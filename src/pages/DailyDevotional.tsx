@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sun, BookOpen, Sparkles } from "lucide-react";
+import { Sun, BookOpen, Sparkles, Heart, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 type Devotional = {
@@ -93,6 +95,31 @@ const DailyDevotional = () => {
                         <p className="font-serif text-lg italic leading-relaxed">{today.declaration}</p>
                       </div>
                     )}
+
+                    <div className="mt-8 p-6 rounded-xl border border-accent/30 bg-accent/5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Heart className="w-5 h-5 text-accent" />
+                        <p className="text-accent font-semibold text-sm uppercase tracking-wider">Prayer Point</p>
+                      </div>
+                      <p className="text-foreground/85 leading-relaxed font-serif italic">
+                        Father, let the truth of Your Word take root in my heart today. Strengthen my faith,
+                        order my steps, and let every word from this devotional become a living reality in my life,
+                        in Jesus' name. Amen.
+                      </p>
+                    </div>
+
+                    <div className="mt-10 p-8 rounded-xl bg-gradient-to-br from-primary to-primary/90 text-primary-foreground text-center">
+                      <Sun className="w-8 h-8 text-accent mx-auto mb-3" />
+                      <h3 className="text-2xl font-serif font-bold mb-2">Join Our Morning Prayers</h3>
+                      <p className="text-primary-foreground/80 mb-6 max-w-md mx-auto">
+                        Start every day in God's presence with Spirit-led prayers and declarations.
+                      </p>
+                      <Button asChild variant="secondary" size="lg">
+                        <Link to="/prayers">
+                          Pray With Us <ArrowRight className="ml-2 w-4 h-4" />
+                        </Link>
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.article>
