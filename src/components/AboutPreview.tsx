@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, User } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import bibleImg from "@/assets/devotional-bible.jpg";
 
 const AboutPreview = () => {
   return (
@@ -14,18 +15,15 @@ const AboutPreview = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <div className="aspect-[4/5] rounded-2xl bg-card border border-border overflow-hidden relative shadow-sm">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsla(38,60%,56%,0.06)_0%,_transparent_70%)]" />
-              <div className="absolute inset-6 rounded-xl border-2 border-accent/20" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="w-28 h-28 rounded-full bg-accent/10 flex items-center justify-center mb-5 ring-4 ring-accent/10 ring-offset-4 ring-offset-card">
-                  <User className="w-14 h-14 text-accent/40" />
-                </div>
-                <p className="text-muted-foreground text-sm font-medium">Coach Profile Photo</p>
-                <p className="text-muted-foreground/50 text-xs mt-1">Upload your photo here</p>
-              </div>
-              <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-accent/30 rounded-tl-lg" />
-              <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-accent/30 rounded-br-lg" />
+            <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-xl border border-border">
+              <img
+                src={bibleImg}
+                alt="Open Bible bathed in golden morning light"
+                className="w-full h-full object-cover"
+                loading="lazy"
+                width={1280}
+                height={896}
+              />
             </div>
           </motion.div>
 
@@ -35,22 +33,23 @@ const AboutPreview = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.1 }}
           >
-            <p className="text-accent font-medium text-sm mb-3 uppercase tracking-wider">About Me</p>
+            <p className="text-accent font-medium text-sm mb-3 uppercase tracking-wider">Our Mission</p>
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-8 leading-tight">
-              A Passion for Helping Others Grow in Faith
+              Daily Encounters That Build Champions
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-5">
-              With years of experience in ministry and life coaching, I am deeply committed to
-              helping individuals discover their God-given purpose and navigate life's challenges
-              with biblical wisdom and grace.
+              Doxazo Expressions exists to help believers grow spiritually, gain clarity in life decisions,
+              and walk in the fullness of God's purpose — through fresh devotionals, fervent prayers, and
+              Spirit-led teachings rooted in the Word.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-10">
-              My mission is to inspire, encourage, and equip people to live boldly in their faith,
-              make confident decisions, and build lives that honor God and impact their communities.
+              Drawing inspiration from Apostle Joshua Selman's kingdom-centered teachings, we equip you to
+              engage Prayer, the Word, Worship, Obedience, and Sacrifice — the five platforms that build a
+              life of impact and divine fulfillment.
             </p>
             <Button asChild variant="outline" className="gap-2 px-6">
               <Link to="/about">
-                Learn More About Me
+                Learn More About Us
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
