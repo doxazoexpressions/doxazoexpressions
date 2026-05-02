@@ -10,10 +10,11 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "About", href: "/about" },
-    { name: "Coaching", href: "/coaching" },
+    { name: "Daily Devotional", href: "/devotional" },
+    { name: "Prayers", href: "/prayers" },
+    { name: "Teachings", href: "/teachings" },
     { name: "Speaking", href: "/speaking" },
-    { name: "Wisdom", href: "/wisdom" },
+    { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
 
@@ -28,7 +29,7 @@ const Navbar = () => {
               <Cross className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-serif font-bold text-foreground">
-              Grace<span className="text-accent">Path</span>
+              Doxazo<span className="text-accent"> Expressions</span>
             </span>
           </Link>
 
@@ -51,7 +52,7 @@ const Navbar = () => {
           <div className="hidden lg:flex items-center gap-3">
             <ThemeToggle />
             <Button asChild className="px-6">
-              <Link to="/coaching">Book a Session</Link>
+              <Link to="/devotional">Today's Devotional</Link>
             </Button>
           </div>
 
@@ -83,7 +84,7 @@ const Navbar = () => {
               </Link>
             ))}
             <Button asChild className="w-full mt-4">
-              <Link to="/coaching" onClick={() => setIsOpen(false)}>Book a Session</Link>
+              <Link to="/devotional" onClick={() => setIsOpen(false)}>Today's Devotional</Link>
             </Button>
           </div>
         )}
