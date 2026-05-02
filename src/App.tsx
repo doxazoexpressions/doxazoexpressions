@@ -6,10 +6,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import About from "./pages/About";
-import Coaching from "./pages/Coaching";
+import DailyDevotional from "./pages/DailyDevotional";
+import Prayers from "./pages/Prayers";
+import Teachings from "./pages/Teachings";
 import Speaking from "./pages/Speaking";
-import Wisdom from "./pages/Wisdom";
 import Contact from "./pages/Contact";
+import Auth from "./pages/Auth";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,10 +27,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
-            <Route path="/coaching" element={<Coaching />} />
+            <Route path="/devotional" element={<DailyDevotional />} />
+            <Route path="/prayers" element={<Prayers />} />
+            <Route path="/teachings" element={<Teachings />} />
             <Route path="/speaking" element={<Speaking />} />
-            <Route path="/wisdom" element={<Wisdom />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
