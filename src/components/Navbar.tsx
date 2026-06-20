@@ -11,9 +11,6 @@ const Navbar = () => {
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Daily Devotional", href: "/devotional" },
-    { name: "Prayers", href: "/prayers" },
-    { name: "Teachings", href: "/teachings" },
-    { name: "Speaking", href: "/speaking" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];

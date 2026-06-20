@@ -5,9 +5,6 @@ const Footer = () => {
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Daily Devotional", href: "/devotional" },
-    { name: "Prayers", href: "/prayers" },
-    { name: "Teachings", href: "/teachings" },
-    { name: "Speaking", href: "/speaking" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
@@ -26,8 +23,8 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Daily devotionals, morning prayers, and biblical teachings to help believers grow
-              spiritually and walk boldly in God's purpose.
+              Your daily discipleship companion — Spirit-led devotionals delivered each morning
+              to help you build a consistent rhythm and walk boldly in God's plan.
             </p>
           </div>
 

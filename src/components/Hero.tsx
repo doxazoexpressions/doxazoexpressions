@@ -28,7 +28,7 @@ const Hero = () => {
           >
             <Sparkles className="w-4 h-4 text-accent" />
             <span className="text-sm text-foreground font-medium">
-              Daily Devotionals · Morning Prayers · Spiritual Teachings
+              Your Daily Discipleship Companion
             </span>
           </motion.div>
 
@@ -38,8 +38,8 @@ const Hero = () => {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="text-4xl md:text-5xl lg:text-7xl font-serif font-bold leading-[1.1] mb-8"
           >
-            Discover <span className="text-gradient">purpose</span>, strengthen your{" "}
-            <span className="text-gradient">faith</span>, walk boldly in God's plan
+            A fresh <span className="text-gradient">devotional</span> every morning to anchor your{" "}
+            <span className="text-gradient">walk with God</span>
           </motion.h1>
 
           <motion.p
@@ -48,8 +48,8 @@ const Hero = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed"
           >
-            Start each morning with God through fresh devotionals, early-morning prayers, and Spirit-led
-            teachings that build champions and equip believers for kingdom living.
+            Move from sporadic inspiration to disciplined spiritual growth. Structured,
+            Spirit-led devotionals built for a consistent morning rhythm.
           </motion.p>
 
           <motion.div
@@ -65,14 +65,8 @@ const Hero = () => {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2 px-8 py-6 text-base">
-              <Link to="/prayers">
-                <Heart className="w-5 h-5" />
-                Join Morning Prayers
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="lg" className="gap-2 px-6 py-6 text-base">
-              <Link to="/teachings">
-                Explore Teachings
+              <Link to="/devotional#archive">
+                Browse Archive
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
