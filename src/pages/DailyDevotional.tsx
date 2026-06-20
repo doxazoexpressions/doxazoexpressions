@@ -110,13 +110,13 @@ const DailyDevotional = () => {
 
                     <div className="mt-10 p-8 rounded-xl bg-gradient-to-br from-primary to-primary/90 text-primary-foreground text-center">
                       <Sun className="w-8 h-8 text-accent mx-auto mb-3" />
-                      <h3 className="text-2xl font-serif font-bold mb-2">Join Our Morning Prayers</h3>
+                      <h3 className="text-2xl font-serif font-bold mb-2">Walk in Today's Word</h3>
                       <p className="text-primary-foreground/80 mb-6 max-w-md mx-auto">
-                        Start every day in God's presence with Spirit-led prayers and declarations.
+                        Carry this devotional with you. Share it. Live it. Let it shape your day.
                       </p>
                       <Button asChild variant="secondary" size="lg">
-                        <Link to="/prayers">
-                          Pray With Us <ArrowRight className="ml-2 w-4 h-4" />
+                        <Link to="/devotional">
+                          Browse Archive <ArrowRight className="ml-2 w-4 h-4" />
                         </Link>
                       </Button>
                     </div>
