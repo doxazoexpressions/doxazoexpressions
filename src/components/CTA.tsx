@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sun, Heart, BookOpen } from "lucide-react";
+import { Sun, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 const CTA = () => {
@@ -23,8 +23,7 @@ const CTA = () => {
           </h2>
 
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
-            Make morning encounter a lifestyle. Receive daily devotionals, prayer points, and teachings
-            that anchor your soul and prepare you for every season.
+            Make morning encounter a lifestyle. One fresh devotional. Every morning. Anchored in Scripture.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
@@ -35,15 +34,9 @@ const CTA = () => {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2 px-8 py-6 text-base">
-              <Link to="/prayers">
-                <Heart className="w-5 h-5" />
-                Join Morning Prayers
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="lg" className="gap-2 px-6 py-6 text-base">
-              <Link to="/teachings">
-                <BookOpen className="w-5 h-5" />
-                Explore Teachings
+              <Link to="/devotional#archive">
+                Browse Archive
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
           </div>
