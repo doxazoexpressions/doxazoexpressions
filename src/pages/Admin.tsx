@@ -301,7 +301,10 @@ function Inbox() {
         <h2 className="font-serif font-semibold text-xl mb-4">Contact Messages ({contacts.length})</h2>
         <div className="space-y-3">{contacts.map((c) => (
           <div key={c.id} className="p-4 border border-border rounded-lg">
-            <p className="font-medium">{c.name} <span className="text-muted-foreground text-sm">· {c.email}</span></p>
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+              <p className="font-medium">{c.name} <span className="text-muted-foreground text-sm">· {c.email}</span></p>
+              <Badge variant="outline" className="text-[10px] uppercase">{(c.type ?? "general").replace("_", " ")}</Badge>
+            </div>
             {c.subject && <p className="text-sm text-accent mt-1">{c.subject}</p>}
             <p className="text-sm mt-2 whitespace-pre-wrap">{c.message}</p>
           </div>
