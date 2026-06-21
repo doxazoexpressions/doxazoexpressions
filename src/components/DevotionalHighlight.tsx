@@ -107,18 +107,46 @@ const DevotionalHighlight = () => {
         ) : loading ? (
           <div className="max-w-3xl mx-auto mb-16 min-h-[20rem]" aria-hidden="true" />
         ) : error ? (
-          <div className="max-w-2xl mx-auto mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mx-auto mb-16"
+          >
             <Card className="border-border shadow-xl">
-              <CardContent className="p-6 sm:p-10 text-center">
-                <h3 className="text-2xl font-serif font-bold text-foreground mb-3">We couldn't load today's devotional</h3>
-                <p className="text-muted-foreground mb-6">Please refresh the page, or browse the archive in the meantime.</p>
-                <div className="flex gap-3 justify-center flex-wrap">
-                  <Button onClick={() => window.location.reload()}>Try Again</Button>
-                  <Button asChild variant="outline"><Link to="/archive">Browse Archive</Link></Button>
+              <CardContent className="p-6 sm:p-8 md:p-12">
+                <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {new Date().toLocaleDateString(undefined, {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <CategoryBadge slug="daily" />
+                </div>
+                <h3 className="text-2xl md:text-4xl font-serif font-bold text-foreground mb-5 leading-tight">
+                  A Fresh Word Is Being Prepared
+                </h3>
+                <p className="text-accent font-medium mb-6">Psalm 119:105 — "Your word is a lamp to my feet and a light to my path."</p>
+                <p className="text-muted-foreground leading-relaxed mb-8">
+                  While today's devotional is being prepared, take a moment to reflect on this truth: God's Word is always a lamp for our path. Browse the archive for past devotionals filled with Scripture, reflection, and faith declarations to anchor your day.
+                </p>
+                <div className="flex gap-3 flex-wrap">
+                  <Button asChild onClick={() => track("devotional_open", { from: "home_highlight_fallback" })}>
+                    <Link to="/devotional">
+                      Read Today's Devotional
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/archive">Browse Archive</Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         ) : today ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
