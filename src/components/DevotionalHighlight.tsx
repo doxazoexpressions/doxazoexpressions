@@ -119,17 +119,34 @@ const DevotionalHighlight = () => {
             </Card>
           </motion.div>
         ) : (
-          <div className="text-center mb-16 max-w-xl mx-auto">
-            <p className="text-muted-foreground mb-4">
-              Today's devotional will publish at sunrise. In the meantime, explore the archive.
-            </p>
-            <Button asChild variant="outline" className="gap-2">
-              <Link to="/archive">
-                Browse Devotional Archive
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </Button>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-2xl mx-auto mb-16"
+          >
+            <Card className="border-border shadow-xl">
+              <CardContent className="p-6 sm:p-10 text-center">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Sun className="w-5 h-5 text-accent" />
+                  <p className="text-accent font-medium text-xs uppercase tracking-wider">Devotional Schedule</p>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-serif font-bold text-foreground mb-4 leading-tight">
+                  Today's devotional publishes at sunrise
+                </h3>
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  Every morning, a fresh Scripture, reflection, and declaration is prepared for your walk.
+                  While you wait, dive into the archive of past devotionals.
+                </p>
+                <Button asChild className="gap-2">
+                  <Link to="/archive">
+                    Browse Devotional Archive
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
         <motion.div

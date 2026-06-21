@@ -7,18 +7,18 @@ import { track } from "@/lib/analytics";
 
 const Hero = () => {
   return (
-    <section className="relative flex items-center justify-center pt-20 pb-10 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
+    <section className="relative flex items-center justify-center pt-[calc(env(safe-area-inset-top)+5rem)] pb-8 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={heroImg}
           alt="Golden sunrise breaking through clouds over peaceful mountains"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover brightness-90 md:brightness-100"
           width={1920}
           height={1280}
           {...({ fetchpriority: "high" } as any)}
         />
         {/* Strong overlay — heavier on mobile for headline contrast */}
-        <div className="absolute inset-0 bg-background/80 md:hidden" />
+        <div className="absolute inset-0 bg-background/90 md:hidden" />
         <div className="absolute inset-0 hidden md:block bg-gradient-to-b from-background/85 via-background/85 to-background" />
       </div>
 
@@ -28,10 +28,10 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card/90 backdrop-blur border border-accent/30 mb-8 shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card/95 backdrop-blur border border-accent/40 mb-5 sm:mb-8 shadow-sm"
           >
             <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-xs sm:text-sm text-foreground font-medium">
+            <span className="text-xs sm:text-sm text-foreground font-semibold">
               Your Daily Discipleship Companion
             </span>
           </motion.div>
@@ -40,7 +40,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-[2.25rem] leading-[1.1] sm:text-5xl lg:text-7xl font-serif font-bold mb-6 sm:mb-8 text-foreground drop-shadow-sm"
+            className="text-[1.875rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-4 sm:mb-8 text-foreground"
           >
             A fresh <span className="text-gradient">devotional</span> every morning to anchor your{" "}
             <span className="text-gradient">walk with God</span>
@@ -50,7 +50,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed"
           >
             Move from sporadic inspiration to disciplined spiritual growth. Scripture-rooted devotionals
             built for a consistent morning rhythm.
@@ -60,12 +60,12 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-5 sm:mb-6"
           >
             <Button
               asChild
               size="lg"
-              className="gap-2 px-7 py-6 text-base shadow-lg hover:shadow-xl transition-shadow w-full sm:w-auto"
+              className="gap-2 px-7 min-h-[3rem] py-5 sm:py-6 text-base shadow-lg hover:shadow-xl transition-shadow w-full sm:w-auto"
               onClick={() => track("cta_today_devotional", { from: "hero" })}
             >
               <Link to="/devotional">
@@ -77,7 +77,7 @@ const Hero = () => {
               asChild
               variant="outline"
               size="lg"
-              className="gap-2 px-7 py-6 text-base w-full sm:w-auto"
+              className="gap-2 px-7 min-h-[3rem] py-5 sm:py-6 text-base w-full sm:w-auto"
               onClick={() => track("cta_browse_archive", { from: "hero" })}
             >
               <Link to="/archive">
@@ -91,12 +91,12 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.45 }}
-            className="mb-8 md:mb-12"
+            className="mb-6 md:mb-12"
           >
             <Link
               to="/categories"
               onClick={() => track("cta_explore_categories", { from: "hero" })}
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-accent transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-accent transition-colors py-2"
             >
               <Compass className="w-4 h-4" />
               Explore by theme
@@ -108,7 +108,7 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="max-w-lg mx-auto"
+            className="max-w-lg mx-auto hidden sm:block"
           >
             <div className="section-divider mb-6" />
             <blockquote className="text-muted-foreground italic font-serif text-base sm:text-lg border-l-2 border-accent pl-5 sm:pl-6 text-left">
