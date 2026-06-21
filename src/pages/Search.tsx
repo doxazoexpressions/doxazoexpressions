@@ -92,7 +92,16 @@ const Search = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {loading ? (
-              <p className="text-center text-muted-foreground py-12">Searching…</p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="rounded-lg border border-border p-6 space-y-3">
+                    <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                    <div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
+                    <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
+                    <div className="h-16 w-full bg-muted animate-pulse rounded" />
+                  </div>
+                ))}
+              </div>
             ) : !ran ? (
               <p className="text-center text-muted-foreground py-12">Type a query above to begin.</p>
             ) : results.length === 0 ? (
