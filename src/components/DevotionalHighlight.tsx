@@ -23,6 +23,8 @@ type Devotional = {
 const DevotionalHighlight = () => {
   const [today, setToday] = useState<Devotional | null>(null);
   const [recent, setRecent] = useState<Devotional[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const nowIso = new Date().toISOString();
@@ -33,7 +35,12 @@ const DevotionalHighlight = () => {
       .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
       .order("publish_date", { ascending: false })
       .limit(4)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        setLoading(false);
+        if (error) {
+          setError(true);
+          return;
+        }
         if (!data || data.length === 0) return;
         setToday(data[0] as Devotional);
         setRecent(data.slice(1) as Devotional[]);
