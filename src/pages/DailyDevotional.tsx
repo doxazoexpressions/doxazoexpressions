@@ -5,7 +5,7 @@ import SEO from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sun, BookOpen, Sparkles, Heart, ArrowRight, Play } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import CategoryBadge from "@/components/CategoryBadge";
@@ -28,27 +28,48 @@ type Devotional = {
 };
 
 const DailyDevotional = () => {
+  const { id: routeId } = useParams<{ id?: string }>();
   const [params] = useSearchParams();
-  const requestedId = params.get("id");
+  const navigate = useNavigate();
+  // Legacy /devotional?id=… links → redirect to /devotional/:id (kept for old shares/SEO)
+  const legacyId = params.get("id");
+  const requestedId = routeId ?? null;
   const [current, setCurrent] = useState<Devotional | null>(null);
   const [recent, setRecent] = useState<DevotionalCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (legacyId && !routeId) {
+      navigate(`/devotional/${legacyId}`, { replace: true });
+    }
+  }, [legacyId, routeId, navigate]);
+
+  useEffect(() => {
     (async () => {
       setLoading(true);
       const nowIso = new Date().toISOString();
-      const base = supabase
-        .from("devotionals")
-        .select("*")
-        .eq("published", true)
-        .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`);
+      const base = () =>
+        supabase
+          .from("devotionals")
+          .select("*")
+          .eq("published", true)
+          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`);
 
       if (requestedId) {
-        const { data } = await base.eq("id", requestedId).maybeSingle();
+        const { data } = await base().eq("id", requestedId).maybeSingle();
+        // If the requested id is actually the latest, normalize URL to /devotional
+        if (data) {
+          const { data: latest } = await base()
+            .order("publish_date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (latest && (latest as Devotional).id === (data as Devotional).id) {
+            navigate("/devotional", { replace: true });
+          }
+        }
         setCurrent((data as Devotional) ?? null);
       } else {
-        const { data } = await base.order("publish_date", { ascending: false }).limit(1).maybeSingle();
+        const { data } = await base().order("publish_date", { ascending: false }).limit(1).maybeSingle();
         setCurrent((data as Devotional) ?? null);
       }
 
@@ -64,7 +85,7 @@ const DailyDevotional = () => {
 
       setLoading(false);
     })();
-  }, [requestedId]);
+  }, [requestedId, navigate]);
 
   useEffect(() => {
     if (current) track("devotional_open", { id: current.id, from: "devotional_page" });
@@ -75,7 +96,7 @@ const DailyDevotional = () => {
     current?.excerpt ??
     (current?.body ? current.body.replace(/\s+/g, " ").slice(0, 155) : null) ??
     "Today's Christian devotional from Doxazo Expressions — Scripture, reflection, and a faith declaration to shape your day.";
-  const seoPath = requestedId ? `/devotional?id=${requestedId}` : "/devotional";
+  const seoPath = requestedId ? `/devotional/${requestedId}` : "/devotional";
   const articleLd = current
     ? {
         "@context": "https://schema.org",

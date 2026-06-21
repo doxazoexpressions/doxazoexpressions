@@ -21,7 +21,7 @@ const buildExcerpt = (d: DevotionalCardData) => {
 
 const DevotionalCard = ({ d }: { d: DevotionalCardData }) => {
   return (
-    <Link to={`/devotional?id=${d.id}`} className="group block h-full">
+    <Link to={`/devotional/${d.id}`} className="group block h-full">
       <Card className="h-full border-border group-hover:border-accent/40 group-hover:shadow-lg transition-all duration-300">
         <CardContent className="p-6 flex flex-col h-full">
           <div className="flex items-center justify-between gap-2 mb-3">
