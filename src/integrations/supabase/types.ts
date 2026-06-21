@@ -22,6 +22,7 @@ export type Database = {
           message: string
           name: string
           subject: string | null
+          type: Database["public"]["Enums"]["contact_message_type"]
         }
         Insert: {
           created_at?: string
@@ -30,6 +31,7 @@ export type Database = {
           message: string
           name: string
           subject?: string | null
+          type?: Database["public"]["Enums"]["contact_message_type"]
         }
         Update: {
           created_at?: string
@@ -38,46 +40,68 @@ export type Database = {
           message?: string
           name?: string
           subject?: string | null
+          type?: Database["public"]["Enums"]["contact_message_type"]
         }
         Relationships: []
       }
       devotionals: {
         Row: {
+          audio_url: string | null
           author_id: string | null
           body: string
+          category: Database["public"]["Enums"]["devotional_category"] | null
           created_at: string
           declaration: string | null
+          excerpt: string | null
           id: string
           publish_date: string
           published: boolean
+          scheduled_for: string | null
           scripture_reference: string | null
           scripture_text: string | null
+          seo_description: string | null
+          seo_title: string | null
+          series: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          audio_url?: string | null
           author_id?: string | null
           body: string
+          category?: Database["public"]["Enums"]["devotional_category"] | null
           created_at?: string
           declaration?: string | null
+          excerpt?: string | null
           id?: string
           publish_date?: string
           published?: boolean
+          scheduled_for?: string | null
           scripture_reference?: string | null
           scripture_text?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          series?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          audio_url?: string | null
           author_id?: string | null
           body?: string
+          category?: Database["public"]["Enums"]["devotional_category"] | null
           created_at?: string
           declaration?: string | null
+          excerpt?: string | null
           id?: string
           publish_date?: string
           published?: boolean
+          scheduled_for?: string | null
           scripture_reference?: string | null
           scripture_text?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          series?: string | null
           title?: string
           updated_at?: string
         }
@@ -290,6 +314,18 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      contact_message_type:
+        | "general"
+        | "partnership"
+        | "testimony"
+        | "prayer_request"
+      devotional_category:
+        | "series"
+        | "divine_relationship"
+        | "destiny_purpose"
+        | "blessings"
+        | "prayers"
+        | "life_relationships"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -418,6 +454,20 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      contact_message_type: [
+        "general",
+        "partnership",
+        "testimony",
+        "prayer_request",
+      ],
+      devotional_category: [
+        "series",
+        "divine_relationship",
+        "destiny_purpose",
+        "blessings",
+        "prayers",
+        "life_relationships",
+      ],
     },
   },
 } as const
