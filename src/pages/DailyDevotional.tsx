@@ -169,9 +169,53 @@ const DailyDevotional = () => {
                       </div>
                     )}
 
-                    <div className="prose prose-lg max-w-none text-foreground/85 leading-[1.85] whitespace-pre-wrap font-light text-[1.0625rem]">
-                      {current.body}
-                    </div>
+                    {(() => {
+                      const marker = /(\n\s*)INSPIRATION\s*(?::|—|-)?\s*(\n|$)/i;
+                      const match = current.body.match(marker);
+                      const reflection = match && match.index !== undefined ? current.body.slice(0, match.index).trim() : current.body.trim();
+                      const inspiration = match && match.index !== undefined ? current.body.slice(match.index + match[0].length).trim() : null;
+
+                      let paragraphs = reflection.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
+                      if (paragraphs.length === 1 && reflection.includes('\n') && !reflection.includes('\n\n')) {
+                        paragraphs = reflection.split('\n').map(l => l.trim()).filter(Boolean);
+                      }
+
+                      return (
+                        <>
+                          <div className="mb-10">
+                            <div className="flex items-center gap-2 mb-5">
+                              <BookOpen className="w-5 h-5 text-accent" />
+                              <h3 className="text-accent font-semibold text-xs uppercase tracking-[0.15em]">Today's Reflection</h3>
+                            </div>
+                            <div className="bg-muted/50 rounded-xl p-6 sm:p-8 md:p-10 border border-border/40">
+                              <div className="max-w-[66ch] mx-auto font-serif text-[17px] md:text-[19px] leading-[1.85] text-primary">
+                                {paragraphs.length > 0 ? paragraphs.map((para, i, arr) => {
+                                  const isLast = i === arr.length - 1;
+                                  const isSecondLast = i === arr.length - 2;
+                                  const emphasize = isLast || (arr.length > 3 && isSecondLast);
+                                  return (
+                                    <p key={i} className={`mb-5 last:mb-0 ${emphasize ? 'font-semibold' : 'font-normal'}`}>
+                                      {para}
+                                    </p>
+                                  );
+                                }) : (
+                                  <p className="whitespace-pre-wrap">{reflection}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {inspiration && (
+                            <div className="mb-10 p-6 sm:p-8 rounded-xl border border-accent/20 bg-accent/5">
+                              <p className="text-accent font-bold text-[11px] uppercase tracking-[0.18em] mb-3">Inspiration</p>
+                              <p className="font-serif text-lg md:text-xl font-semibold text-primary leading-relaxed">
+                                {inspiration}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
 
                     {current.declaration && (
                       <div className="mt-10 p-6 rounded-xl bg-primary text-primary-foreground">
