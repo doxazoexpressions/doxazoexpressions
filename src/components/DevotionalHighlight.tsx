@@ -85,7 +85,34 @@ const DevotionalHighlight = () => {
 
         <div className="section-divider mb-12" />
 
-        {today ? (
+        {loading ? (
+          <div className="max-w-3xl mx-auto mb-16">
+            <Card className="border-border shadow-xl">
+              <CardContent className="p-6 sm:p-8 md:p-12 space-y-4">
+                <div className="flex justify-between"><Skeleton className="h-4 w-40" /><Skeleton className="h-5 w-20" /></div>
+                <Skeleton className="h-10 w-3/4" />
+                <Skeleton className="h-5 w-1/3" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-10 w-44 mt-2" />
+              </CardContent>
+            </Card>
+          </div>
+        ) : error ? (
+          <div className="max-w-2xl mx-auto mb-16">
+            <Card className="border-border shadow-xl">
+              <CardContent className="p-6 sm:p-10 text-center">
+                <h3 className="text-2xl font-serif font-bold text-foreground mb-3">We couldn't load today's devotional</h3>
+                <p className="text-muted-foreground mb-6">Please refresh the page, or browse the archive in the meantime.</p>
+                <div className="flex gap-3 justify-center flex-wrap">
+                  <Button onClick={() => window.location.reload()}>Try Again</Button>
+                  <Button asChild variant="outline"><Link to="/archive">Browse Archive</Link></Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : today ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -119,7 +146,7 @@ const DevotionalHighlight = () => {
                 <p className="text-muted-foreground leading-relaxed mb-8">{previewText}</p>
                 <Button asChild className="gap-2" onClick={() => track("devotional_open", { from: "home_highlight" })}>
                   <Link to="/devotional">
-                    Read Full Devotional
+                    Read Today's Devotional
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </Button>
@@ -140,15 +167,15 @@ const DevotionalHighlight = () => {
                   <p className="text-accent font-medium text-xs uppercase tracking-wider">Devotional Schedule</p>
                 </div>
                 <h3 className="text-2xl md:text-3xl font-serif font-bold text-foreground mb-4 leading-tight">
-                  Today's devotional publishes at sunrise
+                  The first devotional arrives at sunrise
                 </h3>
                 <p className="text-muted-foreground leading-relaxed mb-6">
-                  Every morning, a fresh Scripture, reflection, and declaration is prepared for your walk.
-                  While you wait, dive into the archive of past devotionals.
+                  Every morning, a fresh Scripture, reflection, and declaration is published here.
+                  Subscribe below to be the first to read it.
                 </p>
                 <Button asChild className="gap-2">
                   <Link to="/archive">
-                    Browse Devotional Archive
+                    Explore Devotional Archive
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </Button>
