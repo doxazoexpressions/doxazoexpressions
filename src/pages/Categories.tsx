@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
 import { Compass, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -31,6 +32,11 @@ const Categories = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Devotionals by Theme"
+        description="Browse devotionals by theme — divine relationship, destiny and purpose, blessings, prayer, and life and relationships."
+        path="/categories"
+      />
       <Navbar />
       <main className="pt-16">
         <section className="section-padding bg-secondary/30">

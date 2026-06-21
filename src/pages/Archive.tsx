@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import DevotionalCard, { DevotionalCardData } from "@/components/DevotionalCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,15 @@ const Archive = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={activeCategory ? `${heading}` : "Devotional Archive"}
+        description={
+          activeCategory
+            ? `Browse every ${CATEGORIES.find((c) => c.slug === activeCategory)?.label} devotional published on Doxazo Expressions.`
+            : "Every devotional we've published — searchable, filterable, and ready to revisit."
+        }
+        path={activeCategory ? `/archive?category=${activeCategory}` : "/archive"}
+      />
       <Navbar />
       <main className="pt-16">
         <section className="section-padding bg-secondary/30">

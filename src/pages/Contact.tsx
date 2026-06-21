@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -74,6 +75,11 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Contact Doxazo Expressions"
+        description="Reach out for prayer, partnership, to share a testimony, or for any general question."
+        path="/contact"
+      />
       <Navbar />
       <main className="pt-16">
         <section className="py-12 md:py-16 bg-secondary/30">
