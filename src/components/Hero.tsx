@@ -7,7 +7,7 @@ import { track } from "@/lib/analytics";
 
 const Hero = () => {
   return (
-    <section className="relative flex items-center justify-center pt-24 pb-12 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
+    <section className="relative flex items-center justify-center pt-20 pb-10 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={heroImg}
@@ -17,8 +17,9 @@ const Hero = () => {
           height={1280}
           {...({ fetchpriority: "high" } as any)}
         />
-        {/* Stronger overlay for mobile readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/85 to-background" />
+        {/* Strong overlay — heavier on mobile for headline contrast */}
+        <div className="absolute inset-0 bg-background/80 md:hidden" />
+        <div className="absolute inset-0 hidden md:block bg-gradient-to-b from-background/85 via-background/85 to-background" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
