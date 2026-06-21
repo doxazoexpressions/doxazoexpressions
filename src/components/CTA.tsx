@@ -34,7 +34,7 @@ const CTA = () => {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="gap-2 px-8 py-6 text-base">
-              <Link to="/devotional#archive">
+              <Link to="/archive">
                 Browse Archive
                 <ArrowRight className="w-4 h-4" />
               </Link>

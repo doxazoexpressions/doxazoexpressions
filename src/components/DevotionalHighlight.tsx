@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Sun, ArrowRight, Flame, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import CategoryBadge from "./CategoryBadge";
+import { track } from "@/lib/analytics";
 
 type Devotional = {
   id: string;
@@ -12,6 +14,8 @@ type Devotional = {
   scripture_reference: string | null;
   scripture_text: string | null;
   body: string;
+  excerpt: string | null;
+  category: string | null;
   publish_date: string;
 };
 
@@ -20,18 +24,24 @@ const DevotionalHighlight = () => {
   const [recent, setRecent] = useState<Devotional[]>([]);
 
   useEffect(() => {
+    const nowIso = new Date().toISOString();
     supabase
       .from("devotionals")
-      .select("id,title,scripture_reference,scripture_text,body,publish_date")
+      .select("id,title,scripture_reference,scripture_text,body,excerpt,category,publish_date")
       .eq("published", true)
+      .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
       .order("publish_date", { ascending: false })
       .limit(4)
       .then(({ data }) => {
         if (!data || data.length === 0) return;
-        setToday(data[0]);
-        setRecent(data.slice(1));
+        setToday(data[0] as Devotional);
+        setRecent(data.slice(1) as Devotional[]);
       });
   }, []);
+
+  const previewText =
+    today?.excerpt?.trim() ||
+    (today?.body ? (today.body.length > 280 ? today.body.slice(0, 280).trim() + "…" : today.body) : "");
 
   return (
     <section className="section-padding bg-secondary/30">
@@ -49,7 +59,7 @@ const DevotionalHighlight = () => {
           <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground mb-5">
             Begin Your Morning in God's Presence
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-base md:text-lg">
             A fresh word, scripture, and reflection prepared for today.
           </p>
         </motion.div>
@@ -64,15 +74,18 @@ const DevotionalHighlight = () => {
             className="max-w-3xl mx-auto mb-16"
           >
             <Card className="border-border shadow-xl">
-              <CardContent className="p-8 md:p-12">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
-                  {new Date(today.publish_date).toLocaleDateString(undefined, {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
+              <CardContent className="p-6 sm:p-8 md:p-12">
+                <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {new Date(today.publish_date).toLocaleDateString(undefined, {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <CategoryBadge slug={today.category} />
+                </div>
                 <h3 className="text-2xl md:text-4xl font-serif font-bold text-foreground mb-5 leading-tight">
                   {today.title}
                 </h3>
@@ -84,8 +97,8 @@ const DevotionalHighlight = () => {
                     "{today.scripture_text}"
                   </blockquote>
                 )}
-                <p className="text-muted-foreground leading-relaxed line-clamp-4 mb-8">{today.body}</p>
-                <Button asChild className="gap-2">
+                <p className="text-muted-foreground leading-relaxed mb-8">{previewText}</p>
+                <Button asChild className="gap-2" onClick={() => track("devotional_open", { from: "home_highlight" })}>
                   <Link to="/devotional">
                     Read Full Devotional
                     <ArrowRight className="w-4 h-4" />
@@ -98,14 +111,13 @@ const DevotionalHighlight = () => {
           <p className="text-center text-muted-foreground mb-16">A fresh devotional is on its way.</p>
         )}
 
-        {/* Trust signal */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="flex items-center justify-center gap-3 mb-16 text-sm text-muted-foreground"
+          className="flex items-center justify-center gap-3 mb-16 text-sm text-muted-foreground text-center px-4"
         >
-          <Flame className="w-4 h-4 text-accent" />
+          <Flame className="w-4 h-4 text-accent shrink-0" />
           <span>Daily devotionals, published every morning without fail.</span>
         </motion.div>
 
@@ -117,28 +129,35 @@ const DevotionalHighlight = () => {
                 <p className="text-accent font-medium text-sm uppercase tracking-wider">From the Archive</p>
               </div>
             </div>
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
               {recent.map((post) => (
-                <Card key={post.id} className="h-full border-border hover:border-accent/40 transition-all duration-300 hover:shadow-lg">
-                  <CardContent className="p-6">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
-                      {new Date(post.publish_date).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
-                    <h4 className="font-serif font-semibold text-foreground mb-2 leading-snug">{post.title}</h4>
-                    {post.scripture_reference && (
-                      <p className="text-xs text-accent font-medium">{post.scripture_reference}</p>
-                    )}
-                  </CardContent>
-                </Card>
+                <Link key={post.id} to="/archive" className="group block h-full">
+                  <Card className="h-full border-border group-hover:border-accent/40 transition-all duration-300 group-hover:shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                          {new Date(post.publish_date).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                        <CategoryBadge slug={post.category} asLink={false} />
+                      </div>
+                      <h4 className="font-serif font-semibold text-foreground mb-2 leading-snug group-hover:text-accent transition-colors">
+                        {post.title}
+                      </h4>
+                      {post.scripture_reference && (
+                        <p className="text-xs text-accent font-medium">{post.scripture_reference}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
             <div className="text-center">
-              <Button asChild variant="outline" className="gap-2">
-                <Link to="/devotional">
+              <Button asChild variant="outline" className="gap-2" onClick={() => track("cta_browse_archive", { from: "home_archive" })}>
+                <Link to="/archive">
                   View Devotional Archive
                   <ArrowRight className="w-4 h-4" />
                 </Link>

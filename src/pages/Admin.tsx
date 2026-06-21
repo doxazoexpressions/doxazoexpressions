@@ -8,10 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { LogOut, Plus, Trash2 } from "lucide-react";
+import { CATEGORIES, categoryLabel } from "@/lib/categories";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -80,33 +89,86 @@ VALUES ('${user.id}', 'admin');`}
 };
 
 function DevotionalAdmin({ userId }: { userId: string }) {
+  const emptyForm = {
+    title: "",
+    scripture_reference: "",
+    scripture_text: "",
+    body: "",
+    excerpt: "",
+    declaration: "",
+    category: "",
+    series: "",
+    audio_url: "",
+    seo_title: "",
+    seo_description: "",
+    publish_date: new Date().toISOString().slice(0, 10),
+    scheduled_for: "",
+  };
   const [list, setList] = useState<any[]>([]);
-  const [form, setForm] = useState({ title: "", scripture_reference: "", scripture_text: "", body: "", declaration: "", publish_date: new Date().toISOString().slice(0, 10) });
+  const [form, setForm] = useState(emptyForm);
   const load = () =>
     supabase.from("devotionals").select("*").order("publish_date", { ascending: false }).then(({ data }) => setList(data ?? []));
   useEffect(() => { load(); }, []);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.body.trim()) { toast({ title: "Title and body are required", variant: "destructive" }); return; }
-    const { error } = await supabase.from("devotionals").insert({ ...form, author_id: userId });
+    const payload: any = {
+      title: form.title,
+      scripture_reference: form.scripture_reference || null,
+      scripture_text: form.scripture_text || null,
+      body: form.body,
+      excerpt: form.excerpt || null,
+      declaration: form.declaration || null,
+      category: form.category || null,
+      series: form.series || null,
+      audio_url: form.audio_url || null,
+      seo_title: form.seo_title || null,
+      seo_description: form.seo_description || null,
+      publish_date: form.publish_date,
+      scheduled_for: form.scheduled_for ? new Date(form.scheduled_for).toISOString() : null,
+      author_id: userId,
+    };
+    const { error } = await supabase.from("devotionals").insert(payload);
     if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
-    else { toast({ title: "Devotional posted" }); setForm({ title: "", scripture_reference: "", scripture_text: "", body: "", declaration: "", publish_date: new Date().toISOString().slice(0, 10) }); load(); }
+    else { toast({ title: "Devotional posted" }); setForm(emptyForm); load(); }
   };
   const remove = async (id: string) => {
     await supabase.from("devotionals").delete().eq("id", id);
     toast({ title: "Deleted" }); load();
   };
+  const isScheduled = (d: any) => d.scheduled_for && new Date(d.scheduled_for) > new Date();
   return (
     <div className="grid md:grid-cols-2 gap-6">
       <Card><CardContent className="p-6">
         <h2 className="font-serif font-semibold text-xl mb-4 flex items-center gap-2"><Plus className="w-5 h-5" />New Devotional</h2>
         <form onSubmit={submit} className="space-y-3">
           <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
-          <div><Label>Publish Date</Label><Input type="date" value={form.publish_date} onChange={(e) => setForm({ ...form, publish_date: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Category</Label>
+              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => <SelectItem key={c.slug} value={c.slug}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Series (optional)</Label><Input value={form.series} onChange={(e) => setForm({ ...form, series: e.target.value })} placeholder="e.g. Walking in Authority" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Publish Date</Label><Input type="date" value={form.publish_date} onChange={(e) => setForm({ ...form, publish_date: e.target.value })} /></div>
+            <div><Label>Schedule (optional)</Label><Input type="datetime-local" value={form.scheduled_for} onChange={(e) => setForm({ ...form, scheduled_for: e.target.value })} /></div>
+          </div>
           <div><Label>Scripture Reference</Label><Input value={form.scripture_reference} onChange={(e) => setForm({ ...form, scripture_reference: e.target.value })} placeholder="e.g. Psalm 23:1" /></div>
           <div><Label>Scripture Text</Label><Textarea value={form.scripture_text} onChange={(e) => setForm({ ...form, scripture_text: e.target.value })} rows={2} /></div>
+          <div><Label>Excerpt (preview text)</Label><Textarea value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} rows={2} placeholder="Auto-generated from body if blank" /></div>
           <div><Label>Devotional Body</Label><Textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} rows={6} required /></div>
           <div><Label>Faith Declaration</Label><Textarea value={form.declaration} onChange={(e) => setForm({ ...form, declaration: e.target.value })} rows={2} /></div>
+          <div><Label>Audio URL (optional)</Label><Input value={form.audio_url} onChange={(e) => setForm({ ...form, audio_url: e.target.value })} placeholder="https://…mp3" /></div>
+          <div className="grid grid-cols-1 gap-3">
+            <div><Label>SEO Title (optional)</Label><Input value={form.seo_title} onChange={(e) => setForm({ ...form, seo_title: e.target.value })} /></div>
+            <div><Label>SEO Description (optional)</Label><Textarea value={form.seo_description} onChange={(e) => setForm({ ...form, seo_description: e.target.value })} rows={2} /></div>
+          </div>
           <Button type="submit" className="w-full">Publish</Button>
         </form>
       </CardContent></Card>
@@ -115,9 +177,14 @@ function DevotionalAdmin({ userId }: { userId: string }) {
         <div className="space-y-3 max-h-[600px] overflow-y-auto">
           {list.map((d) => (
             <div key={d.id} className="flex items-start justify-between gap-3 p-3 border border-border rounded-lg">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-medium truncate">{d.title}</p>
-                <p className="text-xs text-muted-foreground">{d.publish_date}</p>
+                <p className="text-xs text-muted-foreground">
+                  {d.publish_date} {d.category && <>· {categoryLabel(d.category)}</>}
+                </p>
+                {isScheduled(d) && (
+                  <Badge variant="outline" className="mt-1 text-[10px]">Scheduled · {new Date(d.scheduled_for).toLocaleString()}</Badge>
+                )}
               </div>
               <Button size="sm" variant="ghost" onClick={() => remove(d.id)}><Trash2 className="w-4 h-4" /></Button>
             </div>
@@ -234,7 +301,10 @@ function Inbox() {
         <h2 className="font-serif font-semibold text-xl mb-4">Contact Messages ({contacts.length})</h2>
         <div className="space-y-3">{contacts.map((c) => (
           <div key={c.id} className="p-4 border border-border rounded-lg">
-            <p className="font-medium">{c.name} <span className="text-muted-foreground text-sm">· {c.email}</span></p>
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+              <p className="font-medium">{c.name} <span className="text-muted-foreground text-sm">· {c.email}</span></p>
+              <Badge variant="outline" className="text-[10px] uppercase">{(c.type ?? "general").replace("_", " ")}</Badge>
+            </div>
             {c.subject && <p className="text-sm text-accent mt-1">{c.subject}</p>}
             <p className="text-sm mt-2 whitespace-pre-wrap">{c.message}</p>
           </div>
