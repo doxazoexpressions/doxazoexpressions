@@ -108,7 +108,17 @@ const DevotionalHighlight = () => {
             </Card>
           </motion.div>
         ) : (
-          <p className="text-center text-muted-foreground mb-16">A fresh devotional is on its way.</p>
+          <div className="text-center mb-16 max-w-xl mx-auto">
+            <p className="text-muted-foreground mb-4">
+              Today's devotional will publish at sunrise. In the meantime, explore the archive.
+            </p>
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/archive">
+                Browse Devotional Archive
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
+          </div>
         )}
 
         <motion.div
