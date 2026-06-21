@@ -7,7 +7,7 @@ import { track } from "@/lib/analytics";
 
 const Hero = () => {
   return (
-    <section className="relative flex items-center justify-center pt-24 pb-12 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
+    <section className="relative flex items-center justify-center pt-20 pb-10 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={heroImg}
@@ -17,8 +17,9 @@ const Hero = () => {
           height={1280}
           {...({ fetchpriority: "high" } as any)}
         />
-        {/* Stronger overlay for mobile readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/85 to-background" />
+        {/* Strong overlay — heavier on mobile for headline contrast */}
+        <div className="absolute inset-0 bg-background/80 md:hidden" />
+        <div className="absolute inset-0 hidden md:block bg-gradient-to-b from-background/85 via-background/85 to-background" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -39,7 +40,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-[2.25rem] leading-[1.1] sm:text-5xl lg:text-7xl font-serif font-bold mb-6 sm:mb-8"
+            className="text-[2.25rem] leading-[1.1] sm:text-5xl lg:text-7xl font-serif font-bold mb-6 sm:mb-8 text-foreground drop-shadow-sm"
           >
             A fresh <span className="text-gradient">devotional</span> every morning to anchor your{" "}
             <span className="text-gradient">walk with God</span>
@@ -90,7 +91,7 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.45 }}
-            className="mb-12"
+            className="mb-8 md:mb-12"
           >
             <Link
               to="/categories"

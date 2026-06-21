@@ -43,6 +43,17 @@ const DevotionalHighlight = () => {
     today?.excerpt?.trim() ||
     (today?.body ? (today.body.length > 280 ? today.body.slice(0, 280).trim() + "…" : today.body) : "");
 
+  const isToday = today
+    ? new Date(today.publish_date).toDateString() === new Date().toDateString()
+    : false;
+  const eyebrow = isToday ? "Today's Devotional" : "Latest Devotional";
+  const heading = isToday
+    ? "Begin Your Morning in God's Presence"
+    : "Your Latest Devotional Is Ready";
+  const subheading = isToday
+    ? "A fresh word, scripture, and reflection prepared for today."
+    : "Read the most recent word, scripture, and reflection — available now.";
+
   return (
     <section className="section-padding bg-secondary/30">
       <div className="container mx-auto px-4">
@@ -54,13 +65,13 @@ const DevotionalHighlight = () => {
         >
           <div className="flex items-center justify-center gap-2 mb-3">
             <Sun className="w-5 h-5 text-accent" />
-            <p className="text-accent font-medium text-sm uppercase tracking-wider">Today's Devotional</p>
+            <p className="text-accent font-medium text-sm uppercase tracking-wider">{eyebrow}</p>
           </div>
           <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground mb-5">
-            Begin Your Morning in God's Presence
+            {heading}
           </h2>
           <p className="text-muted-foreground text-base md:text-lg">
-            A fresh word, scripture, and reflection prepared for today.
+            {subheading}
           </p>
         </motion.div>
 
