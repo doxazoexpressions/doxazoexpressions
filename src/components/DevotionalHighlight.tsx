@@ -24,9 +24,12 @@ const DevotionalHighlight = () => {
   const [today, setToday] = useState<Devotional | null>(null);
   const [recent, setRecent] = useState<Devotional[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // Only show skeleton if loading takes longer than 200ms — avoids flash on fast networks
+    const skeletonTimer = setTimeout(() => setShowSkeleton(true), 200);
     const nowIso = new Date().toISOString();
     supabase
       .from("devotionals")
@@ -36,6 +39,7 @@ const DevotionalHighlight = () => {
       .order("publish_date", { ascending: false })
       .limit(4)
       .then(({ data, error }) => {
+        clearTimeout(skeletonTimer);
         setLoading(false);
         if (error) {
           setError(true);
@@ -45,6 +49,7 @@ const DevotionalHighlight = () => {
         setToday(data[0] as Devotional);
         setRecent(data.slice(1) as Devotional[]);
       });
+    return () => clearTimeout(skeletonTimer);
   }, []);
 
   const previewText =
@@ -85,7 +90,7 @@ const DevotionalHighlight = () => {
 
         <div className="section-divider mb-12" />
 
-        {loading ? (
+        {loading && showSkeleton ? (
           <div className="max-w-3xl mx-auto mb-16">
             <Card className="border-border shadow-xl">
               <CardContent className="p-6 sm:p-8 md:p-12 space-y-4">
@@ -99,6 +104,8 @@ const DevotionalHighlight = () => {
               </CardContent>
             </Card>
           </div>
+        ) : loading ? (
+          <div className="max-w-3xl mx-auto mb-16 min-h-[20rem]" aria-hidden="true" />
         ) : error ? (
           <div className="max-w-2xl mx-auto mb-16">
             <Card className="border-border shadow-xl">

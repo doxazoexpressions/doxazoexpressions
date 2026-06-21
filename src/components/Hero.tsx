@@ -7,21 +7,22 @@ import { track } from "@/lib/analytics";
 
 const Hero = () => {
   return (
-    <section className="relative flex items-center justify-center pt-[calc(env(safe-area-inset-top)+5rem)] pb-8 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
+    <section className="relative flex items-center justify-center pt-[calc(env(safe-area-inset-top)+5rem)] pb-10 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={heroImg}
           alt="Golden sunrise breaking through clouds over peaceful mountains"
-          className="w-full h-full object-cover brightness-75 md:brightness-90"
+          className="w-full h-full object-cover object-center brightness-[0.55] md:brightness-[0.65]"
           width={1920}
           height={1280}
           {...({ fetchpriority: "high" } as any)}
         />
-        {/* Strong overlay for maximum text contrast on every device */}
-        <div className="absolute inset-0 bg-background/95 md:hidden" />
-        <div className="absolute inset-0 hidden md:block bg-gradient-to-b from-background/92 via-background/90 to-background" />
-        {/* Focal vignette behind text block */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--background)/0.4)_0%,transparent_70%)]" />
+        {/* Base wash so the page surface tone carries through */}
+        <div className="absolute inset-0 bg-background/80 md:bg-background/70" />
+        {/* Top-to-bottom gradient drives focus to copy area */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
+        {/* Soft vignette behind the headline block for instant readability */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--background)/0.55)_0%,transparent_72%)]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -30,10 +31,10 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card/95 backdrop-blur border border-accent/40 mb-5 sm:mb-8 shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-accent/40 mb-5 sm:mb-8 shadow-sm"
           >
             <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-xs sm:text-sm text-foreground font-semibold">
+            <span className="text-xs sm:text-sm text-primary font-semibold">
               Your Daily Discipleship Companion
             </span>
           </motion.div>
@@ -42,17 +43,17 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-[1.875rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-4 sm:mb-8 text-foreground drop-shadow-[0_1px_2px_hsl(var(--background)/0.6)]"
+            className="text-[1.875rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-4 sm:mb-8 text-primary"
           >
-            A fresh <span className="text-gradient">devotional</span> every morning to anchor your{" "}
-            <span className="text-gradient">walk with God</span>
+            A fresh <span className="text-accent">devotional</span> every morning to anchor your{" "}
+            <span className="text-accent">walk with God</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-sm sm:text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed font-medium"
+            className="text-sm sm:text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed font-medium"
           >
             Move from sporadic inspiration to disciplined spiritual growth. Scripture-rooted devotionals
             built for a consistent morning rhythm.
@@ -62,12 +63,12 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-5 sm:mb-6"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-6 sm:mb-8"
           >
             <Button
               asChild
               size="lg"
-              className="gap-2 px-7 min-h-[3rem] py-5 sm:py-6 text-base shadow-lg hover:shadow-xl transition-shadow w-full sm:w-auto"
+              className="gap-2 px-8 min-h-[3.25rem] py-6 text-base font-semibold shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all w-full sm:w-auto"
               onClick={() => track("cta_today_devotional", { from: "hero" })}
             >
               <Link to="/devotional">
@@ -77,9 +78,9 @@ const Hero = () => {
             </Button>
             <Button
               asChild
-              variant="outline"
+              variant="ghost"
               size="lg"
-              className="gap-2 px-7 min-h-[3rem] py-5 sm:py-6 text-base w-full sm:w-auto"
+              className="gap-2 px-5 min-h-[3rem] py-5 text-sm sm:text-base text-foreground/80 hover:text-primary hover:bg-transparent underline-offset-4 hover:underline w-full sm:w-auto"
               onClick={() => track("cta_browse_archive", { from: "hero" })}
             >
               <Link to="/archive">
@@ -98,9 +99,9 @@ const Hero = () => {
             <Link
               to="/categories"
               onClick={() => track("cta_explore_categories", { from: "hero" })}
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-accent transition-colors py-2"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-accent transition-colors py-2"
             >
-              <Compass className="w-4 h-4" />
+              <Compass className="w-3.5 h-3.5" />
               Explore by theme
               <ArrowRight className="w-3 h-3" />
             </Link>
