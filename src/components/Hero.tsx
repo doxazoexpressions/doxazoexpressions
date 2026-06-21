@@ -12,14 +12,16 @@ const Hero = () => {
         <img
           src={heroImg}
           alt="Golden sunrise breaking through clouds over peaceful mountains"
-          className="w-full h-full object-cover brightness-90 md:brightness-100"
+          className="w-full h-full object-cover brightness-75 md:brightness-90"
           width={1920}
           height={1280}
           {...({ fetchpriority: "high" } as any)}
         />
-        {/* Strong overlay — heavier on mobile for headline contrast */}
-        <div className="absolute inset-0 bg-background/90 md:hidden" />
-        <div className="absolute inset-0 hidden md:block bg-gradient-to-b from-background/85 via-background/85 to-background" />
+        {/* Strong overlay for maximum text contrast on every device */}
+        <div className="absolute inset-0 bg-background/95 md:hidden" />
+        <div className="absolute inset-0 hidden md:block bg-gradient-to-b from-background/92 via-background/90 to-background" />
+        {/* Focal vignette behind text block */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--background)/0.4)_0%,transparent_70%)]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
