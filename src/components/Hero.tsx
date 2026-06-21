@@ -12,17 +12,17 @@ const Hero = () => {
         <img
           src={heroImg}
           alt="Golden sunrise breaking through clouds over peaceful mountains"
-          className="w-full h-full object-cover object-center brightness-[0.55] md:brightness-[0.65]"
+          className="w-full h-full object-cover object-center brightness-[0.45] md:brightness-[0.55]"
           width={1920}
           height={1280}
           {...({ fetchpriority: "high" } as any)}
         />
         {/* Base wash so the page surface tone carries through */}
-        <div className="absolute inset-0 bg-background/80 md:bg-background/70" />
+        <div className="absolute inset-0 bg-background/90 md:bg-background/85" />
         {/* Top-to-bottom gradient drives focus to copy area */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
-        {/* Soft vignette behind the headline block for instant readability */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--background)/0.55)_0%,transparent_72%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/75 via-background/90 to-background" />
+        {/* Strong vignette behind the headline block for instant readability */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--background)/0.75)_0%,transparent_70%)]" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
