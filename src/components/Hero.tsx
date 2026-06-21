@@ -42,7 +42,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-[1.875rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-4 sm:mb-8 text-foreground"
+            className="text-[1.875rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-4 sm:mb-8 text-foreground drop-shadow-[0_1px_2px_hsl(var(--background)/0.6)]"
           >
             A fresh <span className="text-gradient">devotional</span> every morning to anchor your{" "}
             <span className="text-gradient">walk with God</span>
@@ -52,7 +52,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed"
+            className="text-sm sm:text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-6 sm:mb-10 leading-relaxed font-medium"
           >
             Move from sporadic inspiration to disciplined spiritual growth. Scripture-rooted devotionals
             built for a consistent morning rhythm.
