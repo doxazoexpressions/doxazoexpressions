@@ -40,7 +40,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-[2.25rem] leading-[1.1] sm:text-5xl lg:text-7xl font-serif font-bold mb-6 sm:mb-8"
+            className="text-[2.25rem] leading-[1.1] sm:text-5xl lg:text-7xl font-serif font-bold mb-6 sm:mb-8 text-foreground drop-shadow-sm"
           >
             A fresh <span className="text-gradient">devotional</span> every morning to anchor your{" "}
             <span className="text-gradient">walk with God</span>
