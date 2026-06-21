@@ -32,13 +32,13 @@ const CategoriesPreview = () => {
               key={c.slug}
               to={`/categories/${c.slug}`}
               onClick={() => track("category_open", { slug: c.slug, from: "home_preview" })}
-              className="group rounded-xl border border-border bg-card p-5 sm:p-6 min-h-[7rem] hover:border-accent/50 hover:shadow-md transition-all"
+              className="group flex flex-col rounded-xl border border-border bg-card p-5 sm:p-6 min-h-[9rem] hover:border-accent/50 hover:shadow-md transition-all"
             >
               <h3 className="font-serif font-semibold text-lg text-foreground mb-2 group-hover:text-accent transition-colors break-words">
                 {c.label}
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{c.description}</p>
-              <span className="inline-flex items-center gap-1 mt-3 sm:mt-4 py-1 text-xs text-accent font-medium uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1 mt-auto pt-4 text-xs text-accent font-medium uppercase tracking-wider">
                 Explore <ArrowRight className="w-3 h-3" />
               </span>
             </Link>
