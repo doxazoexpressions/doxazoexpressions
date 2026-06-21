@@ -1,5 +1,4 @@
 export type CategorySlug =
-  | "series"
   | "divine_relationship"
   | "destiny_purpose"
   | "blessings"
@@ -13,7 +12,6 @@ export type CategoryMeta = {
 };
 
 export const CATEGORIES: CategoryMeta[] = [
-  { slug: "series", label: "Series", description: "Multi-part teaching arcs that go deeper." },
   { slug: "divine_relationship", label: "Divine Relationship", description: "Drawing closer to the heart of God." },
   { slug: "destiny_purpose", label: "Destiny & Purpose", description: "Walking in your God-given assignment." },
   { slug: "blessings", label: "Blessings", description: "Receiving and stewarding God's favor." },
