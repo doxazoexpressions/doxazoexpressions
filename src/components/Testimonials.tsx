@@ -11,9 +11,27 @@ type Testimony = {
 };
 
 const fallback: Testimony[] = [
-  { id: "1", name: "Grace O.", location: "Lagos", message: "The morning prayers and devotionals have transformed my walk with God. I face each day with clarity and boldness." },
-  { id: "2", name: "Daniel & Ruth M.", location: "Accra", message: "These teachings on the five platforms gave us a structure for our spiritual life. Our home has never been more peaceful." },
-  { id: "3", name: "Pastor James A.", location: "Abuja", message: "Inviting this ministry to our youth conference was a blessing. Lives were stirred and many recommitted to Christ." },
+  {
+    id: "1",
+    name: "Grace O.",
+    location: "Lagos",
+    message:
+      "The morning devotional has become the anchor of my day. I open it before anything else and the rest of my hours feel ordered.",
+  },
+  {
+    id: "2",
+    name: "Daniel & Ruth M.",
+    location: "Accra",
+    message:
+      "We read it together over coffee every morning. It's grown our faith and our marriage at the same time.",
+  },
+  {
+    id: "3",
+    name: "Sarah K.",
+    location: "London",
+    message:
+      "After years of inconsistent quiet times, I finally have a rhythm. The Word feels alive again.",
+  },
 ];
 
 const Testimonials = () => {
@@ -44,10 +62,10 @@ const Testimonials = () => {
         >
           <p className="text-accent font-medium text-sm mb-3 uppercase tracking-wider">Testimonies</p>
           <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground mb-6">
-            Lives Transformed by God's Word
+            Mornings Transformed by the Word
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Hear from believers around the world whose faith, prayer life, and clarity have been renewed.
+            Hear from readers whose daily walk has been shaped by sitting with the devotional each morning.
           </p>
         </motion.div>
 
