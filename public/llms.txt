@@ -1,0 +1,15 @@
+# Doxazo Expressions
+
+> Daily Christian devotionals — Scripture, reflection, and a faith declaration delivered every morning to anchor your walk with God.
+
+Doxazo Expressions is a digital sanctuary publishing a fresh devotional each morning. Content is rooted in Scripture and organized by themes such as divine relationship, destiny and purpose, blessings, prayer, and life and relationships.
+
+## Pages
+
+- [Home](/): Overview of the ministry and today's featured devotional.
+- [Today's Devotional](/devotional): The current day's Scripture, reflection, and faith declaration.
+- [Archive](/archive): Chronological list of every published devotional, filterable by theme.
+- [Categories](/categories): Browse devotionals by theme.
+- [Search](/search): Search devotionals by title, scripture reference, or content.
+- [About](/about): Mission, vision, and foundations of Doxazo Expressions.
+- [Contact](/contact): Reach out for prayer, partnership, testimony, or general inquiries.

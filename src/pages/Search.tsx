@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import DevotionalCard, { DevotionalCardData } from "@/components/DevotionalCard";
@@ -52,6 +53,11 @@ const Search = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={initialQ ? `Search: ${initialQ}` : "Search Devotionals"}
+        description="Search Doxazo Expressions devotionals by title, scripture reference, or content."
+        path={initialQ ? `/search?q=${encodeURIComponent(initialQ)}` : "/search"}
+      />
       <Navbar />
       <main className="pt-16">
         <section className="section-padding bg-secondary/30">

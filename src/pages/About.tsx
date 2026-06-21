@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Heart, BookOpen, Users, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import bibleImg from "@/assets/devotional-bible.jpg";
@@ -7,6 +8,11 @@ import bibleImg from "@/assets/devotional-bible.jpg";
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="About Doxazo Expressions"
+        description="A digital sanctuary publishing daily devotionals rooted in Scripture, prayer, and the leading of the Holy Spirit."
+        path="/about"
+      />
       <Navbar />
       <main className="pt-16">
         <section className="section-padding bg-secondary/30">

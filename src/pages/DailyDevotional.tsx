@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sun, BookOpen, Sparkles, Heart, ArrowRight, Play } from "lucide-react";
 import { motion } from "framer-motion";
@@ -69,8 +70,34 @@ const DailyDevotional = () => {
     if (current) track("devotional_open", { id: current.id, from: "devotional_page" });
   }, [current?.id]);
 
+  const seoTitle = current?.title ?? "Today's Devotional";
+  const seoDescription =
+    current?.excerpt ??
+    (current?.body ? current.body.replace(/\s+/g, " ").slice(0, 155) : null) ??
+    "Today's Christian devotional from Doxazo Expressions — Scripture, reflection, and a faith declaration to shape your day.";
+  const seoPath = requestedId ? `/devotional?id=${requestedId}` : "/devotional";
+  const articleLd = current
+    ? {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        headline: current.title,
+        description: seoDescription,
+        datePublished: current.publish_date,
+        author: { "@type": "Organization", name: "Doxazo Expressions" },
+        publisher: { "@type": "Organization", name: "Doxazo Expressions" },
+        mainEntityOfPage: `https://doxazoexpressions.com${seoPath}`,
+      }
+    : undefined;
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        path={seoPath}
+        type="article"
+        jsonLd={articleLd}
+      />
       <Navbar />
       <main className="pt-16">
         <section className="py-12 md:py-16 bg-secondary/30">
