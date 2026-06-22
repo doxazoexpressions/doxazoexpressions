@@ -10,8 +10,19 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import CategoryBadge from "@/components/CategoryBadge";
 import ShareButton from "@/components/ShareButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import DevotionalCard, { DevotionalCardData } from "@/components/DevotionalCard";
 import { track } from "@/lib/analytics";
+import {
+  cacheCurrentDevotional,
+  cacheDevotionalById,
+  cacheRecentDevotionals,
+  getCachedCurrentDevotional,
+  getCachedDevotionalById,
+  getCachedRecentDevotionals,
+} from "@/lib/offlineCache";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { WifiOff } from "lucide-react";
 
 type Devotional = {
   id: string;
