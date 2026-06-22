@@ -122,6 +122,8 @@ const DailyDevotional = () => {
     };
   }, [requestedId, navigate]);
 
+  const online = useOnlineStatus();
+
   useEffect(() => {
     if (current) track("devotional_open", { id: current.id, from: "devotional_page" });
   }, [current?.id]);
