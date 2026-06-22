@@ -52,8 +52,12 @@ export type Database = {
           category: Database["public"]["Enums"]["devotional_category"] | null
           created_at: string
           declaration: string | null
+          decree_and_declare: string | null
           excerpt: string | null
           id: string
+          inspiration_caption: string | null
+          prayer_section: string | null
+          publish_at: string | null
           publish_date: string
           published: boolean
           scheduled_for: string | null
@@ -62,6 +66,8 @@ export type Database = {
           seo_description: string | null
           seo_title: string | null
           series: string | null
+          slug: string | null
+          status: Database["public"]["Enums"]["devotional_status"]
           title: string
           updated_at: string
         }
@@ -72,8 +78,12 @@ export type Database = {
           category?: Database["public"]["Enums"]["devotional_category"] | null
           created_at?: string
           declaration?: string | null
+          decree_and_declare?: string | null
           excerpt?: string | null
           id?: string
+          inspiration_caption?: string | null
+          prayer_section?: string | null
+          publish_at?: string | null
           publish_date?: string
           published?: boolean
           scheduled_for?: string | null
@@ -82,6 +92,8 @@ export type Database = {
           seo_description?: string | null
           seo_title?: string | null
           series?: string | null
+          slug?: string | null
+          status?: Database["public"]["Enums"]["devotional_status"]
           title: string
           updated_at?: string
         }
@@ -92,8 +104,12 @@ export type Database = {
           category?: Database["public"]["Enums"]["devotional_category"] | null
           created_at?: string
           declaration?: string | null
+          decree_and_declare?: string | null
           excerpt?: string | null
           id?: string
+          inspiration_caption?: string | null
+          prayer_section?: string | null
+          publish_at?: string | null
           publish_date?: string
           published?: boolean
           scheduled_for?: string | null
@@ -102,6 +118,8 @@ export type Database = {
           seo_description?: string | null
           seo_title?: string | null
           series?: string | null
+          slug?: string | null
+          status?: Database["public"]["Enums"]["devotional_status"]
           title?: string
           updated_at?: string
         }
@@ -193,6 +211,35 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          devotional_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          devotional_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          devotional_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_devotional_id_fkey"
+            columns: ["devotional_id"]
+            isOneToOne: false
+            referencedRelation: "devotionals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prayers: {
         Row: {
@@ -462,6 +509,7 @@ export type Database = {
         | "blessings"
         | "prayers"
         | "life_relationships"
+      devotional_status: "draft" | "scheduled" | "published"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -604,6 +652,7 @@ export const Constants = {
         "prayers",
         "life_relationships",
       ],
+      devotional_status: ["draft", "scheduled", "published"],
     },
   },
 } as const
