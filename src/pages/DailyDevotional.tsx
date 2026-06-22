@@ -158,6 +158,12 @@ const DailyDevotional = () => {
       />
       <Navbar />
       <main className="pt-16">
+        {!online && (
+          <div className="bg-accent/15 border-b border-accent/30 text-sm text-center py-2 px-4 flex items-center justify-center gap-2">
+            <WifiOff className="w-4 h-4" />
+            You're offline — showing the latest saved devotional.
+          </div>
+        )}
         <section className="py-12 md:py-16 bg-secondary/30">
           <div className="container mx-auto px-4">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto text-center">
@@ -298,7 +304,15 @@ const DailyDevotional = () => {
                     </div>
 
                     <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                      <ShareButton title={current.title} text={current.scripture_reference ?? undefined} />
+                      <FavoriteButton devotionalId={current.id} />
+                      <ShareButton
+                        title={current.title}
+                        text={
+                          current.excerpt ??
+                          current.scripture_reference ??
+                          undefined
+                        }
+                      />
                       <Button asChild variant="outline" className="gap-2">
                         <Link to="/archive">
                           Browse Archive <ArrowRight className="w-4 h-4" />
