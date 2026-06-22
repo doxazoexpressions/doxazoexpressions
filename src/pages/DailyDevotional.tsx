@@ -56,8 +56,20 @@ const DailyDevotional = () => {
   }, [legacyId, routeId, navigate]);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       setLoading(true);
+
+      // 1) Show cached content immediately for snappy + offline-friendly UX
+      const cachedCurrent = requestedId
+        ? getCachedDevotionalById<Devotional>(requestedId)
+        : getCachedCurrentDevotional<Devotional>();
+      if (cachedCurrent && !cancelled) setCurrent(cachedCurrent);
+      const cachedRecent = getCachedRecentDevotionals<DevotionalCardData>();
+      if (cachedRecent.length && !cancelled) {
+        setRecent(cachedRecent.filter((d) => d.id !== requestedId).slice(0, 6));
+      }
+
       const nowIso = new Date().toISOString();
       const base = () =>
         supabase
@@ -66,36 +78,48 @@ const DailyDevotional = () => {
           .eq("published", true)
           .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`);
 
-      if (requestedId) {
-        const { data } = await base().eq("id", requestedId).maybeSingle();
-        // If the requested id is actually the latest, normalize URL to /devotional
-        if (data) {
-          const { data: latest } = await base()
+      try {
+        if (requestedId) {
+          const { data } = await base().eq("id", requestedId).maybeSingle();
+          if (data) {
+            const { data: latest } = await base()
+              .order("publish_date", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (latest && (latest as Devotional).id === (data as Devotional).id) {
+              navigate("/devotional", { replace: true });
+            }
+            cacheDevotionalById((data as Devotional).id, data);
+          }
+          if (!cancelled) setCurrent((data as Devotional) ?? cachedCurrent ?? null);
+        } else {
+          const { data } = await base()
             .order("publish_date", { ascending: false })
             .limit(1)
             .maybeSingle();
-          if (latest && (latest as Devotional).id === (data as Devotional).id) {
-            navigate("/devotional", { replace: true });
-          }
+          if (data) cacheCurrentDevotional(data);
+          if (!cancelled) setCurrent((data as Devotional) ?? cachedCurrent ?? null);
         }
-        setCurrent((data as Devotional) ?? null);
-      } else {
-        const { data } = await base().order("publish_date", { ascending: false }).limit(1).maybeSingle();
-        setCurrent((data as Devotional) ?? null);
+
+        const { data: recentData } = await supabase
+          .from("devotionals")
+          .select("id,title,scripture_reference,excerpt,body,category,series,publish_date")
+          .eq("published", true)
+          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+          .order("publish_date", { ascending: false })
+          .limit(7);
+        if (recentData && recentData.length) cacheRecentDevotionals(recentData);
+        const filtered = (recentData ?? []).filter((d) => d.id !== requestedId);
+        if (!cancelled) setRecent(filtered.slice(0, 6) as DevotionalCardData[]);
+      } catch (err) {
+        console.warn("Devotional fetch failed, using cached copy.", err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      const { data: recentData } = await supabase
-        .from("devotionals")
-        .select("id,title,scripture_reference,excerpt,body,category,series,publish_date")
-        .eq("published", true)
-        .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
-        .order("publish_date", { ascending: false })
-        .limit(7);
-      const filtered = (recentData ?? []).filter((d) => d.id !== requestedId);
-      setRecent(filtered.slice(0, 6) as DevotionalCardData[]);
-
-      setLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [requestedId, navigate]);
 
   useEffect(() => {
