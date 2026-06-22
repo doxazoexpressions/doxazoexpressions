@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { LogOut, Plus, Trash2 } from "lucide-react";
 import { CATEGORIES, categoryLabel } from "@/lib/categories";
+import DevotionalsManager from "@/components/admin/DevotionalsManager";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -76,7 +77,7 @@ VALUES ('${user.id}', 'admin');`}
               <TabsTrigger value="inbox">Inbox</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="devotional"><DevotionalAdmin userId={user.id} /></TabsContent>
+            <TabsContent value="devotional"><DevotionalsManager userId={user.id} /></TabsContent>
             <TabsContent value="prayer"><PrayerAdmin userId={user.id} /></TabsContent>
             <TabsContent value="teaching"><TeachingAdmin userId={user.id} /></TabsContent>
             <TabsContent value="inbox"><Inbox /></TabsContent>
