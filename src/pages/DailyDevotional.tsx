@@ -10,8 +10,19 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import CategoryBadge from "@/components/CategoryBadge";
 import ShareButton from "@/components/ShareButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import DevotionalCard, { DevotionalCardData } from "@/components/DevotionalCard";
 import { track } from "@/lib/analytics";
+import {
+  cacheCurrentDevotional,
+  cacheDevotionalById,
+  cacheRecentDevotionals,
+  getCachedCurrentDevotional,
+  getCachedDevotionalById,
+  getCachedRecentDevotionals,
+} from "@/lib/offlineCache";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { WifiOff } from "lucide-react";
 
 type Devotional = {
   id: string;
@@ -45,8 +56,20 @@ const DailyDevotional = () => {
   }, [legacyId, routeId, navigate]);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       setLoading(true);
+
+      // 1) Show cached content immediately for snappy + offline-friendly UX
+      const cachedCurrent = requestedId
+        ? getCachedDevotionalById<Devotional>(requestedId)
+        : getCachedCurrentDevotional<Devotional>();
+      if (cachedCurrent && !cancelled) setCurrent(cachedCurrent);
+      const cachedRecent = getCachedRecentDevotionals<DevotionalCardData>();
+      if (cachedRecent.length && !cancelled) {
+        setRecent(cachedRecent.filter((d) => d.id !== requestedId).slice(0, 6));
+      }
+
       const nowIso = new Date().toISOString();
       const base = () =>
         supabase
@@ -55,37 +78,51 @@ const DailyDevotional = () => {
           .eq("published", true)
           .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`);
 
-      if (requestedId) {
-        const { data } = await base().eq("id", requestedId).maybeSingle();
-        // If the requested id is actually the latest, normalize URL to /devotional
-        if (data) {
-          const { data: latest } = await base()
+      try {
+        if (requestedId) {
+          const { data } = await base().eq("id", requestedId).maybeSingle();
+          if (data) {
+            const { data: latest } = await base()
+              .order("publish_date", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (latest && (latest as Devotional).id === (data as Devotional).id) {
+              navigate("/devotional", { replace: true });
+            }
+            cacheDevotionalById((data as Devotional).id, data);
+          }
+          if (!cancelled) setCurrent((data as Devotional) ?? cachedCurrent ?? null);
+        } else {
+          const { data } = await base()
             .order("publish_date", { ascending: false })
             .limit(1)
             .maybeSingle();
-          if (latest && (latest as Devotional).id === (data as Devotional).id) {
-            navigate("/devotional", { replace: true });
-          }
+          if (data) cacheCurrentDevotional(data);
+          if (!cancelled) setCurrent((data as Devotional) ?? cachedCurrent ?? null);
         }
-        setCurrent((data as Devotional) ?? null);
-      } else {
-        const { data } = await base().order("publish_date", { ascending: false }).limit(1).maybeSingle();
-        setCurrent((data as Devotional) ?? null);
+
+        const { data: recentData } = await supabase
+          .from("devotionals")
+          .select("id,title,scripture_reference,excerpt,body,category,series,publish_date")
+          .eq("published", true)
+          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+          .order("publish_date", { ascending: false })
+          .limit(7);
+        if (recentData && recentData.length) cacheRecentDevotionals(recentData);
+        const filtered = (recentData ?? []).filter((d) => d.id !== requestedId);
+        if (!cancelled) setRecent(filtered.slice(0, 6) as DevotionalCardData[]);
+      } catch (err) {
+        console.warn("Devotional fetch failed, using cached copy.", err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      const { data: recentData } = await supabase
-        .from("devotionals")
-        .select("id,title,scripture_reference,excerpt,body,category,series,publish_date")
-        .eq("published", true)
-        .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
-        .order("publish_date", { ascending: false })
-        .limit(7);
-      const filtered = (recentData ?? []).filter((d) => d.id !== requestedId);
-      setRecent(filtered.slice(0, 6) as DevotionalCardData[]);
-
-      setLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [requestedId, navigate]);
+
+  const online = useOnlineStatus();
 
   useEffect(() => {
     if (current) track("devotional_open", { id: current.id, from: "devotional_page" });
@@ -121,6 +158,12 @@ const DailyDevotional = () => {
       />
       <Navbar />
       <main className="pt-16">
+        {!online && (
+          <div className="bg-accent/15 border-b border-accent/30 text-sm text-center py-2 px-4 flex items-center justify-center gap-2">
+            <WifiOff className="w-4 h-4" />
+            You're offline — showing the latest saved devotional.
+          </div>
+        )}
         <section className="py-12 md:py-16 bg-secondary/30">
           <div className="container mx-auto px-4">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto text-center">
@@ -261,7 +304,15 @@ const DailyDevotional = () => {
                     </div>
 
                     <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                      <ShareButton title={current.title} text={current.scripture_reference ?? undefined} />
+                      <FavoriteButton devotionalId={current.id} />
+                      <ShareButton
+                        title={current.title}
+                        text={
+                          current.excerpt ??
+                          current.scripture_reference ??
+                          undefined
+                        }
+                      />
                       <Button asChild variant="outline" className="gap-2">
                         <Link to="/archive">
                           Browse Archive <ArrowRight className="w-4 h-4" />

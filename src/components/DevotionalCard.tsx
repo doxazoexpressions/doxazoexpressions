@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import CategoryBadge from "./CategoryBadge";
+import FavoriteButton from "./FavoriteButton";
 
 export type DevotionalCardData = {
   id: string;
@@ -21,32 +22,37 @@ const buildExcerpt = (d: DevotionalCardData) => {
 
 const DevotionalCard = ({ d }: { d: DevotionalCardData }) => {
   return (
-    <Link to={`/devotional/${d.id}`} className="group block h-full">
-      <Card className="h-full border-border group-hover:border-accent/40 group-hover:shadow-lg transition-all duration-300">
-        <CardContent className="p-6 flex flex-col h-full">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">
-              {new Date(d.publish_date).toLocaleDateString(undefined, {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-            <CategoryBadge slug={d.category} asLink={false} />
-          </div>
-          <h3 className="font-serif font-semibold text-lg text-foreground mb-2 leading-snug group-hover:text-accent transition-colors">
-            {d.title}
-          </h3>
-          {d.scripture_reference && (
-            <p className="text-xs text-accent font-medium mb-3">{d.scripture_reference}</p>
-          )}
-          {d.series && (
-            <p className="text-xs text-muted-foreground italic mb-3">Series · {d.series}</p>
-          )}
-          <p className="text-sm text-muted-foreground line-clamp-3 mt-auto">{buildExcerpt(d)}</p>
-        </CardContent>
-      </Card>
-    </Link>
+    <div className="relative h-full group">
+      <div className="absolute top-3 right-3 z-10">
+        <FavoriteButton devotionalId={d.id} variant="ghost" size="icon" showLabel={false} />
+      </div>
+      <Link to={`/devotional/${d.id}`} className="block h-full">
+        <Card className="h-full border-border group-hover:border-accent/40 group-hover:shadow-lg transition-all duration-300">
+          <CardContent className="p-6 flex flex-col h-full">
+            <div className="flex items-center justify-between gap-2 mb-3 pr-10">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                {new Date(d.publish_date).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+              <CategoryBadge slug={d.category} asLink={false} />
+            </div>
+            <h3 className="font-serif font-semibold text-lg text-foreground mb-2 leading-snug group-hover:text-accent transition-colors">
+              {d.title}
+            </h3>
+            {d.scripture_reference && (
+              <p className="text-xs text-accent font-medium mb-3">{d.scripture_reference}</p>
+            )}
+            {d.series && (
+              <p className="text-xs text-muted-foreground italic mb-3">Series · {d.series}</p>
+            )}
+            <p className="text-sm text-muted-foreground line-clamp-3 mt-auto">{buildExcerpt(d)}</p>
+          </CardContent>
+        </Card>
+      </Link>
+    </div>
   );
 };
 
