@@ -1,84 +1,74 @@
 
-# Doxazo Expressions — MVP Wrap-Up Plan
+# Doxazo Expressions — Phase 2 Build Plan
 
-Scope: bring the site to MVP-ready per the handoff checklist. Devotional-first only. Prayers/Teachings/Speaking remain in DB/Admin but stay hidden from public.
+This is a very large scope (admin CMS + app-readiness + Capacitor prep). I'll build it in sequenced milestones across multiple turns rather than one giant commit, so each piece is verifiable and reviewable. Below is the full plan and the order I'll execute. Please approve and I'll start with Milestone 1.
 
-## Phase 1 — Messaging & Homepage alignment
-- Rewrite hero subcopy + mission section to remove references to prayers/teachings/speaking. Keep "daily discipleship companion" tone.
-- Filter Testimonies on homepage to only those tagged as devotional-related (or rewrite generic ones).
-- Add a third entry point in hero/homepage: **Explore Categories** (tertiary CTA, lower emphasis than Today's Devotional + Browse Archive).
-- Tighten vertical spacing and mobile hero contrast (overlay + larger headline tracking on `sm:`).
+## Milestone 1 — Admin Content Pipeline (Priority 1, unblocks content ops)
 
-## Phase 2 — Devotional content model (DB migration)
-Add to `devotionals` table:
-- `category` (enum: series, divine_relationship, destiny_purpose, blessings, prayers, life_relationships)
-- `series` (text, nullable)
-- `excerpt` (text, nullable — auto-derived if blank)
-- `audio_url` (text, nullable)
-- `seo_title`, `seo_description` (text, nullable)
-- `scheduled_for` (timestamptz, nullable) — for publish scheduling
-- Index on `(published, publish_date desc)` and on `category`.
+**Goal:** You can log in, see a real dashboard, and create / schedule / publish / bulk-import a full year of devotionals without developer help.
 
-A scheduled job (cron via pg_cron) flips `published=true` when `scheduled_for <= now()`. (Or compute "is live" at query time — simpler, no cron needed for MVP. Use query-time filter: `published=true AND (scheduled_for IS NULL OR scheduled_for <= now())`.)
+1. **Schema additions** (migration):
+   - Add `status` enum (`draft` | `scheduled` | `published`), `publish_at` timestamptz, `slug`, `excerpt`, `seo_title`, `seo_description`, `prayer_section`, `decree_and_declare`, `inspiration_caption` to `devotionals` (only those not already present — I'll diff first).
+   - Unique constraint on `devotional_date` to prevent duplicate-date conflicts.
+   - RLS: keep current public-read for published; admin-only write (already scoped to `authenticated` from previous migration).
+   - Update the "public visibility" policy to: `status = 'published' AND publish_at <= now()`.
 
-## Phase 3 — Pages
+2. **Admin dashboard** (`/admin`):
+   - Big "Create New Devotional" button.
+   - Summary cards: total / drafts / scheduled / published.
+   - Tabs: All / Drafts / Scheduled / Published.
+   - Filters: category, month; search by title / scripture.
 
-### Today's Devotional (`/devotional`)
-- Improve typography: max-w-prose, larger leading, blockquote styling for scripture, faith-declaration card.
-- Add **Share button** (Web Share API with clipboard fallback).
-- Graceful empty state with link to archive.
+3. **Devotional editor** (`/admin/devotionals/new` and `/admin/devotionals/:id/edit`):
+   - All fields from spec, with validation (zod).
+   - Actions: Save Draft, Schedule (date picker), Publish Now, Update, Delete, Preview.
+   - Autosave drafts, unsaved-changes warning, duplicate-date warning, toasts.
 
-### Archive (`/archive` — new route, or repurpose existing archive grid)
-- Chronological list, paginated (12/page).
-- Card shows: title, date, excerpt, category badge, series (if any).
-- Filter chips by category at top.
+4. **Bulk import** (`/admin/devotionals/import`):
+   - CSV + JSON upload, row-level validation, summary report (success / failure / reasons), dry-run preview.
 
-### Categories (`/categories` and `/categories/:slug` — new)
-- Hub page lists 6 founder-defined categories with counts.
-- Detail page = filtered archive view.
+5. **Front-end publish logic update**:
+   - `/devotional` query becomes `status='published' AND publish_at <= now()` ordered by `publish_at desc`.
+   - Archive same filter.
 
-### Search (`/search` — new + navbar input)
-- Input in navbar (desktop) + dedicated page.
-- Postgres `ilike` on title/scripture/body OR `tsvector` if available.
-- Results: title, date, excerpt, category, highlighted matches.
-- Empty/no-results state with suggestions.
+## Milestone 2 — App-Worthy Features (Priority 2)
 
-### Contact (`/contact`)
-- Add **type** select: General / Partnership / Testimony / Prayer Request.
-- Persist to `contact_messages.type` (add column).
+1. **Favorites**: `favorites` table (user-scoped via RLS) + localStorage fallback for anon. Bookmark icon on devotional cards / detail. `/favorites` page.
+2. **Native share**: Web Share API with title + scripture + excerpt + canonical URL; copy-link fallback.
+3. **Offline reading**: cache last 7 devotionals in IndexedDB (via `idb-keyval`); offline banner; show cached content when fetch fails.
+4. **Loading / empty / offline / retry / error states**: skeletons + standardized state components reused across Devotional, Archive, Search, Favorites, Contact.
+5. **Deep linking**: already mostly correct; verify `/devotional`, `/devotional/:id`, legacy `?id=` redirect, archive routes.
+6. **Push notifications**: requires a provider decision — see Questions below. I'll scaffold the permission UI + `notification_settings` table + device-token table + edge function to send on publish, but the actual transport (Web Push VAPID vs Firebase Cloud Messaging vs OneSignal) depends on your answer.
 
-## Phase 4 — CMS / Admin
-- Admin devotional form: add category select, series, excerpt, audio_url, SEO fields, scheduled_for.
-- Show "Scheduled" badge for future-dated entries.
-- Keep existing prayers/teachings admin tabs untouched.
+## Milestone 3 — App Shell Polish (Priority 3)
 
-## Phase 5 — Analytics
-- Add lightweight event tracker (`src/lib/analytics.ts`) — wraps `window.plausible` / `gtag` if present, no-ops otherwise.
-- Fire: `cta_today_devotional`, `cta_browse_archive`, `cta_explore_categories`, `devotional_open`, `devotional_share`, `search_submit`, `category_open`.
+1. **Dark mode default**: flip `ThemeToggle` initial state to dark, persist in localStorage, respect saved preference.
+2. **Safe areas**: add `env(safe-area-inset-*)` padding to Navbar / Footer / page containers; viewport-fit=cover in `index.html`.
+3. **App icon + splash + status bar**: generate icon set (1024 master + PWA sizes), splash image, `theme-color` meta, `apple-touch-icon`, manifest.webmanifest with dark theme.
+4. **Privacy / Terms / Delete Account** pages: `/privacy`, `/terms`, and an in-app account deletion flow on the profile page (calls an edge function that uses service role to delete the user).
+5. **Capacitor prep doc**: README section with the exact `npx cap` steps (no Capacitor install yet — kept as web-first until you confirm you want to wrap).
 
-## Phase 6 — Performance / A11y / QA
-- Lazy-load non-critical images, add `loading="lazy"` and explicit width/height.
-- Preload hero image in `index.html`.
-- Audit contrast tokens, add alt text, ensure focus rings on all interactive elements.
-- Verify keyboard nav through hero CTAs, navbar, search.
+## Technical Details (for the technical reader)
 
-## Out of scope (Phase 2 / future)
-- Audio TTS generation pipeline (field exists; player UI deferred unless audio_url set).
-- Editor/reviewer workflow (single-admin publishing for now).
-- Full-text ranking; `ilike` is acceptable at MVP volume.
+- **Stack stays:** React 18 + Vite + Tailwind + shadcn + Lovable Cloud (Supabase). No framework swap.
+- **No service worker for offline yet** — using IndexedDB cache is enough for "read last N devotionals offline" and avoids the PWA stale-cache risks in Lovable preview. If you later want true offline-app behavior I'll follow the PWA skill.
+- **Push notifications**: I recommend **Web Push (VAPID)** for the web app + later FCM when wrapped in Capacitor. Needs one secret (VAPID private key) which I'll generate via `generate_secret`.
+- **Admin role:** already uses `user_roles` + `has_role()` — I'll verify the production admin user has a row in `user_roles` and surface a clear "you are not an admin" message if not, instead of a blank page.
+- **Bulk import format:** CSV with columns matching the schema; JSON as an array of the same shape. I'll include a downloadable template.
 
-## Technical notes
-- New routes registered in `src/App.tsx`: `/archive`, `/categories`, `/categories/:slug`, `/search`.
-- New components: `CategoriesPreview`, `ShareButton`, `SearchInput`, `CategoryBadge`, `DevotionalCard`.
-- DB migration runs first (must be approved before code consuming new columns lands).
-- Types regen happens automatically post-migration.
+## Questions Before I Start
 
-## Suggested build order
-1. DB migration (devotionals new columns + contact_messages.type).
-2. Admin form updates.
-3. Public pages: Archive → Categories → Search → Devotional polish + Share.
-4. Homepage messaging + Categories CTA + Testimonies filter.
-5. Analytics wrapper + event wiring.
-6. Mobile/a11y/perf pass + QA.
+1. **Push notification provider** — Web Push (VAPID, free, works in browsers + Android Capacitor) **or** OneSignal (easier, free tier, requires account + API key) **or** defer push to a later phase and ship everything else now?
+2. **Account model for favorites** — require login to save favorites, or anonymous-friendly with localStorage fallback (recommended)?
+3. **Year-of-devotionals file** — do you already have the CSV/JSON ready, or should the import tool just be built and you'll load content later?
+4. **Capacitor wrapping now or later?** — I'll prep the codebase regardless; question is whether to also add the Capacitor config + icons/splash this phase or wait until you're ready to build the native binary.
 
-This is a large scope (~2–3 build iterations). I'll execute it in the order above, pausing for migration approval and after each major phase so you can sanity-check.
+## Execution Order Across Turns
+
+Because this is ~15+ files per milestone, I'll do one milestone per turn:
+
+- **Turn A (next):** Milestone 1 schema migration → wait for approval → build admin UI files.
+- **Turn B:** Milestone 2 features.
+- **Turn C:** Milestone 3 polish + Capacitor doc.
+
+Reply with answers to the 4 questions (or just "go with your recommendations") and I'll start Milestone 1 immediately.
