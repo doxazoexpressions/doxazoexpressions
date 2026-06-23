@@ -19,17 +19,46 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Plus, Trash2 } from "lucide-react";
+import { LogOut, Plus, Trash2, Send } from "lucide-react";
 import { CATEGORIES, categoryLabel } from "@/lib/categories";
 import DevotionalsManager from "@/components/admin/DevotionalsManager";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
   }, [user, loading, navigate]);
+
+  const sendTestPush = async () => {
+    setSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-push", {
+        body: {
+          title: "Doxazo Expressions",
+          body: "Test push — today's devotional is ready.",
+          url: "/devotional",
+        },
+      });
+      if (error) throw error;
+      const sent = (data as { sent?: number } | null)?.sent ?? 0;
+      const removed = (data as { removed?: number } | null)?.removed ?? 0;
+      toast({
+        title: sent > 0 ? "Test push sent" : "No active subscribers",
+        description:
+          sent > 0
+            ? `Delivered to ${sent} device${sent === 1 ? "" : "s"}${removed ? ` · cleaned up ${removed} stale` : ""}.`
+            : "Enable notifications from Settings on at least one device, then try again.",
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to send test push";
+      toast({ title: "Push failed", description: msg, variant: "destructive" });
+    } finally {
+      setSendingTest(false);
+    }
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
   if (!user) return null;
@@ -64,9 +93,20 @@ VALUES ('${user.id}', 'admin');`}
               <h1 className="text-3xl md:text-4xl font-serif font-bold">Admin Dashboard</h1>
               <p className="text-muted-foreground text-sm mt-1">Welcome, {user.email}</p>
             </div>
-            <Button variant="outline" onClick={signOut} className="gap-2">
-              <LogOut className="w-4 h-4" /> Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={sendTestPush}
+                disabled={sendingTest}
+                className="gap-2"
+              >
+                <Send className="w-4 h-4" />
+                {sendingTest ? "Sending…" : "Send test push"}
+              </Button>
+              <Button variant="outline" onClick={signOut} className="gap-2">
+                <LogOut className="w-4 h-4" /> Sign Out
+              </Button>
+            </div>
           </div>
 
           <Tabs defaultValue="devotional" className="w-full">
