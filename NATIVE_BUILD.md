@@ -76,20 +76,40 @@ This populates `ios/App/App/Assets.xcassets` and `android/app/src/main/res/`.
 4. Product → Archive → Distribute App → App Store Connect → Upload
 5. Must build with iOS 26 SDK (Xcode 26+) per Apple's April 28, 2026 requirement.
 
-## 6. Native push delivery (FCM + APNs)
+## 6. Native push delivery (FCM + APNs) — server side is LIVE
 
-Web push (VAPID) is live and verified. For store apps, native delivery requires:
+Web push (VAPID) and native fan-out are both wired server-side. The flow:
 
-**Android (FCM):**
-- Create Firebase project, add Android app with package `app.lovable.7c926cd50e074118871e5ab8fb64751c`
-- Download `google-services.json` → place at `android/app/google-services.json`
-- Add Google Services Gradle plugin (Capacitor docs)
+1. App registers via `@capacitor/push-notifications` → `registration` event fires.
+2. `src/lib/native.ts` POSTs `{ token, platform, device_info }` to the `register-device-token` edge function.
+3. The function upserts into `public.device_tokens` keyed by `token`.
+4. The `send-push` edge function reads `push_subscriptions` (web), and `device_tokens` (android/ios), then fans out to **VAPID + FCM HTTP v1 + APNs HTTP/2** in a single call. Invalid tokens (FCM 400/404, APNs 410) are auto-pruned.
 
-**iOS (APNs):**
-- Apple Developer → Keys → create APNs Auth Key (.p8)
-- Upload .p8 to Firebase (if using FCM for both) OR call APNs directly
+Required secrets (add in Lovable Cloud → Secrets):
 
-**Server side (next code task, not done in this phase):** create an edge function `register-device-token` that stores `{ user_id, platform, token }` in a new `device_tokens` table, then extend `send-push` to fan out to FCM/APNs in addition to VAPID. Say the word and I'll build it.
+| Secret | Where to get it |
+|---|---|
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase Console → Project Settings → Service accounts → Generate new private key. Paste the **entire JSON file** as the secret value. |
+| `APNS_KEY_P8` | Apple Developer → Keys → "+" → enable APNs → download the `.p8`. Paste the file contents (including `-----BEGIN PRIVATE KEY-----` lines). |
+| `APNS_KEY_ID` | 10-char Key ID shown alongside the .p8 in Apple Developer. |
+| `APNS_TEAM_ID` | Apple Developer → Membership → Team ID (10 chars). |
+| `APNS_BUNDLE_ID` | Bundle ID of the iOS app. Defaults to `app.lovable.7c926cd50e074118871e5ab8fb64751c`. |
+| `APNS_PRODUCTION` | `"false"` for TestFlight/dev, `"true"` for App Store release. |
+
+Until each set is configured, `send-push` skips that channel cleanly and reports `skipped: "..."` in the response — web push keeps working.
+
+**Native project wiring (one-time, local):**
+
+- **Android (FCM):**
+  - Firebase Console → add Android app with package `app.lovable.7c926cd50e074118871e5ab8fb64751c`.
+  - Download `google-services.json` → `android/app/google-services.json`.
+  - In `android/build.gradle` add `classpath 'com.google.gms:google-services:4.4.2'` to dependencies.
+  - In `android/app/build.gradle` add `apply plugin: 'com.google.gms.google-services'` at the bottom.
+- **iOS (APNs):**
+  - Open `ios/App/App.xcworkspace` → Signing & Capabilities → add **Push Notifications** and **Background Modes → Remote notifications**.
+  - No client SDK needed — we call APNs directly from the edge function with the .p8 key.
+
+**Verify end-to-end:** sign in on the device → grant notification prompt → `device_tokens` row appears → hit "Send test push" in `/admin` → notification arrives → tap routes via `path` payload.
 
 ## 7. Deep linking
 
@@ -148,13 +168,16 @@ Web push (VAPID) is live and verified. For store apps, native delivery requires:
 
 - Capacitor + iOS + Android + 5 plugins installed
 - `capacitor.config.ts` with app ID, name, dark splash/status bar, live-reload URL
-- `src/lib/native.ts` bridge: status bar, splash hide, deep-link routing, push registration + tap-to-route, native share
+- `src/lib/native.ts` bridge: status bar, splash hide, deep-link routing, push registration + token upload + tap-to-route, native share
+- `device_tokens` table with RLS (users manage their own; service role full access)
+- `register-device-token` edge function — auth-gated, upserts by token
+- `send-push` edge function — admin-gated, fans out web push (VAPID) + Android (FCM HTTP v1) + iOS (APNs HTTP/2) and prunes dead tokens
 - This runbook
 
 ## 11. What still needs your hands
 
 - Run `npx cap add ios && npx cap add android` locally (sandbox can't create native projects)
 - Generate icons/splash from your 1024² source art with `@capacitor/assets`
-- Wire FCM (`google-services.json`) + APNs key
+- Add FCM secrets + `google-services.json`; add APNs secrets + Push capability in Xcode (see §6)
 - Build signed AAB + archive IPA
 - Fill store listings and upload
