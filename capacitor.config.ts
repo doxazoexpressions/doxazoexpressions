@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.7c926cd50e074118871e5ab8fb64751c',
+  appId: 'com.doxazo.expressions',
   appName: 'Doxazo Expressions',
   webDir: 'dist',
   server: {
