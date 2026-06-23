@@ -91,6 +91,23 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'DM Sans', sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
+    /* Respect device safe areas (notches, home indicators) */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    /* Prevent overscroll bounce showing wrong-color background on iOS */
+    background-color: hsl(var(--background));
+    min-height: 100vh;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Standalone (installed PWA) tweaks */
+  @media (display-mode: standalone) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
   }
 
   .font-serif {
