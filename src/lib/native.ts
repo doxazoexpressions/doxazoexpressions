@@ -1,5 +1,6 @@
 // Native-runtime bridges. All imports are dynamic so the web build is unaffected.
 import { Capacitor } from '@capacitor/core';
+import { supabase } from '@/integrations/supabase/client';
 
 export const isNative = () => Capacitor.isNativePlatform();
 export const nativePlatform = () => Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
@@ -52,9 +53,23 @@ export async function initNative(navigate: (path: string) => void) {
       return;
     }
     await PushNotifications.register();
-    PushNotifications.addListener('registration', (token) => {
-      // TODO: POST token.value to an edge function that stores it per user for FCM/APNs delivery.
-      console.info('[native] push token registered');
+    PushNotifications.addListener('registration', async (token) => {
+      try {
+        const platform = nativePlatform() === 'ios' ? 'ios' : 'android';
+        const { error } = await supabase.functions.invoke('register-device-token', {
+          body: {
+            token: token.value,
+            platform,
+            device_info: { ua: navigator.userAgent },
+          },
+        });
+        if (error) console.error('[native] register-device-token failed', error);
+      } catch (e) {
+        console.error('[native] token upload error', e);
+      }
+    });
+    PushNotifications.addListener('registrationError', (err) => {
+      console.error('[native] push registration error', err);
     });
     PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
       const data = action.notification.data || {};
