@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Anonymous subscriptions can be updated by endpoint" ON public.push_subscriptions;
+DROP POLICY IF EXISTS "Anonymous subscriptions can be updated by endpoint" ON public.device_tokens;
