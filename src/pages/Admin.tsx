@@ -22,6 +22,7 @@ import { toast } from "@/hooks/use-toast";
 import { LogOut, Plus, Trash2, Send } from "lucide-react";
 import { CATEGORIES, categoryLabel } from "@/lib/categories";
 import DevotionalsManager from "@/components/admin/DevotionalsManager";
+import SocialPackPanel from "@/components/admin/SocialPackPanel";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
