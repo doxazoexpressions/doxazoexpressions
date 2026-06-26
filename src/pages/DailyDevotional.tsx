@@ -12,6 +12,7 @@ import CategoryBadge from "@/components/CategoryBadge";
 import ShareButton from "@/components/ShareButton";
 import FavoriteButton from "@/components/FavoriteButton";
 import DevotionalCard, { DevotionalCardData } from "@/components/DevotionalCard";
+import DevotionalBody from "@/components/DevotionalBody";
 import { track } from "@/lib/analytics";
 import {
   cacheCurrentDevotional,
