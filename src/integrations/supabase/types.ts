@@ -370,6 +370,101 @@ export type Database = {
         }
         Relationships: []
       }
+      social_packs: {
+        Row: {
+          canva_cta: string | null
+          canva_excerpt: string | null
+          canva_headline: string | null
+          canva_scripture: string | null
+          created_at: string
+          date_posted: string | null
+          devotional_id: string
+          facebook_caption: string | null
+          hashtags_facebook: string | null
+          hashtags_instagram: string | null
+          hashtags_tiktok: string | null
+          hashtags_x: string | null
+          id: string
+          instagram_caption: string | null
+          notification_cta: string | null
+          posted_facebook: boolean
+          posted_instagram: boolean
+          posted_tiktok: boolean
+          posted_x: boolean
+          quote_graphic: string | null
+          reel_hook: string | null
+          scheduled: boolean
+          story_cta: string | null
+          tiktok_script: string | null
+          updated_at: string
+          x_post: string | null
+        }
+        Insert: {
+          canva_cta?: string | null
+          canva_excerpt?: string | null
+          canva_headline?: string | null
+          canva_scripture?: string | null
+          created_at?: string
+          date_posted?: string | null
+          devotional_id: string
+          facebook_caption?: string | null
+          hashtags_facebook?: string | null
+          hashtags_instagram?: string | null
+          hashtags_tiktok?: string | null
+          hashtags_x?: string | null
+          id?: string
+          instagram_caption?: string | null
+          notification_cta?: string | null
+          posted_facebook?: boolean
+          posted_instagram?: boolean
+          posted_tiktok?: boolean
+          posted_x?: boolean
+          quote_graphic?: string | null
+          reel_hook?: string | null
+          scheduled?: boolean
+          story_cta?: string | null
+          tiktok_script?: string | null
+          updated_at?: string
+          x_post?: string | null
+        }
+        Update: {
+          canva_cta?: string | null
+          canva_excerpt?: string | null
+          canva_headline?: string | null
+          canva_scripture?: string | null
+          created_at?: string
+          date_posted?: string | null
+          devotional_id?: string
+          facebook_caption?: string | null
+          hashtags_facebook?: string | null
+          hashtags_instagram?: string | null
+          hashtags_tiktok?: string | null
+          hashtags_x?: string | null
+          id?: string
+          instagram_caption?: string | null
+          notification_cta?: string | null
+          posted_facebook?: boolean
+          posted_instagram?: boolean
+          posted_tiktok?: boolean
+          posted_x?: boolean
+          quote_graphic?: string | null
+          reel_hook?: string | null
+          scheduled?: boolean
+          story_cta?: string | null
+          tiktok_script?: string | null
+          updated_at?: string
+          x_post?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_packs_devotional_id_fkey"
+            columns: ["devotional_id"]
+            isOneToOne: true
+            referencedRelation: "devotionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       speaking_requests: {
         Row: {
           created_at: string
