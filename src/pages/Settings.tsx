@@ -68,6 +68,18 @@ const Settings = () => {
                 </Link>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-serif font-semibold mb-2">Delete your account</h2>
+                <p className="text-muted-foreground text-sm mb-3">
+                  Permanently remove your account and all associated data. This cannot be undone.
+                </p>
+                <Link to="/delete-account" className="text-destructive underline text-sm">
+                  Delete my account →
+                </Link>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </main>
