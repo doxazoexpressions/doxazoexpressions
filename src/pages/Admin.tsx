@@ -22,6 +22,7 @@ import { toast } from "@/hooks/use-toast";
 import { LogOut, Plus, Trash2, Send } from "lucide-react";
 import { CATEGORIES, categoryLabel } from "@/lib/categories";
 import DevotionalsManager from "@/components/admin/DevotionalsManager";
+import SocialPackPanel from "@/components/admin/SocialPackPanel";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -110,16 +111,18 @@ VALUES ('${user.id}', 'admin');`}
           </div>
 
           <Tabs defaultValue="devotional" className="w-full">
-            <TabsList className="grid grid-cols-4 mb-6">
+            <TabsList className="grid grid-cols-5 mb-6">
               <TabsTrigger value="devotional">Devotionals</TabsTrigger>
               <TabsTrigger value="prayer">Prayers</TabsTrigger>
               <TabsTrigger value="teaching">Teachings</TabsTrigger>
+              <TabsTrigger value="social">Social Pack</TabsTrigger>
               <TabsTrigger value="inbox">Inbox</TabsTrigger>
             </TabsList>
 
             <TabsContent value="devotional"><DevotionalsManager userId={user.id} /></TabsContent>
             <TabsContent value="prayer"><PrayerAdmin userId={user.id} /></TabsContent>
             <TabsContent value="teaching"><TeachingAdmin userId={user.id} /></TabsContent>
+            <TabsContent value="social"><SocialPackPanel /></TabsContent>
             <TabsContent value="inbox"><Inbox /></TabsContent>
           </Tabs>
         </div>
