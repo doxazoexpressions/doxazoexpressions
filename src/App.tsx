@@ -26,6 +26,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Favorites from "./pages/Favorites";
 import Settings from "./pages/Settings";
+import DeleteAccount from "./pages/DeleteAccount";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/delete-account" element={<DeleteAccount />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<NotFound />} />
