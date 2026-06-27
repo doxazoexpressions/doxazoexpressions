@@ -4,11 +4,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { parseCSV, slugifyWithDay, normalizeText, toIsoDate } from "@/lib/devotionalSlug";
 import { resolveCategory } from "@/lib/categories";
-import { Upload, FileText, CheckCircle2, AlertTriangle, Loader2, Sparkles } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertTriangle, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+
+type Resolved = "draft" | "scheduled" | "published";
+
+/** Resolve the final state a row will land in, honoring the force-draft override. */
+function resolveFinal(n: { status: "draft" | "scheduled" | "published"; publish_at: string | null }, forceDraft: boolean): Resolved {
+  if (forceDraft) return "draft";
+  if (n.status === "draft") return "draft";
+  if (n.status === "scheduled") {
+    // Scheduled only "goes live" once publish_at has passed AND status is flipped to published.
+    return "scheduled";
+  }
+  // status === "published"
+  if (n.publish_at && Date.parse(n.publish_at) > Date.now()) return "scheduled";
+  return "published";
+}
 
 type Props = { userId: string; onImported: () => void };
 
