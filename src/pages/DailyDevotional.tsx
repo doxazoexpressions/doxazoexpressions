@@ -269,13 +269,15 @@ const DailyDevotional = () => {
                       );
                     })()}
 
-                    {current.declaration && (
+                    {(current.declaration || current.decree_and_declare) && (
                       <div className="mt-10 p-6 rounded-xl bg-primary text-primary-foreground">
                         <div className="flex items-center gap-2 mb-3">
                           <Sparkles className="w-5 h-5 text-accent" />
-                          <p className="text-accent font-semibold text-sm uppercase tracking-wider">Faith Declaration</p>
+                          <p className="text-accent font-semibold text-sm uppercase tracking-wider">Decree & Declare</p>
                         </div>
-                        <p className="font-serif text-lg italic leading-relaxed">{current.declaration}</p>
+                        <p className="font-serif text-lg italic leading-relaxed whitespace-pre-line">
+                          {current.decree_and_declare || current.declaration}
+                        </p>
                       </div>
                     )}
 
@@ -284,10 +286,9 @@ const DailyDevotional = () => {
                         <Heart className="w-5 h-5 text-accent" />
                         <p className="text-accent font-semibold text-sm uppercase tracking-wider">Prayer Point</p>
                       </div>
-                      <p className="text-foreground/85 leading-relaxed font-serif italic">
-                        Father, let the truth of Your Word take root in my heart today. Strengthen my faith,
-                        order my steps, and let every word from this devotional become a living reality in my life,
-                        in Jesus' name. Amen.
+                      <p className="text-foreground/85 leading-relaxed font-serif italic whitespace-pre-line">
+                        {current.prayer_section?.trim() ||
+                          "Father, let the truth of Your Word take root in my heart today. Strengthen my faith, order my steps, and let every word from this devotional become a living reality in my life, in Jesus' name. Amen."}
                       </p>
                     </div>
 
