@@ -175,7 +175,9 @@ export default function BulkImportDevotionals({ userId, onImported }: Props) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [importing, setImporting] = useState(false);
+  const [forceDraft, setForceDraft] = useState(true);
   const [result, setResult] = useState<{ inserted: number; updated: number; failed: number; errors: string[] } | null>(null);
+
 
   const onFile = async (file: File) => {
     setResult(null);
