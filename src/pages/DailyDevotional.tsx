@@ -241,7 +241,8 @@ const DailyDevotional = () => {
                       const marker = /(\n\s*)INSPIRATION\s*(?::|—|-)?\s*(\n|$)/i;
                       const match = current.body.match(marker);
                       const reflection = match && match.index !== undefined ? current.body.slice(0, match.index).trim() : current.body.trim();
-                      const inspiration = match && match.index !== undefined ? current.body.slice(match.index + match[0].length).trim() : null;
+                      const inspirationFromBody = match && match.index !== undefined ? current.body.slice(match.index + match[0].length).trim() : null;
+                      const inspiration = current.inspiration_caption?.trim() || inspirationFromBody;
                       return (
                         <>
                           <div className="mb-10">
