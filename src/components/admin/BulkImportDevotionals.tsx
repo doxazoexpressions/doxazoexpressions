@@ -4,11 +4,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { parseCSV, slugifyWithDay, normalizeText, toIsoDate } from "@/lib/devotionalSlug";
 import { resolveCategory } from "@/lib/categories";
-import { Upload, FileText, CheckCircle2, AlertTriangle, Loader2, Sparkles } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertTriangle, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+
+type Resolved = "draft" | "scheduled" | "published";
+
+/** Resolve the final state a row will land in, honoring the force-draft override. */
+function resolveFinal(n: { status: "draft" | "scheduled" | "published"; publish_at: string | null }, forceDraft: boolean): Resolved {
+  if (forceDraft) return "draft";
+  if (n.status === "draft") return "draft";
+  if (n.status === "scheduled") {
+    // Scheduled only "goes live" once publish_at has passed AND status is flipped to published.
+    return "scheduled";
+  }
+  // status === "published"
+  if (n.publish_at && Date.parse(n.publish_at) > Date.now()) return "scheduled";
+  return "published";
+}
 
 type Props = { userId: string; onImported: () => void };
 
@@ -159,7 +175,9 @@ export default function BulkImportDevotionals({ userId, onImported }: Props) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [importing, setImporting] = useState(false);
+  const [forceDraft, setForceDraft] = useState(true);
   const [result, setResult] = useState<{ inserted: number; updated: number; failed: number; errors: string[] } | null>(null);
+
 
   const onFile = async (file: File) => {
     setResult(null);
@@ -246,22 +264,28 @@ export default function BulkImportDevotionals({ userId, onImported }: Props) {
     const withDay = valid.filter((r) => r.data.day != null);
     const withoutDay = valid.filter((r) => r.data.day == null);
 
-    const buildPayload = (n: Normalized) => ({
-      day: n.day,
-      title: n.title,
-      slug: n.slug || null,
-      series: n.series,
-      category: n.category,
-      body: n.body,
-      scripture_reference: n.scripture_reference,
-      scripture_text: n.scripture_text,
-      prayer_section: n.prayer_section,
-      inspiration_caption: n.inspiration_caption,
-      status: n.status,
-      publish_date: n.publish_date,
-      publish_at: n.publish_at,
-      author_id: userId,
-    });
+    const buildPayload = (n: Normalized) => {
+      const finalStatus: Resolved = resolveFinal(n, forceDraft);
+      // When forced to draft, scrub publish_at so the DB trigger can't auto-stamp it live later.
+      const finalPublishAt =
+        finalStatus === "draft" ? null : n.publish_at;
+      return {
+        day: n.day,
+        title: n.title,
+        slug: n.slug || null,
+        series: n.series,
+        category: n.category,
+        body: n.body,
+        scripture_reference: n.scripture_reference,
+        scripture_text: n.scripture_text,
+        prayer_section: n.prayer_section,
+        inspiration_caption: n.inspiration_caption,
+        status: finalStatus,
+        publish_date: n.publish_date,
+        publish_at: finalPublishAt,
+        author_id: userId,
+      };
+    };
 
     const runChunked = async (
       items: Row[],
@@ -325,6 +349,24 @@ export default function BulkImportDevotionals({ userId, onImported }: Props) {
           )}
         </div>
 
+        <label className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30 cursor-pointer">
+          <Checkbox
+            id="force-draft"
+            checked={forceDraft}
+            onCheckedChange={(v) => setForceDraft(Boolean(v))}
+            className="mt-0.5"
+          />
+          <div className="text-sm">
+            <div className="font-medium flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-accent" />
+              Force all imported rows to draft
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Safe default. Ignores any <code>Status</code> column in the CSV and imports everything as <strong>draft</strong> so nothing goes live by accident. Uncheck only when you intentionally want the CSV's status (draft / scheduled / published) to take effect.
+            </p>
+          </div>
+        </label>
+
         {rows && summary && (
           <div className="space-y-3">
             <div className="flex gap-2 flex-wrap">
@@ -340,30 +382,54 @@ export default function BulkImportDevotionals({ userId, onImported }: Props) {
               )}
             </div>
 
+            <div className="flex gap-2 flex-wrap text-xs">
+              <Badge variant="outline" className="border-muted-foreground/40">
+                {rows.filter((r) => r.errors.length === 0 && resolveFinal(r.data, forceDraft) === "draft").length} → draft
+              </Badge>
+              <Badge variant="outline" className="border-amber-500/40 text-amber-600">
+                {rows.filter((r) => r.errors.length === 0 && resolveFinal(r.data, forceDraft) === "scheduled").length} → scheduled
+              </Badge>
+              <Badge variant="outline" className="border-emerald-500/40 text-emerald-600">
+                {rows.filter((r) => r.errors.length === 0 && resolveFinal(r.data, forceDraft) === "published").length} → published (live)
+              </Badge>
+            </div>
+
             <div className="max-h-80 overflow-y-auto border rounded-lg divide-y">
-              {rows.slice(0, 300).map((r) => (
-                <div key={r.index} className="p-2 text-xs flex items-start gap-2">
-                  <span className="text-muted-foreground tabular-nums w-8">#{r.index}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
-                      {r.data.day != null && <span className="text-accent mr-1">Day {r.data.day} ·</span>}
-                      {r.data.title || <em className="text-muted-foreground">(no title)</em>}
-                    </p>
-                    <p className="text-muted-foreground truncate">
-                      {r.data.publish_date} · {r.data.status}
-                      {r.data.slug && ` · /${r.data.slug}`}
-                      {r.data.category && ` · ${r.data.category}`}
-                      {r.willOverwrite && <span className="ml-1 text-accent">· will update existing (matched by {r.willOverwrite})</span>}
-                    </p>
-                    {r.errors.length > 0 && (
-                      <p className="text-destructive mt-0.5">{r.errors.join(", ")}</p>
-                    )}
-                    {r.warnings.length > 0 && (
-                      <p className="text-amber-600 mt-0.5">{r.warnings.join(", ")}</p>
-                    )}
+              {rows.slice(0, 300).map((r) => {
+                const finalState = resolveFinal(r.data, forceDraft);
+                const stateClass =
+                  finalState === "published"
+                    ? "text-emerald-600 border-emerald-500/40"
+                    : finalState === "scheduled"
+                    ? "text-amber-600 border-amber-500/40"
+                    : "text-muted-foreground border-muted-foreground/40";
+                return (
+                  <div key={r.index} className="p-2 text-xs flex items-start gap-2">
+                    <span className="text-muted-foreground tabular-nums w-8">#{r.index}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate flex items-center gap-1.5">
+                        {r.data.day != null && <span className="text-accent">Day {r.data.day} ·</span>}
+                        <span className="truncate">{r.data.title || <em className="text-muted-foreground">(no title)</em>}</span>
+                        <Badge variant="outline" className={`ml-1 h-5 px-1.5 ${stateClass}`}>
+                          → {finalState === "published" ? "live" : finalState}
+                        </Badge>
+                      </p>
+                      <p className="text-muted-foreground truncate">
+                        csv status: {r.data.status} · {r.data.publish_date}
+                        {r.data.slug && ` · /${r.data.slug}`}
+                        {r.data.category && ` · ${r.data.category}`}
+                        {r.willOverwrite && <span className="ml-1 text-accent">· will update existing (matched by {r.willOverwrite})</span>}
+                      </p>
+                      {r.errors.length > 0 && (
+                        <p className="text-destructive mt-0.5">{r.errors.join(", ")}</p>
+                      )}
+                      {r.warnings.length > 0 && (
+                        <p className="text-amber-600 mt-0.5">{r.warnings.join(", ")}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {rows.length > 300 && (
                 <div className="p-2 text-xs text-muted-foreground text-center">
                   …{rows.length - 300} more rows hidden
