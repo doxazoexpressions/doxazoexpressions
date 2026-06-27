@@ -37,6 +37,9 @@ type Devotional = {
   series: string | null;
   audio_url: string | null;
   excerpt: string | null;
+  inspiration_caption: string | null;
+  prayer_section: string | null;
+  decree_and_declare: string | null;
 };
 
 const DailyDevotional = () => {
