@@ -40,6 +40,8 @@ type Devotional = {
   inspiration_caption: string | null;
   prayer_section: string | null;
   decree_and_declare: string | null;
+  day: number | null;
+  slug: string | null;
 };
 
 const DailyDevotional = () => {
@@ -84,7 +86,12 @@ const DailyDevotional = () => {
 
       try {
         if (requestedId) {
-          const { data } = await base().eq("id", requestedId).maybeSingle();
+          // Look up by id (uuid) or by slug — both supported in the URL.
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedId);
+          const lookup = isUuid
+            ? await base().eq("id", requestedId).maybeSingle()
+            : await base().eq("slug", requestedId).maybeSingle();
+          const data = lookup.data;
           if (data) {
             const { data: latest } = await base()
               .order("publish_date", { ascending: false })
@@ -211,8 +218,11 @@ const DailyDevotional = () => {
                       </p>
                       <CategoryBadge slug={current.category} />
                     </div>
-                    {current.series && (
-                      <p className="text-xs text-muted-foreground italic mb-2">Part of series · {current.series}</p>
+                    {(current.series || current.day != null) && (
+                      <p className="text-xs md:text-sm text-accent font-semibold uppercase tracking-[0.18em] mb-3">
+                        {current.series ? current.series.toUpperCase() : "DEVOTIONAL"}
+                        {current.day != null && <> · PART {current.day}</>}
+                      </p>
                     )}
                     <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6 leading-tight">{current.title}</h2>
 

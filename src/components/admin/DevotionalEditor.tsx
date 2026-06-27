@@ -15,7 +15,7 @@ import {
 import { CATEGORIES } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { slugify } from "@/lib/devotionalSlug";
+import { slugify, slugifyWithDay } from "@/lib/devotionalSlug";
 import { Loader2, Save, Calendar, Globe, Trash2, X, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -32,6 +32,7 @@ type Props = {
 const emptyForm = () => ({
   title: "",
   slug: "",
+  day: "",
   category: "none",
   series: "",
   publish_date: new Date().toISOString().slice(0, 10),
@@ -63,6 +64,7 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
     return {
       title: initial.title ?? "",
       slug: initial.slug ?? "",
+      day: initial.day != null ? String(initial.day) : "",
       category: initial.category ?? "none",
       series: initial.series ?? "",
       publish_date: initial.publish_date ?? new Date().toISOString().slice(0, 10),
@@ -89,12 +91,13 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
     setDirty(true);
   };
 
-  // Auto-slug from title until user edits slug
+  // Auto-slug from title (+ day) until user edits slug
   useEffect(() => {
     if (!slugTouched) {
-      setForm((f) => ({ ...f, slug: slugify(f.title) }));
+      const dayNum = form.day ? Number(form.day) : null;
+      setForm((f) => ({ ...f, slug: slugifyWithDay(f.title, dayNum) }));
     }
-  }, [form.title, slugTouched]);
+  }, [form.title, form.day, slugTouched]);
 
   // Warn on unload
   useEffect(() => {
@@ -114,16 +117,19 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
     if (!form.publish_date) e.push("Publish date is required.");
     if (form.status === "scheduled" && !form.publish_at) e.push("Scheduled status requires a Publish-at date/time.");
     if (form.slug && !/^[a-z0-9-]+$/.test(form.slug)) e.push("Slug may only contain lowercase letters, numbers and hyphens.");
+    if (form.day && !/^\d+$/.test(form.day.trim())) e.push("Day must be a whole number (e.g. 201).");
     return e;
   }, [form]);
 
   const buildPayload = (status: "draft" | "scheduled" | "published") => {
-    const slug = (form.slug || slugify(form.title)).slice(0, 80) || null;
+    const dayNum = form.day && /^\d+$/.test(form.day.trim()) ? Number(form.day) : null;
+    const slug = (form.slug || slugifyWithDay(form.title, dayNum)).slice(0, 80) || null;
     let publish_at: string | null = form.publish_at ? new Date(form.publish_at).toISOString() : null;
     if (status === "published" && !publish_at) publish_at = new Date().toISOString();
     return {
       title: form.title.trim(),
       slug,
+      day: dayNum,
       category: form.category && form.category !== "none" ? form.category : null,
       series: form.series.trim() || null,
       publish_date: form.publish_date,
@@ -222,11 +228,20 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
             <Input value={form.title} onChange={(e) => update({ title: e.target.value })} required />
           </div>
           <div>
+            <Label>Day (series number)</Label>
+            <Input
+              type="number"
+              value={form.day}
+              onChange={(e) => update({ day: e.target.value })}
+              placeholder="e.g. 201"
+            />
+          </div>
+          <div>
             <Label>Slug</Label>
             <Input
               value={form.slug}
               onChange={(e) => { setSlugTouched(true); update({ slug: e.target.value }); }}
-              placeholder="auto-from-title"
+              placeholder="auto-from-title-and-day"
             />
           </div>
           <div>
@@ -241,7 +256,7 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
           </div>
           <div>
             <Label>Series</Label>
-            <Input value={form.series} onChange={(e) => update({ series: e.target.value })} placeholder="Optional" />
+            <Input value={form.series} onChange={(e) => update({ series: e.target.value })} placeholder="e.g. Know This and Know Peace" />
           </div>
           <div>
             <Label>Status</Label>

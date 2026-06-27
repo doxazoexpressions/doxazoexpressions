@@ -8,8 +8,44 @@ export function slugify(input: string): string {
     .slice(0, 80);
 }
 
+export function slugifyWithDay(title: string, day?: number | null): string {
+  const base = slugify(title || "devotional");
+  if (day == null || Number.isNaN(day)) return base.slice(0, 80);
+  return `${base}-part-${day}`.slice(0, 80);
+}
+
+/** Replace curly quotes/dashes with ASCII equivalents and trim. */
+export function normalizeText(input: string | null | undefined): string {
+  if (input == null) return "";
+  return String(input)
+    .replace(/\u2018|\u2019/g, "'")
+    .replace(/\u201C|\u201D/g, '"')
+    .replace(/\u2013|\u2014/g, "-")
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00A0/g, " ")
+    .trim();
+}
+
+/** Try to convert any human/ISO date string to YYYY-MM-DD. Returns null if invalid. */
+export function toIsoDate(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const s = String(input).trim();
+  if (!s) return null;
+  // Already YYYY-MM-DD?
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  const t = Date.parse(s);
+  if (Number.isNaN(t)) return null;
+  const d = new Date(t);
+  const y = d.getUTCFullYear();
+  const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const da = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${mo}-${da}`;
+}
+
 export function parseCSV(text: string): Record<string, string>[] {
-  // Minimal RFC-4180-ish parser supporting quoted fields with embedded commas/newlines/""
+  // Strip BOM
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
   const rows: string[][] = [];
   let i = 0;
   let field = "";

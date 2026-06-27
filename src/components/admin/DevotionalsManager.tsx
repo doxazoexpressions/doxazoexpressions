@@ -75,7 +75,7 @@ export default function DevotionalsManager({ userId }: { userId: string }) {
             <Plus className="w-5 h-5" /> Create New Devotional
           </Button>
           <Button onClick={() => { setShowImport((s) => !s); setEditing(null); setCreating(false); }} variant="outline" className="gap-2">
-            <Upload className="w-4 h-4" /> Bulk Import
+            <Upload className="w-4 h-4" /> Import from Notion / CSV
           </Button>
         </div>
       </div>
@@ -161,6 +161,9 @@ export default function DevotionalsManager({ userId }: { userId: string }) {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
+                      {d.day != null && (
+                        <Badge variant="outline" className="text-[10px] font-mono">Day {d.day}</Badge>
+                      )}
                       <p className="font-medium truncate">{d.title}</p>
                       <Badge
                         variant={d.status === "published" ? "default" : d.status === "scheduled" ? "outline" : "secondary"}

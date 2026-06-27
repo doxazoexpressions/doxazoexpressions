@@ -84,6 +84,7 @@ export type Database = {
           body: string
           category: Database["public"]["Enums"]["devotional_category"] | null
           created_at: string
+          day: number | null
           declaration: string | null
           decree_and_declare: string | null
           excerpt: string | null
@@ -110,6 +111,7 @@ export type Database = {
           body: string
           category?: Database["public"]["Enums"]["devotional_category"] | null
           created_at?: string
+          day?: number | null
           declaration?: string | null
           decree_and_declare?: string | null
           excerpt?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           body?: string
           category?: Database["public"]["Enums"]["devotional_category"] | null
           created_at?: string
+          day?: number | null
           declaration?: string | null
           decree_and_declare?: string | null
           excerpt?: string | null
