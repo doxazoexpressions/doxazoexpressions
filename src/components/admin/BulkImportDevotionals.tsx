@@ -273,7 +273,7 @@ export default function BulkImportDevotionals({ userId, onImported }: Props) {
         const payloads = chunk.map((r) => buildPayload(r.data));
         const { error, data } = await supabase
           .from("devotionals")
-          .upsert(payloads, { onConflict, ignoreDuplicates: false })
+          .upsert(payloads as any, { onConflict, ignoreDuplicates: false })
           .select("id");
         if (error) {
           failed += chunk.length;
