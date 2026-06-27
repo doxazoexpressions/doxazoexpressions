@@ -264,22 +264,28 @@ export default function BulkImportDevotionals({ userId, onImported }: Props) {
     const withDay = valid.filter((r) => r.data.day != null);
     const withoutDay = valid.filter((r) => r.data.day == null);
 
-    const buildPayload = (n: Normalized) => ({
-      day: n.day,
-      title: n.title,
-      slug: n.slug || null,
-      series: n.series,
-      category: n.category,
-      body: n.body,
-      scripture_reference: n.scripture_reference,
-      scripture_text: n.scripture_text,
-      prayer_section: n.prayer_section,
-      inspiration_caption: n.inspiration_caption,
-      status: n.status,
-      publish_date: n.publish_date,
-      publish_at: n.publish_at,
-      author_id: userId,
-    });
+    const buildPayload = (n: Normalized) => {
+      const finalStatus: Resolved = resolveFinal(n, forceDraft);
+      // When forced to draft, scrub publish_at so the DB trigger can't auto-stamp it live later.
+      const finalPublishAt =
+        finalStatus === "draft" ? null : n.publish_at;
+      return {
+        day: n.day,
+        title: n.title,
+        slug: n.slug || null,
+        series: n.series,
+        category: n.category,
+        body: n.body,
+        scripture_reference: n.scripture_reference,
+        scripture_text: n.scripture_text,
+        prayer_section: n.prayer_section,
+        inspiration_caption: n.inspiration_caption,
+        status: finalStatus,
+        publish_date: n.publish_date,
+        publish_at: finalPublishAt,
+        author_id: userId,
+      };
+    };
 
     const runChunked = async (
       items: Row[],
