@@ -135,6 +135,21 @@ const Navbar = () => {
             <Button asChild className="w-full mt-4">
               <Link to="/devotional" onClick={() => setIsOpen(false)}>Today's Devotional</Link>
             </Button>
+            {user ? (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs text-muted-foreground px-1 truncate">Signed in as {user.email}</p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/settings" onClick={() => setIsOpen(false)}>Account Settings</Link>
+                </Button>
+                <Button onClick={() => { signOut(); setIsOpen(false); }} variant="ghost" className="w-full gap-1.5">
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button asChild variant="outline" className="w-full mt-3 gap-1.5">
+                <Link to="/auth" onClick={() => setIsOpen(false)}><LogIn className="w-4 h-4" /> Sign In</Link>
+              </Button>
+            )}
           </div>
         )}
       </div>
