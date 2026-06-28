@@ -71,26 +71,42 @@ const Auth = () => {
         </Link>
         <Card>
           <CardContent className="p-6">
-            <h1 className="text-2xl font-serif font-bold mb-1">{mode === "signin" ? "Welcome Back" : "Create Account"}</h1>
-            <p className="text-sm text-muted-foreground mb-6">
-              {mode === "signin" ? "Sign in to access your devotional journey." : "Join the community of daily seekers."}
-            </p>
-            <form onSubmit={submit} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            {existingEmail ? (
+              <div className="text-center space-y-4">
+                <h1 className="text-2xl font-serif font-bold">You're already signed in</h1>
+                <p className="text-sm text-muted-foreground">
+                  Signed in as <span className="font-medium text-foreground">{existingEmail}</span>
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={() => navigate("/")} className="w-full">Go to Home</Button>
+                  <Button onClick={() => navigate("/settings")} variant="outline" className="w-full">Account Settings</Button>
+                  <Button onClick={handleSignOut} variant="ghost" className="w-full">Sign Out</Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              </div>
-              <Button type="submit" className="w-full" disabled={busy}>
-                {busy ? "Please wait..." : mode === "signin" ? "Sign In" : "Sign Up"}
-              </Button>
-            </form>
-            <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full text-sm text-muted-foreground mt-4 hover:text-accent">
-              {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
-            </button>
+            ) : (
+              <>
+                <h1 className="text-2xl font-serif font-bold mb-1">{mode === "signin" ? "Welcome Back" : "Create Account"}</h1>
+                <p className="text-sm text-muted-foreground mb-6">
+                  {mode === "signin" ? "Sign in to access your devotional journey." : "Join the community of daily seekers."}
+                </p>
+                <form onSubmit={submit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+                  </div>
+                  <div>
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete={mode === "signin" ? "current-password" : "new-password"} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>
+                    {busy ? "Please wait..." : mode === "signin" ? "Sign In" : "Sign Up"}
+                  </Button>
+                </form>
+                <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full text-sm text-muted-foreground mt-4 hover:text-accent">
+                  {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
+                </button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
