@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, X, Cross, Search as SearchIcon } from "lucide-react";
+import { Menu, X, Cross, Search as SearchIcon, LogIn, LogOut, User } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
