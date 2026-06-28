@@ -21,11 +21,18 @@ const Auth = () => {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
+  const [existingEmail, setExistingEmail] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/");
+      if (session?.user) setExistingEmail(session.user.email ?? "signed in");
     });
-  }, [navigate]);
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setExistingEmail(null);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
