@@ -11,6 +11,7 @@ const Navbar = () => {
   const [q, setQ] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   const navLinks = [
     { name: "Today", href: "/devotional" },
