@@ -2,14 +2,16 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, X, Cross, Search as SearchIcon } from "lucide-react";
+import { Menu, X, Cross, Search as SearchIcon, LogIn, LogOut, User } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [q, setQ] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   const navLinks = [
     { name: "Today", href: "/devotional" },
@@ -73,6 +75,20 @@ const Navbar = () => {
               />
             </form>
             <ThemeToggle />
+            {user ? (
+              <>
+                <Button asChild variant="ghost" size="sm" className="gap-1.5">
+                  <Link to="/settings" aria-label="Account"><User className="w-4 h-4" /><span className="hidden xl:inline">Account</span></Link>
+                </Button>
+                <Button onClick={() => signOut()} variant="outline" size="sm" className="gap-1.5">
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </Button>
+              </>
+            ) : (
+              <Button asChild variant="outline" size="sm" className="gap-1.5">
+                <Link to="/auth"><LogIn className="w-4 h-4" /> Sign In</Link>
+              </Button>
+            )}
             <Button asChild className="px-5">
               <Link to="/devotional">Today's Devotional</Link>
             </Button>
@@ -119,6 +135,21 @@ const Navbar = () => {
             <Button asChild className="w-full mt-4">
               <Link to="/devotional" onClick={() => setIsOpen(false)}>Today's Devotional</Link>
             </Button>
+            {user ? (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs text-muted-foreground px-1 truncate">Signed in as {user.email}</p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/settings" onClick={() => setIsOpen(false)}>Account Settings</Link>
+                </Button>
+                <Button onClick={() => { signOut(); setIsOpen(false); }} variant="ghost" className="w-full gap-1.5">
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button asChild variant="outline" className="w-full mt-3 gap-1.5">
+                <Link to="/auth" onClick={() => setIsOpen(false)}><LogIn className="w-4 h-4" /> Sign In</Link>
+              </Button>
+            )}
           </div>
         )}
       </div>
