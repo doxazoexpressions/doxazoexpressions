@@ -75,6 +75,20 @@ const Navbar = () => {
               />
             </form>
             <ThemeToggle />
+            {user ? (
+              <>
+                <Button asChild variant="ghost" size="sm" className="gap-1.5">
+                  <Link to="/settings" aria-label="Account"><User className="w-4 h-4" /><span className="hidden xl:inline">Account</span></Link>
+                </Button>
+                <Button onClick={() => signOut()} variant="outline" size="sm" className="gap-1.5">
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </Button>
+              </>
+            ) : (
+              <Button asChild variant="outline" size="sm" className="gap-1.5">
+                <Link to="/auth"><LogIn className="w-4 h-4" /> Sign In</Link>
+              </Button>
+            )}
             <Button asChild className="px-5">
               <Link to="/devotional">Today's Devotional</Link>
             </Button>
