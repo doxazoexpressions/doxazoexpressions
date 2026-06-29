@@ -1,13 +1,13 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// Production Capacitor config for native iOS/Android builds (TestFlight, App Store, Play Store).
+// IMPORTANT: Do NOT add a `server.url` block here. That would point the native app at the
+// Lovable sandbox preview instead of the bundled production web assets in `dist/`, which is
+// exactly what caused the TestFlight build to redirect to the lovableproject.com URL.
 const config: CapacitorConfig = {
   appId: 'com.doxazo.expressions',
   appName: 'Doxazo Expressions',
   webDir: 'dist',
-  server: {
-    url: 'https://7c926cd5-0e07-4118-871e-5ab8fb64751c.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1200,
