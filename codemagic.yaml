@@ -10,7 +10,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.doxazo.expressions
       vars:
-        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_PROJECT: "App.xcodeproj"
         XCODE_SCHEME: "App"
 
     scripts:
@@ -34,6 +34,7 @@ workflows:
         script: |
           cd ios/App
           xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
+
 
     artifacts:
       - ios/App/build/ios/ipa/*.ipa
