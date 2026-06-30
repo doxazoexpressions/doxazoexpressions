@@ -19,6 +19,7 @@ const Archive = () => {
   const activeCategory = (params.get("category") as CategorySlug | null) ?? null;
   const [items, setItems] = useState<DevotionalCardData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [q, setQ] = useState("");
@@ -28,8 +29,15 @@ const Archive = () => {
   }, [activeCategory]);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setShowSkeleton(false);
+    // Only show skeleton if request takes >300ms — avoids flash on fast responses.
+    const skeletonTimer = setTimeout(() => {
+      if (!cancelled) setShowSkeleton(true);
+    }, 300);
+
     (async () => {
-      setLoading(true);
       const nowIso = new Date().toISOString();
       let query = supabase
         .from("devotionals")
@@ -40,10 +48,17 @@ const Archive = () => {
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (activeCategory) query = query.eq("category", activeCategory);
       const { data, count } = await query;
+      if (cancelled) return;
       setItems((data as DevotionalCardData[]) ?? []);
       setTotal(count ?? 0);
       setLoading(false);
+      setShowSkeleton(false);
     })();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(skeletonTimer);
+    };
   }, [page, activeCategory]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -133,16 +148,20 @@ const Archive = () => {
             </div>
 
             {loading ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="rounded-lg border border-border p-6 space-y-3">
-                    <div className="h-3 w-24 bg-muted animate-pulse rounded" />
-                    <div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
-                    <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
-                    <div className="h-16 w-full bg-muted animate-pulse rounded" />
-                  </div>
-                ))}
-              </div>
+              showSkeleton ? (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto" aria-busy="true" aria-live="polite">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="rounded-lg border border-border p-6 space-y-3">
+                      <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                      <div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
+                      <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
+                      <div className="h-16 w-full bg-muted animate-pulse rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="min-h-[200px]" aria-busy="true" />
+              )
             ) : items.length === 0 ? (
               <div className="text-center py-16 max-w-md mx-auto">
                 <BookOpen className="w-10 h-10 text-accent/40 mx-auto mb-4" />

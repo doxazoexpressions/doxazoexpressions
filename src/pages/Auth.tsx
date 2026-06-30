@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,8 +144,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+      <Helmet>
+        <title>Sign In | Doxazo Expressions</title>
+        <meta name="description" content="Sign in or create a Doxazo Expressions account to save favorites and receive daily devotionals." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="w-full max-w-md">
-        <Link to="/" className="flex items-center justify-center gap-2.5 mb-8">
+        <Link to="/" className="flex items-center justify-center gap-2.5 mb-8 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Cross className="w-5 h-5 text-primary-foreground" />
           </div>
@@ -217,7 +223,7 @@ const Auth = () => {
               </div>
             ) : mode === "forgot" ? (
               <>
-                <button onClick={() => setMode("signin")} className="flex items-center gap-1 text-sm text-muted-foreground mb-4 hover:text-accent">
+                <button onClick={() => setMode("signin")} className="flex items-center gap-1 text-sm text-muted-foreground mb-4 hover:text-accent rounded-md px-1 -mx-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <h1 className="text-2xl font-serif font-bold mb-1">Reset your password</h1>
@@ -251,7 +257,7 @@ const Auth = () => {
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password">Password</Label>
                       {mode === "signin" && (
-                        <button type="button" onClick={() => setMode("forgot")} className="text-xs text-accent hover:underline">
+                        <button type="button" onClick={() => setMode("forgot")} className="text-xs text-accent hover:underline rounded px-1 -mx-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                           Forgot password?
                         </button>
                       )}
@@ -267,7 +273,7 @@ const Auth = () => {
                         autoComplete={mode === "signin" ? "current-password" : "new-password"}
                         className="pr-10"
                       />
-                      <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showPassword ? "Hide password" : "Show password"}>
+                      <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={showPassword ? "Hide password" : "Show password"}>
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
@@ -279,7 +285,7 @@ const Auth = () => {
                     {busy ? "Please wait..." : mode === "signin" ? "Sign In" : "Sign Up"}
                   </Button>
                 </form>
-                <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full text-sm text-muted-foreground mt-4 hover:text-accent">
+                <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full text-sm text-muted-foreground mt-4 hover:text-accent rounded-md py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
                 </button>
               </>

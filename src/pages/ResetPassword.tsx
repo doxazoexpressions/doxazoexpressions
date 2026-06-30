@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Cross, Eye, EyeOff, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Cross, Eye, EyeOff, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 type Status = "checking" | "ready" | "invalid" | "done";
 
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
+const CHECK_TIMEOUT_MS = 8000;
 
 const ResetPassword = () => {
   const [status, setStatus] = useState<Status>("checking");
@@ -23,35 +25,44 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase places the recovery tokens in URL hash (e.g. #access_token=...&type=recovery)
-    // The client library auto-exchanges them and emits PASSWORD_RECOVERY.
+    let resolved = false;
+    const markInvalid = (msg: string) => {
+      if (resolved) return;
+      resolved = true;
+      setErrorMsg(msg);
+      setStatus("invalid");
+    };
+    const markReady = () => {
+      if (resolved) return;
+      resolved = true;
+      setStatus("ready");
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || (session && event === "SIGNED_IN")) {
-        setStatus("ready");
-      }
+      if (event === "PASSWORD_RECOVERY" || (session && event === "SIGNED_IN")) markReady();
     });
 
-    // Initial check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const hash = window.location.hash || "";
-      const isRecovery = hash.includes("type=recovery") || hash.includes("access_token");
-      if (session && isRecovery) setStatus("ready");
-      else if (session) setStatus("ready");
-      else {
-        // wait briefly for hash exchange; if still no session, mark invalid
-        setTimeout(async () => {
-          const { data } = await supabase.auth.getSession();
-          if (data.session) setStatus("ready");
-          else {
-            const err = new URLSearchParams(hash.replace(/^#/, "")).get("error_description");
-            setErrorMsg(err || "This reset link is invalid or has expired. Please request a new one.");
-            setStatus("invalid");
-          }
-        }, 1500);
-      }
-    });
+    // Surface an explicit error from the hash (e.g. expired link) immediately.
+    const hash = window.location.hash || "";
+    const hashErr = new URLSearchParams(hash.replace(/^#/, "")).get("error_description");
+    if (hashErr) {
+      markInvalid(decodeURIComponent(hashErr.replace(/\+/g, " ")));
+    } else {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        const isRecovery = hash.includes("type=recovery") || hash.includes("access_token");
+        if (session && (isRecovery || true)) markReady();
+      });
+    }
 
-    return () => subscription.unsubscribe();
+    // Hard timeout — never leave the user stuck on "Verifying…".
+    const timeout = window.setTimeout(() => {
+      markInvalid("This reset link couldn't be verified. It may be expired, already used, or opened in a different browser than the one you requested it from.");
+    }, CHECK_TIMEOUT_MS);
+
+    return () => {
+      subscription.unsubscribe();
+      window.clearTimeout(timeout);
+    };
   }, []);
 
   const submit = async (e: React.FormEvent) => {
@@ -72,8 +83,13 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+      <Helmet>
+        <title>Reset Password | Doxazo Expressions</title>
+        <meta name="description" content="Set a new password for your Doxazo Expressions account." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="w-full max-w-md">
-        <Link to="/" className="flex items-center justify-center gap-2.5 mb-8">
+        <Link to="/" className="flex items-center justify-center gap-2.5 mb-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Cross className="w-5 h-5 text-primary-foreground" />
           </div>
@@ -85,17 +101,34 @@ const ResetPassword = () => {
         <Card>
           <CardContent className="p-6">
             {status === "checking" && (
-              <div className="text-center py-6 text-sm text-muted-foreground">Verifying reset link…</div>
+              <div className="text-center py-8 space-y-4" role="status" aria-live="polite">
+                <Loader2 className="w-8 h-8 text-accent animate-spin mx-auto" aria-hidden="true" />
+                <div>
+                  <h1 className="text-lg font-serif font-semibold">Verifying reset link…</h1>
+                  <p className="text-sm text-muted-foreground mt-1">This usually takes a couple of seconds.</p>
+                </div>
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button onClick={() => navigate("/auth")} variant="outline" size="sm" className="w-full">
+                    Taking too long? Request a new link
+                  </Button>
+                  <Button onClick={() => navigate("/")} variant="ghost" size="sm" className="w-full">
+                    Back to home
+                  </Button>
+                </div>
+              </div>
             )}
 
             {status === "invalid" && (
               <div className="text-center space-y-4">
                 <div className="mx-auto w-14 h-14 rounded-full bg-destructive/15 flex items-center justify-center">
-                  <AlertTriangle className="w-7 h-7 text-destructive" />
+                  <AlertTriangle className="w-7 h-7 text-destructive" aria-hidden="true" />
                 </div>
                 <h1 className="text-2xl font-serif font-bold">Link invalid or expired</h1>
                 <p className="text-sm text-muted-foreground">{errorMsg}</p>
-                <Button onClick={() => navigate("/auth")} className="w-full">Request a new link</Button>
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button onClick={() => navigate("/auth")} className="w-full">Request a new link</Button>
+                  <Button onClick={() => navigate("/")} variant="ghost" className="w-full">Back to home</Button>
+                </div>
               </div>
             )}
 
@@ -117,7 +150,12 @@ const ResetPassword = () => {
                         autoComplete="new-password"
                         className="pr-10"
                       />
-                      <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showPassword ? "Hide password" : "Show password"}>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((s) => !s)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
@@ -137,7 +175,7 @@ const ResetPassword = () => {
             {status === "done" && (
               <div className="text-center space-y-4">
                 <div className="mx-auto w-14 h-14 rounded-full bg-accent/15 flex items-center justify-center">
-                  <CheckCircle2 className="w-7 h-7 text-accent" />
+                  <CheckCircle2 className="w-7 h-7 text-accent" aria-hidden="true" />
                 </div>
                 <h1 className="text-2xl font-serif font-bold">Password updated</h1>
                 <p className="text-sm text-muted-foreground">You're all set. Sign in with your new password.</p>
