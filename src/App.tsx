@@ -23,6 +23,7 @@ import CategoryDetail from "./pages/CategoryDetail";
 import Search from "./pages/Search";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import Favorites from "./pages/Favorites";
 import Settings from "./pages/Settings";
