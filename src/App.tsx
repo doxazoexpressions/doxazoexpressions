@@ -23,6 +23,7 @@ import CategoryDetail from "./pages/CategoryDetail";
 import Search from "./pages/Search";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import Favorites from "./pages/Favorites";
 import Settings from "./pages/Settings";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/settings" element={<Settings />} />
