@@ -29,8 +29,15 @@ const Archive = () => {
   }, [activeCategory]);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setShowSkeleton(false);
+    // Only show skeleton if request takes >300ms — avoids flash on fast responses.
+    const skeletonTimer = setTimeout(() => {
+      if (!cancelled) setShowSkeleton(true);
+    }, 300);
+
     (async () => {
-      setLoading(true);
       const nowIso = new Date().toISOString();
       let query = supabase
         .from("devotionals")
@@ -41,10 +48,17 @@ const Archive = () => {
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (activeCategory) query = query.eq("category", activeCategory);
       const { data, count } = await query;
+      if (cancelled) return;
       setItems((data as DevotionalCardData[]) ?? []);
       setTotal(count ?? 0);
       setLoading(false);
+      setShowSkeleton(false);
     })();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(skeletonTimer);
+    };
   }, [page, activeCategory]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
