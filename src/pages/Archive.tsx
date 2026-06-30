@@ -148,16 +148,20 @@ const Archive = () => {
             </div>
 
             {loading ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="rounded-lg border border-border p-6 space-y-3">
-                    <div className="h-3 w-24 bg-muted animate-pulse rounded" />
-                    <div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
-                    <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
-                    <div className="h-16 w-full bg-muted animate-pulse rounded" />
-                  </div>
-                ))}
-              </div>
+              showSkeleton ? (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto" aria-busy="true" aria-live="polite">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="rounded-lg border border-border p-6 space-y-3">
+                      <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                      <div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
+                      <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
+                      <div className="h-16 w-full bg-muted animate-pulse rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="min-h-[200px]" aria-busy="true" />
+              )
             ) : items.length === 0 ? (
               <div className="text-center py-16 max-w-md mx-auto">
                 <BookOpen className="w-10 h-10 text-accent/40 mx-auto mb-4" />
