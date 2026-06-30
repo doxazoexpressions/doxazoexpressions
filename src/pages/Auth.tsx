@@ -144,8 +144,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+      <Helmet>
+        <title>Sign In | Doxazo Expressions</title>
+        <meta name="description" content="Sign in or create a Doxazo Expressions account to save favorites and receive daily devotionals." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="w-full max-w-md">
-        <Link to="/" className="flex items-center justify-center gap-2.5 mb-8">
+        <Link to="/" className="flex items-center justify-center gap-2.5 mb-8 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Cross className="w-5 h-5 text-primary-foreground" />
           </div>
