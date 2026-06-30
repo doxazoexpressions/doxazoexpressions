@@ -19,6 +19,7 @@ const Archive = () => {
   const activeCategory = (params.get("category") as CategorySlug | null) ?? null;
   const [items, setItems] = useState<DevotionalCardData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [q, setQ] = useState("");
