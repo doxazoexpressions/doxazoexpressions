@@ -33,12 +33,13 @@ workflows:
 
       - name: Increment build number
         script: |
-           #!/bin/sh
-           cd $CM_BUILD_DIR/ios
-           LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID")
-           agvtool new-version -all $(($LATEST_BUILD + 1))
-
-
+          #!/bin/sh
+          set -e
+          cd "$CM_BUILD_DIR/ios/App"
+          LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID")
+          NEW_BUILD=$((LATEST_BUILD + 1))
+          echo "Using latest TestFlight build $LATEST_BUILD; setting build number to $NEW_BUILD"
+          agvtool new-version -all "$NEW_BUILD"
 
       - name: Build IPA
         script: |
