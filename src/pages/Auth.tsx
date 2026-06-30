@@ -285,7 +285,7 @@ const Auth = () => {
                     {busy ? "Please wait..." : mode === "signin" ? "Sign In" : "Sign Up"}
                   </Button>
                 </form>
-                <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full text-sm text-muted-foreground mt-4 hover:text-accent">
+                <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full text-sm text-muted-foreground mt-4 hover:text-accent rounded-md py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
                 </button>
               </>
