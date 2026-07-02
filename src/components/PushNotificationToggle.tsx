@@ -12,6 +12,7 @@ import {
   isNativePush,
   checkNativePermission,
   enableNativePush,
+  getNativePushStatus,
   openNativeAppSettings,
   type NativePermState,
 } from "@/lib/nativePush";
@@ -26,6 +27,7 @@ const PushNotificationToggle = () => {
   const [subscribed, setSubscribed] = useState<boolean | null>(null);
   // Native state
   const [nativePerm, setNativePerm] = useState<NativePermState>("prompt");
+  const [nativeRegistered, setNativeRegistered] = useState(false);
 
   const [busy, setBusy] = useState(false);
   const supported = isPushSupported();
@@ -33,7 +35,10 @@ const PushNotificationToggle = () => {
 
   useEffect(() => {
     if (native) {
-      checkNativePermission().then(setNativePerm);
+      getNativePushStatus().then((status) => {
+        setNativePerm(status.permission);
+        setNativeRegistered(status.registered);
+      });
     } else if (supported) {
       getCurrentSubscription().then((s) => setSubscribed(!!s));
     }
@@ -41,24 +46,30 @@ const PushNotificationToggle = () => {
 
   // ---------- NATIVE (iOS/Android app) ----------
   if (native) {
+    const fullyRegistered = nativePerm === "granted" && nativeRegistered;
     const label =
-      nativePerm === "granted"
+      fullyRegistered
         ? "Notifications enabled"
         : nativePerm === "denied"
         ? "Notifications blocked in iPhone Settings"
+        : nativePerm === "granted"
+        ? "Permission granted — device registration needed"
         : "Enable daily notifications";
 
     const onEnable = async () => {
       setBusy(true);
       try {
         const result = await enableNativePush();
-        setNativePerm(result);
+        const status = await getNativePushStatus();
+        setNativePerm(status.permission === "unsupported" ? result : status.permission);
+        setNativeRegistered(status.registered);
         if (result === "granted") {
           toast({
             title: "Notifications enabled",
             description: "You'll get a gentle nudge when a new devotional is published.",
           });
         } else if (result === "denied") {
+          setNativeRegistered(false);
           toast({
             title: "Permission blocked",
             description: "Open Settings to allow notifications for Doxazo Expressions.",
@@ -66,6 +77,9 @@ const PushNotificationToggle = () => {
           });
         }
       } catch (err: any) {
+        const latestPermission = await checkNativePermission();
+        setNativePerm(latestPermission);
+        setNativeRegistered(false);
         toast({
           title: "Couldn't enable notifications",
           description: err?.message ?? "Please try again.",
@@ -82,7 +96,7 @@ const PushNotificationToggle = () => {
           Status:{" "}
           <span
             className={
-              nativePerm === "granted"
+              fullyRegistered
                 ? "text-accent"
                 : nativePerm === "denied"
                 ? "text-destructive"
@@ -92,10 +106,10 @@ const PushNotificationToggle = () => {
             {label}
           </span>
         </p>
-        {nativePerm === "granted" ? (
+        {fullyRegistered ? (
           <Button variant="outline" onClick={onEnable} disabled={busy} className="gap-2">
             <Bell className="w-4 h-4" />
-            Re-register this device
+            {busy ? "Registering…" : "Re-register this device"}
           </Button>
         ) : nativePerm === "denied" ? (
           <div className="space-y-2">
@@ -121,7 +135,7 @@ const PushNotificationToggle = () => {
         ) : (
           <Button onClick={onEnable} disabled={busy} className="gap-2">
             <Bell className="w-4 h-4" />
-            {busy ? "Enabling…" : "Enable notifications"}
+            {busy ? "Registering…" : nativePerm === "granted" ? "Register this device" : "Enable notifications"}
           </Button>
         )}
       </div>

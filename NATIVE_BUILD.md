@@ -15,10 +15,10 @@ npx cap add android
 ```
 
 App identity is already configured in `capacitor.config.ts`:
-- `appId`: `app.lovable.7c926cd50e074118871e5ab8fb64751c`
+- `appId`: `com.doxazo.expressions`
 - `appName`: `Doxazo Expressions`
 - `webDir`: `dist`
-- Live-reload `server.url` points at the Lovable preview (remove before release builds — see §5).
+- No live-reload `server.url` is present for release/TestFlight builds; native loads bundled production assets.
 
 ## 2. Iterating
 
@@ -59,7 +59,7 @@ This populates `ios/App/App/Assets.xcassets` and `android/app/src/main/res/`.
 
 ## 5. Release builds
 
-**Before building for release**, edit `capacitor.config.ts` and remove the `server` block (it's only for live-reload during dev). Re-run `npx cap sync`.
+`capacitor.config.ts` is already release-safe: it has no `server.url` block. Re-run `npx cap sync` after every pull/build.
 
 ### Android (AAB)
 
@@ -72,7 +72,7 @@ This populates `ios/App/App/Assets.xcassets` and `android/app/src/main/res/`.
 
 1. Open `ios/App/App.xcworkspace` in Xcode
 2. Signing & Capabilities → select your Apple Developer team
-3. Add capability: **Push Notifications**, **Background Modes → Remote notifications**
+3. Confirm capability: **Push Notifications**, **Background Modes → Remote notifications**
 4. Product → Archive → Distribute App → App Store Connect → Upload
 5. Must build with iOS 26 SDK (Xcode 26+) per Apple's April 28, 2026 requirement.
 
@@ -93,7 +93,7 @@ Required secrets (add in Lovable Cloud → Secrets):
 | `APNS_KEY_P8` | Apple Developer → Keys → "+" → enable APNs → download the `.p8`. Paste the file contents (including `-----BEGIN PRIVATE KEY-----` lines). |
 | `APNS_KEY_ID` | 10-char Key ID shown alongside the .p8 in Apple Developer. |
 | `APNS_TEAM_ID` | Apple Developer → Membership → Team ID (10 chars). |
-| `APNS_BUNDLE_ID` | Bundle ID of the iOS app. Defaults to `app.lovable.7c926cd50e074118871e5ab8fb64751c`. |
+| `APNS_BUNDLE_ID` | Bundle ID of the iOS app: `com.doxazo.expressions`. |
 | `APNS_PRODUCTION` | `"false"` for TestFlight/dev, `"true"` for App Store release. |
 
 Until each set is configured, `send-push` skips that channel cleanly and reports `skipped: "..."` in the response — web push keeps working.
@@ -106,7 +106,9 @@ Until each set is configured, `send-push` skips that channel cleanly and reports
   - In `android/build.gradle` add `classpath 'com.google.gms:google-services:4.4.2'` to dependencies.
   - In `android/app/build.gradle` add `apply plugin: 'com.google.gms.google-services'` at the bottom.
 - **iOS (APNs):**
-  - Open `ios/App/App.xcworkspace` → Signing & Capabilities → add **Push Notifications** and **Background Modes → Remote notifications**.
+  - `ios/App/App/App.entitlements` includes `aps-environment` (`development` for Debug, `production` for Release/TestFlight).
+  - `ios/App/App/Info.plist` includes `UIBackgroundModes → remote-notification`.
+  - The App Store provisioning profile must be regenerated after Push Notifications are enabled, so the signed IPA contains `aps-environment=production`.
   - No client SDK needed — we call APNs directly from the edge function with the .p8 key.
 
 **Verify end-to-end:** sign in on the device → grant notification prompt → `device_tokens` row appears → hit "Send test push" in `/admin` → notification arrives → tap routes via `path` payload.
@@ -167,7 +169,7 @@ Until each set is configured, `send-push` skips that channel cleanly and reports
 ## 10. What's done in this commit
 
 - Capacitor + iOS + Android + 5 plugins installed
-- `capacitor.config.ts` with app ID, name, dark splash/status bar, live-reload URL
+- `capacitor.config.ts` with app ID, name, dark splash/status bar, and bundled production assets
 - `src/lib/native.ts` bridge: status bar, splash hide, deep-link routing, push registration + token upload + tap-to-route, native share
 - `device_tokens` table with RLS (users manage their own; service role full access)
 - `register-device-token` edge function — auth-gated, upserts by token
@@ -178,6 +180,6 @@ Until each set is configured, `send-push` skips that channel cleanly and reports
 
 - Run `npx cap add ios && npx cap add android` locally (sandbox can't create native projects)
 - Generate icons/splash from your 1024² source art with `@capacitor/assets`
-- Add FCM secrets + `google-services.json`; add APNs secrets + Push capability in Xcode (see §6)
+- Add FCM secrets + `google-services.json`; add APNs secrets and use a push-capable App Store provisioning profile (see §6)
 - Build signed AAB + archive IPA
 - Fill store listings and upload

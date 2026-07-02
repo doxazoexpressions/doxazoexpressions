@@ -1,6 +1,7 @@
 // Native-runtime bridges. All imports are dynamic so the web build is unaffected.
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
+import { markNativePushRegistered } from '@/lib/nativePush';
 
 export const isNative = () => Capacitor.isNativePlatform();
 export const nativePlatform = () => Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
@@ -41,21 +42,19 @@ export async function initNative(navigate: (path: string) => void) {
     });
   } catch {}
 
-  // Native push: request permission + register. Token handoff is a placeholder
-  // until the FCM/APNs delivery path is wired server-side.
+  // Native push: when permission is already granted, register with APNs/FCM and
+  // upload the token. The Settings screen owns first-time permission prompts.
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
     const perm = await PushNotifications.checkPermissions();
-    if (perm.receive === 'prompt') {
-      const r = await PushNotifications.requestPermissions();
-      if (r.receive !== 'granted') return;
-    } else if (perm.receive !== 'granted') {
+    if (perm.receive !== 'granted') {
       return;
     }
-    await PushNotifications.register();
     PushNotifications.addListener('registration', async (token) => {
       try {
         const platform = nativePlatform() === 'ios' ? 'ios' : 'android';
+        const { data: sess } = await supabase.auth.getSession();
+        if (!sess?.session) return;
         const { error } = await supabase.functions.invoke('register-device-token', {
           body: {
             token: token.value,
@@ -63,12 +62,19 @@ export async function initNative(navigate: (path: string) => void) {
             device_info: { ua: navigator.userAgent },
           },
         });
-        if (error) console.error('[native] register-device-token failed', error);
+        if (error) {
+          markNativePushRegistered(false);
+          console.error('[native] register-device-token failed', error);
+          return;
+        }
+        markNativePushRegistered(true);
       } catch (e) {
+        markNativePushRegistered(false);
         console.error('[native] token upload error', e);
       }
     });
     PushNotifications.addListener('registrationError', (err) => {
+      markNativePushRegistered(false);
       console.error('[native] push registration error', err);
     });
     PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
@@ -76,6 +82,7 @@ export async function initNative(navigate: (path: string) => void) {
       const path = (data as any).path || '/devotional';
       navigate(path);
     });
+    await PushNotifications.register();
   } catch {}
 }
 
