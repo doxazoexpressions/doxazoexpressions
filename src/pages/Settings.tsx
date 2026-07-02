@@ -58,20 +58,45 @@ const Settings = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <Wifi className="w-5 h-5 text-accent" />
+                  {online ? (
+                    <Wifi className="w-5 h-5 text-accent" />
+                  ) : (
+                    <WifiOff className="w-5 h-5 text-destructive" />
+                  )}
                   <h2 className="text-xl font-serif font-semibold">Offline reading</h2>
                 </div>
                 <p className="text-muted-foreground text-sm">
                   Today's devotional and your most recent reads are saved on this device so you
                   can keep reading even with no connection.
                 </p>
-                <p className="text-sm mt-3">
-                  Status: <span className={online ? "text-accent" : "text-destructive"}>
-                    {online ? "Online" : "Offline — showing cached content"}
-                  </span>
-                </p>
+                <div className="mt-3 space-y-1 text-sm">
+                  <p>
+                    Connection:{" "}
+                    <span className={online ? "text-accent font-medium" : "text-destructive font-medium"}>
+                      {online ? "Online" : "Offline — showing cached content"}
+                    </span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    Saved on this device: {cachedInfo.hasToday ? "today's devotional" : "no devotional yet"}
+                    {cachedInfo.recentCount > 0
+                      ? ` + ${cachedInfo.recentCount} recent ${cachedInfo.recentCount === 1 ? "entry" : "entries"}`
+                      : ""}
+                    .
+                  </p>
+                  {!cachedInfo.hasToday && online && (
+                    <p className="text-muted-foreground">
+                      Open{" "}
+                      <Link to="/devotional" className="text-accent underline">
+                        today's devotional
+                      </Link>{" "}
+                      once while online to save it for offline reading.
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
+
+
 
             <Card>
               <CardContent className="p-6">
