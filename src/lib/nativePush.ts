@@ -36,35 +36,64 @@ export async function enableNativePush(): Promise<NativePermState> {
   }
   if (perm.receive !== 'granted') return perm.receive === 'denied' ? 'denied' : 'prompt';
 
-  // Register (idempotent). Wait for the registration event to upload token.
-  await new Promise<void>(async (resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Registration timed out')), 15000);
-    const handle = await PushNotifications.addListener('registration', async (token) => {
+  // Attach BOTH listeners before calling register(), so we never miss the
+  // native callback (registration can fire almost immediately on iOS when
+  // the app is already registered with APNs).
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+    let regHandle: { remove: () => void } | null = null;
+    let errHandle: { remove: () => void } | null = null;
+
+    const cleanup = () => {
+      try { regHandle?.remove(); } catch {}
+      try { errHandle?.remove(); } catch {}
+    };
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timeout);
+      cleanup();
+      fn();
+    };
+
+    const timeout = setTimeout(() => {
+      finish(() =>
+        reject(
+          new Error(
+            "Timed out waiting for the device token from Apple. Check your internet connection and try again — if this keeps happening, iOS didn't hand back an APNs token (usually a provisioning/entitlement issue)."
+          )
+        )
+      );
+    }, 30000);
+
+    (async () => {
       try {
-        const platform = nativePlatformName() === 'ios' ? 'ios' : 'android';
-        const { error } = await supabase.functions.invoke('register-device-token', {
-          body: { token: token.value, platform, device_info: { ua: navigator.userAgent } },
+        regHandle = await PushNotifications.addListener("registration", async (token) => {
+          try {
+            const platform = nativePlatformName() === "ios" ? "ios" : "android";
+            const { data: sess } = await supabase.auth.getSession();
+            if (!sess?.session) {
+              return finish(() =>
+                reject(new Error("You need to be signed in to enable notifications on this device."))
+              );
+            }
+            const { error } = await supabase.functions.invoke("register-device-token", {
+              body: { token: token.value, platform, device_info: { ua: navigator.userAgent } },
+            });
+            if (error) return finish(() => reject(new Error(error.message || "Failed to save device token")));
+            finish(resolve);
+          } catch (e: any) {
+            finish(() => reject(e));
+          }
         });
-        if (error) return reject(new Error(error.message || 'Failed to save device token'));
-        resolve();
+        errHandle = await PushNotifications.addListener("registrationError", (err) => {
+          finish(() => reject(new Error(err?.error || "Push registration failed")));
+        });
+        await PushNotifications.register();
       } catch (e: any) {
-        reject(e);
-      } finally {
-        handle.remove();
+        finish(() => reject(e));
       }
-    });
-    const errHandle = await PushNotifications.addListener('registrationError', (err) => {
-      clearTimeout(timeout);
-      errHandle.remove();
-      reject(new Error(err?.error || 'Push registration failed'));
-    });
-    try {
-      await PushNotifications.register();
-    } catch (e: any) {
-      clearTimeout(timeout);
-      reject(e);
-    }
+    })();
   });
 
   return 'granted';
