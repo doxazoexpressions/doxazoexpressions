@@ -98,10 +98,26 @@ const PushNotificationToggle = () => {
             Re-register this device
           </Button>
         ) : nativePerm === "denied" ? (
-          <Button variant="outline" onClick={openNativeAppSettings} className="gap-2">
-            <SettingsIcon className="w-4 h-4" />
-            Open iPhone Settings
-          </Button>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              To turn notifications back on, open <span className="font-medium">iPhone Settings → Doxazo Expressions → Notifications</span> and enable Allow Notifications.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                openNativeAppSettings();
+                toast({
+                  title: "Open iPhone Settings",
+                  description: "Settings → Doxazo Expressions → Notifications → Allow Notifications.",
+                });
+              }}
+              className="gap-2"
+            >
+              <SettingsIcon className="w-4 h-4" />
+              How to enable
+            </Button>
+          </div>
+
         ) : (
           <Button onClick={onEnable} disabled={busy} className="gap-2">
             <Bell className="w-4 h-4" />

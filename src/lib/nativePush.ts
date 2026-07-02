@@ -72,17 +72,10 @@ export async function enableNativePush(): Promise<NativePermState> {
 
 /** Open the native app settings so the user can toggle notification permission. */
 export async function openNativeAppSettings() {
-  try {
-    // @ts-ignore - optional plugin
-    const mod = await import('@capacitor/app');
-    // Capacitor App plugin doesn't have openSettings; try native-settings if present.
-    try {
-      // @ts-ignore
-      const ns = await import('capacitor-native-settings');
-      // @ts-ignore
-      await ns.NativeSettings.open({ optionAndroid: 'application_details', optionIOS: 'app' });
-      return;
-    } catch {}
-  } catch {}
-  // Fallback: no-op; the toggle UI will still explain what to do.
+  // The Capacitor App plugin doesn't expose a cross-platform "open settings"
+  // API, and we intentionally don't bundle an extra native-settings plugin
+  // (would require a rebuild + resync). The Settings UI copy tells the user
+  // to open iPhone Settings → Doxazo Expressions → Notifications manually.
+  return;
 }
+
