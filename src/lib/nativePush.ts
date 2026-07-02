@@ -7,6 +7,32 @@ export const isNativePush = () => Capacitor.isNativePlatform();
 export const nativePlatformName = () => Capacitor.getPlatform();
 
 export type NativePermState = 'granted' | 'denied' | 'prompt' | 'unsupported';
+export type NativePushStatus = {
+  permission: NativePermState;
+  registered: boolean;
+};
+
+const NATIVE_PUSH_REGISTERED_KEY = 'doxazo:native-push-registered';
+
+export function markNativePushRegistered(registered: boolean) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (registered) {
+      window.localStorage.setItem(NATIVE_PUSH_REGISTERED_KEY, 'true');
+    } else {
+      window.localStorage.removeItem(NATIVE_PUSH_REGISTERED_KEY);
+    }
+  } catch {}
+}
+
+export function hasNativePushRegistration() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(NATIVE_PUSH_REGISTERED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
 
 export async function checkNativePermission(): Promise<NativePermState> {
   if (!isNativePush()) return 'unsupported';
@@ -19,6 +45,22 @@ export async function checkNativePermission(): Promise<NativePermState> {
   } catch {
     return 'unsupported';
   }
+}
+
+export async function getNativePushStatus(): Promise<NativePushStatus> {
+  const permission = await checkNativePermission();
+  return {
+    permission,
+    registered: permission === 'granted' && hasNativePushRegistration(),
+  };
+}
+
+function pushRegistrationErrorMessage(raw: unknown) {
+  const message = typeof raw === 'string' ? raw : raw instanceof Error ? raw.message : 'Push registration failed';
+  if (message.toLowerCase().includes('aps-environment')) {
+    return 'This TestFlight build is missing the Apple Push Notifications entitlement. Install the next build after the iOS signing profile is regenerated with Push Notifications enabled.';
+  }
+  return message;
 }
 
 /**
@@ -34,7 +76,10 @@ export async function enableNativePush(): Promise<NativePermState> {
   if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
     perm = await PushNotifications.requestPermissions();
   }
-  if (perm.receive !== 'granted') return perm.receive === 'denied' ? 'denied' : 'prompt';
+  if (perm.receive !== 'granted') {
+    markNativePushRegistered(false);
+    return perm.receive === 'denied' ? 'denied' : 'prompt';
+  }
 
   // Attach BOTH listeners before calling register(), so we never miss the
   // native callback (registration can fire almost immediately on iOS when
@@ -57,6 +102,7 @@ export async function enableNativePush(): Promise<NativePermState> {
     };
 
     const timeout = setTimeout(() => {
+      markNativePushRegistered(false);
       finish(() =>
         reject(
           new Error(
@@ -73,6 +119,7 @@ export async function enableNativePush(): Promise<NativePermState> {
             const platform = nativePlatformName() === "ios" ? "ios" : "android";
             const { data: sess } = await supabase.auth.getSession();
             if (!sess?.session) {
+              markNativePushRegistered(false);
               return finish(() =>
                 reject(new Error("You need to be signed in to enable notifications on this device."))
               );
@@ -80,17 +127,24 @@ export async function enableNativePush(): Promise<NativePermState> {
             const { error } = await supabase.functions.invoke("register-device-token", {
               body: { token: token.value, platform, device_info: { ua: navigator.userAgent } },
             });
-            if (error) return finish(() => reject(new Error(error.message || "Failed to save device token")));
+            if (error) {
+              markNativePushRegistered(false);
+              return finish(() => reject(new Error(error.message || "Failed to save device token")));
+            }
+            markNativePushRegistered(true);
             finish(resolve);
           } catch (e: any) {
+            markNativePushRegistered(false);
             finish(() => reject(e));
           }
         });
         errHandle = await PushNotifications.addListener("registrationError", (err) => {
-          finish(() => reject(new Error(err?.error || "Push registration failed")));
+          markNativePushRegistered(false);
+          finish(() => reject(new Error(pushRegistrationErrorMessage(err?.error))));
         });
         await PushNotifications.register();
       } catch (e: any) {
+        markNativePushRegistered(false);
         finish(() => reject(e));
       }
     })();

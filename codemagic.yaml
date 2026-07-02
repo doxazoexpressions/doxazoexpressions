@@ -27,9 +27,51 @@ workflows:
         script: |
           npx cap sync ios
 
+      - name: Verify native push wiring
+        script: |
+          set -e
+          test -f ios/App/App/App.entitlements
+          /usr/libexec/PlistBuddy -c "Print :aps-environment" ios/App/App/App.entitlements | grep -q 'APS_ENVIRONMENT'
+          /usr/libexec/PlistBuddy -c "Print :UIBackgroundModes:0" ios/App/App/Info.plist | grep -q 'remote-notification'
+          grep -q 'didRegisterForRemoteNotificationsWithDeviceToken' ios/App/App/AppDelegate.swift
+          grep -q 'didFailToRegisterForRemoteNotificationsWithError' ios/App/App/AppDelegate.swift
+
       - name: Set up code signing
         script: |
           xcode-project use-profiles
+
+      - name: Verify provisioning profile includes APNs
+        script: |
+          python3 - <<'PY'
+          import glob
+          import os
+          import plistlib
+          import subprocess
+          import sys
+
+          bundle_id = "com.doxazo.expressions"
+          profile_paths = glob.glob(os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision"))
+          matches = []
+
+          for path in profile_paths:
+              try:
+                  xml = subprocess.check_output(["security", "cms", "-D", "-i", path], stderr=subprocess.DEVNULL)
+                  profile = plistlib.loads(xml)
+              except Exception:
+                  continue
+
+              entitlements = profile.get("Entitlements", {})
+              app_identifier = entitlements.get("application-identifier", "")
+              aps_environment = entitlements.get("aps-environment")
+              if app_identifier.endswith("." + bundle_id) and aps_environment:
+                  matches.append((profile.get("Name", path), aps_environment))
+
+          if not matches:
+              sys.exit("No provisioning profile for com.doxazo.expressions contains the aps-environment entitlement. Regenerate the App Store profile after enabling Push Notifications.")
+
+          for name, aps_environment in matches:
+              print(f"Using push-capable profile: {name} ({aps_environment})")
+          PY
 
       - name: Increment build number
         script: |
@@ -45,6 +87,16 @@ workflows:
         script: |
           cd ios/App
           xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
+
+      - name: Verify signed IPA includes APNs entitlement
+        script: |
+          set -e
+          IPA="$(ls ios/App/build/ios/ipa/*.ipa | head -n 1)"
+          test -n "$IPA"
+          rm -rf /tmp/doxazo_ipa
+          unzip -q "$IPA" -d /tmp/doxazo_ipa
+          codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app > /tmp/doxazo_entitlements.plist 2>/tmp/doxazo_codesign.log
+          /usr/libexec/PlistBuddy -c "Print :aps-environment" /tmp/doxazo_entitlements.plist | grep -q 'production'
 
 
     artifacts:
