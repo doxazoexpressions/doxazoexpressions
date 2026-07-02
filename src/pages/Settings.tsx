@@ -3,12 +3,31 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bell, Wifi, Heart } from "lucide-react";
+import { Bell, Wifi, WifiOff, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import {
+  getCachedCurrentDevotional,
+  getCachedRecentDevotionals,
+} from "@/lib/offlineCache";
+import { useEffect, useState } from "react";
 
 const Settings = () => {
   const online = useOnlineStatus();
+  const [cachedInfo, setCachedInfo] = useState({ hasToday: false, recentCount: 0 });
+
+  useEffect(() => {
+    const refresh = () => {
+      setCachedInfo({
+        hasToday: !!getCachedCurrentDevotional(),
+        recentCount: getCachedRecentDevotionals().length,
+      });
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [online]);
+
   return (
     <div className="min-h-screen bg-background">
       <SEO title="Settings" description="Manage notifications, offline reading, and favorites on Doxazo Expressions." path="/settings" />
