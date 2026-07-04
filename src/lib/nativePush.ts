@@ -107,13 +107,11 @@ export async function enableNativePush(): Promise<NativePermState> {
 
     const timeout = setTimeout(() => {
       markNativePushRegistered(false);
-      finish(() =>
-        reject(
-          new Error(
-            "Timed out waiting for the device token from Apple. Check your internet connection and try again — if this keeps happening, iOS didn't hand back an APNs token (usually a provisioning/entitlement issue)."
-          )
-        )
-      );
+      const platform = nativePlatformName();
+      const message = platform === 'android'
+        ? "Timed out waiting for the FCM token. Check the emulator has Google Play Services and internet, and that google-services.json is in android/app/."
+        : "Timed out waiting for the device token from Apple. Check your internet connection and try again — if this keeps happening, iOS didn't hand back an APNs token (usually a provisioning/entitlement issue).";
+      finish(() => reject(new Error(message)));
     }, 30000);
 
     (async () => {
