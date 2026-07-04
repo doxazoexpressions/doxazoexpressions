@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Doxazo Expressions</string>
+    <string name="title_activity_main">Doxazo Expressions</string>
+    <string name="package_name">com.doxazo.expressions</string>
+    <string name="custom_url_scheme">com.doxazo.expressions</string>
+</resources>
