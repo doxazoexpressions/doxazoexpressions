@@ -57,8 +57,12 @@ export async function getNativePushStatus(): Promise<NativePushStatus> {
 
 function pushRegistrationErrorMessage(raw: unknown) {
   const message = typeof raw === 'string' ? raw : raw instanceof Error ? raw.message : 'Push registration failed';
+  const platform = nativePlatformName();
   if (message.toLowerCase().includes('aps-environment')) {
     return 'This TestFlight build is missing the Apple Push Notifications entitlement. Install the next build after the iOS signing profile is regenerated with Push Notifications enabled.';
+  }
+  if (platform === 'android' && /firebase|fcm|google-services|SERVICE_NOT_AVAILABLE|MISSING_INSTANCEID_SERVICE/i.test(message)) {
+    return 'Android push is not fully configured yet. Ensure google-services.json is in android/app/ and the Firebase project is linked, then rebuild the app.';
   }
   return message;
 }
