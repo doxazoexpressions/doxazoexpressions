@@ -14,6 +14,7 @@ import {
   enableNativePush,
   getNativePushStatus,
   openNativeAppSettings,
+  nativePlatformName,
   type NativePermState,
 } from "@/lib/nativePush";
 import { useAuth } from "@/hooks/useAuth";
