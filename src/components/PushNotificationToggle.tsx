@@ -14,6 +14,7 @@ import {
   enableNativePush,
   getNativePushStatus,
   openNativeAppSettings,
+  nativePlatformName,
   type NativePermState,
 } from "@/lib/nativePush";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,12 +47,19 @@ const PushNotificationToggle = () => {
 
   // ---------- NATIVE (iOS/Android app) ----------
   if (native) {
+    const platform = nativePlatformName(); // 'ios' | 'android'
+    const isIOS = platform === "ios";
+    const settingsLabel = isIOS ? "iPhone Settings" : "Android Settings";
+    const settingsPath = isIOS
+      ? "Settings → Doxazo Expressions → Notifications"
+      : "Settings → Apps → Doxazo Expressions → Notifications";
+
     const fullyRegistered = nativePerm === "granted" && nativeRegistered;
     const label =
       fullyRegistered
         ? "Notifications enabled"
         : nativePerm === "denied"
-        ? "Notifications blocked in iPhone Settings"
+        ? `Notifications blocked in ${settingsLabel}`
         : nativePerm === "granted"
         ? "Permission granted — device registration needed"
         : "Enable daily notifications";
@@ -72,7 +80,7 @@ const PushNotificationToggle = () => {
           setNativeRegistered(false);
           toast({
             title: "Permission blocked",
-            description: "Open Settings to allow notifications for Doxazo Expressions.",
+            description: `Open ${settingsLabel} to allow notifications for Doxazo Expressions.`,
             variant: "destructive",
           });
         }
@@ -114,15 +122,15 @@ const PushNotificationToggle = () => {
         ) : nativePerm === "denied" ? (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              To turn notifications back on, open <span className="font-medium">iPhone Settings → Doxazo Expressions → Notifications</span> and enable Allow Notifications.
+              To turn notifications back on, open <span className="font-medium">{settingsPath}</span> and enable Allow Notifications.
             </p>
             <Button
               variant="outline"
               onClick={() => {
                 openNativeAppSettings();
                 toast({
-                  title: "Open iPhone Settings",
-                  description: "Settings → Doxazo Expressions → Notifications → Allow Notifications.",
+                  title: `Open ${settingsLabel}`,
+                  description: `${settingsPath} → Allow Notifications.`,
                 });
               }}
               className="gap-2"

@@ -57,8 +57,12 @@ export async function getNativePushStatus(): Promise<NativePushStatus> {
 
 function pushRegistrationErrorMessage(raw: unknown) {
   const message = typeof raw === 'string' ? raw : raw instanceof Error ? raw.message : 'Push registration failed';
+  const platform = nativePlatformName();
   if (message.toLowerCase().includes('aps-environment')) {
     return 'This TestFlight build is missing the Apple Push Notifications entitlement. Install the next build after the iOS signing profile is regenerated with Push Notifications enabled.';
+  }
+  if (platform === 'android' && /firebase|fcm|google-services|SERVICE_NOT_AVAILABLE|MISSING_INSTANCEID_SERVICE/i.test(message)) {
+    return 'Android push is not fully configured yet. Ensure google-services.json is in android/app/ and the Firebase project is linked, then rebuild the app.';
   }
   return message;
 }
@@ -103,13 +107,11 @@ export async function enableNativePush(): Promise<NativePermState> {
 
     const timeout = setTimeout(() => {
       markNativePushRegistered(false);
-      finish(() =>
-        reject(
-          new Error(
-            "Timed out waiting for the device token from Apple. Check your internet connection and try again — if this keeps happening, iOS didn't hand back an APNs token (usually a provisioning/entitlement issue)."
-          )
-        )
-      );
+      const platform = nativePlatformName();
+      const message = platform === 'android'
+        ? "Timed out waiting for the FCM token. Check the emulator has Google Play Services and internet, and that google-services.json is in android/app/."
+        : "Timed out waiting for the device token from Apple. Check your internet connection and try again — if this keeps happening, iOS didn't hand back an APNs token (usually a provisioning/entitlement issue).";
+      finish(() => reject(new Error(message)));
     }, 30000);
 
     (async () => {
