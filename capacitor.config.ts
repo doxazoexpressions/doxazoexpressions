@@ -23,6 +23,10 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
+      // Android: monochrome white icon in android/app/src/main/res/drawable/ic_stat_notify.png
+      smallIcon: 'ic_stat_notify',
+      iconColor: '#c9a24b',
+      sound: 'default',
     },
   },
   ios: {
