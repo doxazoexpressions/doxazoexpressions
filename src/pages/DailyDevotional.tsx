@@ -251,17 +251,13 @@ const DailyDevotional = () => {
                       </div>
                     )}
 
-                    {current.audio_url && (
-                      <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-2 text-sm font-medium text-foreground">
-                          <Play className="w-4 h-4 text-accent" />
-                          Listen to today's devotional
-                        </div>
-                        <audio controls src={current.audio_url} className="w-full" preload="none">
-                          Your browser does not support audio playback.
-                        </audio>
-                      </div>
-                    )}
+                    <AudioNarration
+                      title={current.title}
+                      scripture={current.scripture_text || current.scripture_reference}
+                      body={current.body}
+                      declaration={current.decree_and_declare || current.declaration}
+                      audioUrl={current.audio_url}
+                    />
 
                     {(() => {
                       const marker = /(\n\s*)INSPIRATION\s*(?::|—|-)?\s*(\n|$)/i;
