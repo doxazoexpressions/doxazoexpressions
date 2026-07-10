@@ -47,6 +47,9 @@ const emptyForm = () => ({
   decree_and_declare: "",
   inspiration_caption: "",
   audio_url: "",
+  audio_male_url: "",
+  audio_female_url: "",
+  audio_default_voice: "female" as VoiceKind,
   seo_title: "",
   seo_description: "",
 });
