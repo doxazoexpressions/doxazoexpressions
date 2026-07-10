@@ -115,8 +115,7 @@ const DailyDevotional = () => {
         const { data: recentData } = await supabase
           .from("devotionals")
           .select("id,title,scripture_reference,excerpt,body,category,series,publish_date")
-          .eq("published", true)
-          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+          .or(orFilter)
           .order("publish_date", { ascending: false })
           .limit(7);
         if (recentData && recentData.length) cacheRecentDevotionals(recentData);
