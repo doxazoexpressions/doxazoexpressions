@@ -31,6 +31,8 @@ import DeleteAccount from "./pages/DeleteAccount";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import Plans from "./pages/Plans";
+import PlanDetail from "./pages/PlanDetail";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +62,8 @@ const App = () => (
             <Route path="/delete-account" element={<DeleteAccount />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/plans" element={<Plans />} />
+            <Route path="/plans/:slug" element={<PlanDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
