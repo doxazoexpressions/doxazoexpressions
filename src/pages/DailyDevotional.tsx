@@ -77,13 +77,12 @@ const DailyDevotional = () => {
         setRecent(cachedRecent.filter((d) => d.id !== requestedId).slice(0, 6));
       }
 
-      const nowIso = new Date().toISOString();
+      const orFilter = liveDevotionalOr();
       const base = () =>
         supabase
           .from("devotionals")
           .select("*")
-          .eq("published", true)
-          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`);
+          .or(orFilter);
 
       try {
         if (requestedId) {
