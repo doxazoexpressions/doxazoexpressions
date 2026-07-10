@@ -310,11 +310,27 @@ const NativeHome = () => {
         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Themes for this season
         </h3>
-        <div className="flex flex-wrap gap-2">
-          {themePicks.map((c) => (
-            <CategoryBadge key={c.slug} slug={c.slug} />
-          ))}
+        <ThemesGrid />
+      </section>
+
+      {/* Reading Plans preview */}
+      <section className="px-5 mt-8">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Reading plans
+          </h3>
+          <Link to="/plans" className="text-xs text-accent inline-flex items-center gap-1">
+            See all <ArrowRight className="w-3 h-3" />
+          </Link>
         </div>
+        <Link
+          to="/plans"
+          onClick={() => hapticLight()}
+          className="block rounded-xl border border-border bg-gradient-to-br from-primary/10 to-accent/10 p-4 active:scale-[0.99] transition"
+        >
+          <p className="font-serif font-semibold text-base leading-snug">Walk through a devotional series</p>
+          <p className="text-xs text-muted-foreground mt-1">Multi-part journeys with progress tracking.</p>
+        </Link>
       </section>
 
       {/* Recent devotionals list */}
