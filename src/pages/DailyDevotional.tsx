@@ -22,6 +22,7 @@ import {
   getCachedDevotionalById,
   getCachedRecentDevotionals,
 } from "@/lib/offlineCache";
+import { recordRead } from "@/lib/readingHistory";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { WifiOff } from "lucide-react";
 
@@ -136,7 +137,16 @@ const DailyDevotional = () => {
   const online = useOnlineStatus();
 
   useEffect(() => {
-    if (current) track("devotional_open", { id: current.id, from: "devotional_page" });
+    if (current) {
+      track("devotional_open", { id: current.id, from: "devotional_page" });
+      recordRead({
+        id: current.id,
+        slug: current.slug,
+        title: current.title,
+        scripture_reference: current.scripture_reference,
+        publish_date: current.publish_date,
+      });
+    }
   }, [current?.id]);
 
   const seoTitle = current?.title ?? "Today's Devotional";
