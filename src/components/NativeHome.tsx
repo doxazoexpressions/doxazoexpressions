@@ -17,6 +17,9 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import CategoryBadge from "@/components/CategoryBadge";
 import { CATEGORIES } from "@/lib/categories";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
+import StreakCard from "@/components/StreakCard";
+import ThemesGrid from "@/components/ThemesGrid";
+import { hapticLight } from "@/lib/haptics";
 const devotionalHref = (d: { slug?: string | null; id: string }) =>
   `/devotional/${d.slug || d.id}`;
 
