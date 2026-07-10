@@ -25,6 +25,7 @@ import {
 import { recordRead } from "@/lib/readingHistory";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { WifiOff } from "lucide-react";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 
 type Devotional = {
   id: string;
@@ -77,13 +78,12 @@ const DailyDevotional = () => {
         setRecent(cachedRecent.filter((d) => d.id !== requestedId).slice(0, 6));
       }
 
-      const nowIso = new Date().toISOString();
+      const orFilter = liveDevotionalOr();
       const base = () =>
         supabase
           .from("devotionals")
           .select("*")
-          .eq("published", true)
-          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`);
+          .or(orFilter);
 
       try {
         if (requestedId) {
@@ -116,8 +116,7 @@ const DailyDevotional = () => {
         const { data: recentData } = await supabase
           .from("devotionals")
           .select("id,title,scripture_reference,excerpt,body,category,series,publish_date")
-          .eq("published", true)
-          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+          .or(orFilter)
           .order("publish_date", { ascending: false })
           .limit(7);
         if (recentData && recentData.length) cacheRecentDevotionals(recentData);

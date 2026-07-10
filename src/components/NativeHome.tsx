@@ -16,6 +16,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import CategoryBadge from "@/components/CategoryBadge";
 import { CATEGORIES } from "@/lib/categories";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 const devotionalHref = (d: { slug?: string | null; id: string }) =>
   `/devotional/${d.slug || d.id}`;
 
@@ -60,12 +61,11 @@ const NativeHome = () => {
     let cancelled = false;
     (async () => {
       try {
-        const nowIso = new Date().toISOString();
+        const orFilter = liveDevotionalOr();
         const { data: t } = await supabase
           .from("devotionals")
           .select("*")
-          .eq("published", true)
-          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+          .or(orFilter)
           .order("publish_date", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -76,8 +76,7 @@ const NativeHome = () => {
         const { data: r } = await supabase
           .from("devotionals")
           .select("id,title,scripture_reference,excerpt,body,category,series,publish_date,slug")
-          .eq("published", true)
-          .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+          .or(orFilter)
           .order("publish_date", { ascending: false })
           .limit(6);
         if (r) {

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sun, ArrowRight, Flame, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 import CategoryBadge from "./CategoryBadge";
 import { track } from "@/lib/analytics";
 
@@ -30,12 +31,10 @@ const DevotionalHighlight = () => {
   useEffect(() => {
     // Only show skeleton if loading takes longer than 200ms — avoids flash on fast networks
     const skeletonTimer = setTimeout(() => setShowSkeleton(true), 200);
-    const nowIso = new Date().toISOString();
     supabase
       .from("devotionals")
       .select("id,title,scripture_reference,scripture_text,body,excerpt,category,publish_date")
-      .eq("published", true)
-      .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+      .or(liveDevotionalOr())
       .order("publish_date", { ascending: false })
       .limit(4)
       .then(({ data, error }) => {

@@ -7,6 +7,7 @@ import { Compass, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CATEGORIES, CategorySlug } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { track } from "@/lib/analytics";
 
 const Categories = () => {
@@ -14,15 +15,14 @@ const Categories = () => {
 
   useEffect(() => {
     (async () => {
-      const nowIso = new Date().toISOString();
+      const orFilter = liveDevotionalOr();
       const results = await Promise.all(
         CATEGORIES.map((c) =>
           supabase
             .from("devotionals")
             .select("id", { count: "exact", head: true })
-            .eq("published", true)
             .eq("category", c.slug)
-            .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+            .or(orFilter)
             .then(({ count }) => [c.slug, count ?? 0] as const),
         ),
       );
