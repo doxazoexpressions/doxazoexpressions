@@ -273,7 +273,7 @@ const DailyDevotional = () => {
                               <h3 className="text-accent font-semibold text-xs uppercase tracking-[0.15em]">Today's Reflection</h3>
                             </div>
                             <div className="bg-muted/50 rounded-xl p-6 sm:p-8 md:p-10 border border-border/40">
-                              <div className="max-w-[66ch] mx-auto">
+                              <div className="max-w-[66ch] mx-auto reader-friendly">
                                 <DevotionalBody body={reflection} variant="full" />
                               </div>
                             </div>
