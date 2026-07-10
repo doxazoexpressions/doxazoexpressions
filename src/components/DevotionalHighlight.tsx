@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sun, ArrowRight, Flame, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 import CategoryBadge from "./CategoryBadge";
 import { track } from "@/lib/analytics";
 
