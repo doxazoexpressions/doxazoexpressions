@@ -155,7 +155,7 @@ const NativeHome = () => {
                       {today.excerpt}
                     </p>
                   )}
-                  <Button asChild size="lg" variant="secondary" className="w-full gap-2">
+                  <Button asChild size="lg" variant="secondary" className="w-full gap-2" onClick={() => hapticLight()}>
                     <Link to={devotionalHref(today)}>
                       Begin today's devotion <ArrowRight className="w-4 h-4" />
                     </Link>
@@ -174,6 +174,11 @@ const NativeHome = () => {
             </CardContent>
           </Card>
         </motion.div>
+      </div>
+
+      {/* Streak */}
+      <div className="px-5 mt-5">
+        <StreakCard />
       </div>
 
       {/* Continue reading */}
