@@ -151,6 +151,11 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
       declaration: form.decree_and_declare.trim() || null, // mirror legacy column
       inspiration_caption: form.inspiration_caption.trim() || null,
       audio_url: form.audio_url.trim() || null,
+      audio_male_url: form.audio_male_url.trim() || null,
+      audio_female_url: form.audio_female_url.trim() || null,
+      audio_default_voice: form.audio_default_voice,
+      audio_male_status: form.audio_male_url.trim() ? "published" : "none",
+      audio_female_status: form.audio_female_url.trim() ? "published" : "none",
       seo_title: form.seo_title.trim() || null,
       seo_description: form.seo_description.trim() || null,
       author_id: userId,
