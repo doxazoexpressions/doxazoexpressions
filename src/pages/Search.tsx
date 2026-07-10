@@ -29,13 +29,11 @@ const Search = () => {
     (async () => {
       setLoading(true);
       track("search_submit", { q: term });
-      const nowIso = new Date().toISOString();
       const like = `%${term.replace(/[%_]/g, "")}%`;
       const { data } = await supabase
         .from("devotionals")
         .select("id,title,scripture_reference,excerpt,body,category,series,publish_date")
-        .eq("published", true)
-        .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+        .or(liveDevotionalOr())
         .or(`title.ilike.${like},scripture_reference.ilike.${like},body.ilike.${like},excerpt.ilike.${like}`)
         .order("publish_date", { ascending: false })
         .limit(50);
