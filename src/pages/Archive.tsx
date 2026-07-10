@@ -38,12 +38,10 @@ const Archive = () => {
     }, 300);
 
     (async () => {
-      const nowIso = new Date().toISOString();
       let query = supabase
         .from("devotionals")
-        .select("id,title,scripture_reference,excerpt,body,category,series,publish_date,scheduled_for", { count: "exact" })
-        .eq("published", true)
-        .or(`scheduled_for.is.null,scheduled_for.lte.${nowIso}`)
+        .select("id,title,scripture_reference,excerpt,body,category,series,publish_date", { count: "exact" })
+        .or(liveDevotionalOr())
         .order("publish_date", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (activeCategory) query = query.eq("category", activeCategory);
