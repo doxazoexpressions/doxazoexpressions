@@ -42,6 +42,9 @@ type Devotional = {
   category: string | null;
   series: string | null;
   audio_url: string | null;
+  audio_male_url: string | null;
+  audio_female_url: string | null;
+  audio_default_voice: "male" | "female" | null;
   excerpt: string | null;
   inspiration_caption: string | null;
   prayer_section: string | null;
@@ -257,6 +260,9 @@ const DailyDevotional = () => {
                       body={current.body}
                       declaration={current.decree_and_declare || current.declaration}
                       audioUrl={current.audio_url}
+                      audioMaleUrl={(current as any).audio_male_url}
+                      audioFemaleUrl={(current as any).audio_female_url}
+                      defaultVoice={(current as any).audio_default_voice}
                     />
 
                     {(() => {
