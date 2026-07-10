@@ -82,6 +82,9 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
       decree_and_declare: initial.decree_and_declare ?? initial.declaration ?? "",
       inspiration_caption: initial.inspiration_caption ?? "",
       audio_url: initial.audio_url ?? "",
+      audio_male_url: initial.audio_male_url ?? "",
+      audio_female_url: initial.audio_female_url ?? "",
+      audio_default_voice: (initial.audio_default_voice as VoiceKind) ?? "female",
       seo_title: initial.seo_title ?? "",
       seo_description: initial.seo_description ?? "",
     };
