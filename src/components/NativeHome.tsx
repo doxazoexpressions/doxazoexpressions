@@ -16,7 +16,8 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import CategoryBadge from "@/components/CategoryBadge";
 import { CATEGORIES } from "@/lib/categories";
-import { devotionalHref } from "@/lib/devotionalSlug";
+const devotionalHref = (d: { slug?: string | null; id: string }) =>
+  `/devotional/${d.slug || d.id}`;
 
 type Devotional = {
   id: string;
@@ -304,7 +305,7 @@ const NativeHome = () => {
         </h3>
         <div className="flex flex-wrap gap-2">
           {themePicks.map((c) => (
-            <CategoryBadge key={c.slug} slug={c.slug} clickable />
+            <CategoryBadge key={c.slug} slug={c.slug} />
           ))}
         </div>
       </section>
