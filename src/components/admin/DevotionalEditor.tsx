@@ -322,9 +322,55 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
             <Label>Inspiration Caption</Label>
             <Input value={form.inspiration_caption} onChange={(e) => update({ inspiration_caption: e.target.value })} />
           </div>
-          <div className="md:col-span-2">
-            <Label>Audio URL</Label>
-            <Input value={form.audio_url} onChange={(e) => update({ audio_url: e.target.value })} placeholder="https://…mp3" />
+          <div className="md:col-span-2 space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <Label className="text-sm font-semibold">Narration Audio</Label>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Default voice</span>
+                <Select
+                  value={form.audio_default_voice}
+                  onValueChange={(v: VoiceKind) => update({ audio_default_voice: v })}
+                >
+                  <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="female">Female (Jane)</SelectItem>
+                    <SelectItem value="male">Male (Sam)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {!editing && (
+              <p className="text-xs text-muted-foreground">
+                Save the devotional as a draft first, then upload audio files here.
+              </p>
+            )}
+            {editing && (
+              <div className="grid sm:grid-cols-2 gap-3">
+                <AudioSlot
+                  label="Female (Jane)"
+                  value={form.audio_female_url}
+                  onChange={(v) => update({ audio_female_url: v })}
+                  devotionalId={initial!.id}
+                  voice="female"
+                />
+                <AudioSlot
+                  label="Male (Sam)"
+                  value={form.audio_male_url}
+                  onChange={(v) => update({ audio_male_url: v })}
+                  devotionalId={initial!.id}
+                  voice="male"
+                />
+              </div>
+            )}
+            <details className="text-xs">
+              <summary className="cursor-pointer text-muted-foreground">Legacy external audio URL (optional fallback)</summary>
+              <Input
+                className="mt-2"
+                value={form.audio_url}
+                onChange={(e) => update({ audio_url: e.target.value })}
+                placeholder="https://…mp3"
+              />
+            </details>
           </div>
           <div>
             <Label>SEO Title</Label>
