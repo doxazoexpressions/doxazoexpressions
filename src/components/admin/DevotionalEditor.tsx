@@ -16,8 +16,9 @@ import { CATEGORIES } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { slugify, slugifyWithDay } from "@/lib/devotionalSlug";
-import { Loader2, Save, Calendar, Globe, Trash2, X, Eye } from "lucide-react";
+import { Loader2, Save, Calendar, Globe, Trash2, X, Eye, Upload, Play } from "lucide-react";
 import { Link } from "react-router-dom";
+import { uploadDevotionalAudio, readAudioDurationSeconds, resolveAudioUrl, VoiceKind } from "@/lib/devotionalAudio";
 
 export type DevotionalRow = any;
 
