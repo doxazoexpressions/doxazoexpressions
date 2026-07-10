@@ -16,6 +16,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import CategoryBadge from "@/components/CategoryBadge";
 import { CATEGORIES } from "@/lib/categories";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 const devotionalHref = (d: { slug?: string | null; id: string }) =>
   `/devotional/${d.slug || d.id}`;
 
