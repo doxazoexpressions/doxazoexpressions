@@ -7,6 +7,7 @@ import { Compass, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CATEGORIES, CategorySlug } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { track } from "@/lib/analytics";
 
 const Categories = () => {
