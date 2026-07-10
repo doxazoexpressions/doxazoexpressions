@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { BookOpen, Search as SearchIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { CATEGORIES, CategorySlug } from "@/lib/categories";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
