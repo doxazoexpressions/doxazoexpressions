@@ -1,56 +1,86 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause, RotateCcw, Volume2, User, User2 } from "lucide-react";
+import { Play, Pause, RotateCcw, Volume2, User, User2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
+import {
+  VoiceKind,
+  getVoicePreference,
+  setVoicePreference,
+  resolveAudioUrl,
+} from "@/lib/devotionalAudio";
 
 type Props = {
   title: string;
   scripture?: string | null;
   body: string;
   declaration?: string | null;
+  /** Legacy single-URL fallback. */
   audioUrl?: string | null;
+  audioMaleUrl?: string | null;
+  audioFemaleUrl?: string | null;
+  defaultVoice?: VoiceKind | null;
 };
 
-type VoiceKind = "female" | "male";
-
-const VOICE_HINTS: Record<VoiceKind, string[]> = {
-  female: ["samantha", "victoria", "karen", "moira", "tessa", "female", "google us english", "en-us-standard-c", "susan", "zira", "allison"],
-  male:   ["daniel", "alex", "fred", "male", "google uk english male", "en-gb-standard-b", "david", "james", "mark"],
+const TTS_HINTS: Record<VoiceKind, string[]> = {
+  female: ["samantha", "victoria", "karen", "moira", "tessa", "female", "google us english", "susan", "zira", "allison"],
+  male:   ["daniel", "alex", "fred", "male", "google uk english male", "david", "james", "mark"],
 };
 
-function pickVoice(voices: SpeechSynthesisVoice[], kind: VoiceKind): SpeechSynthesisVoice | null {
+function pickTtsVoice(voices: SpeechSynthesisVoice[], kind: VoiceKind) {
   const en = voices.filter((v) => /^en/i.test(v.lang));
   const pool = en.length ? en : voices;
-  const hints = VOICE_HINTS[kind];
-  for (const h of hints) {
+  for (const h of TTS_HINTS[kind]) {
     const hit = pool.find((v) => v.name.toLowerCase().includes(h));
     if (hit) return hit;
   }
-  // Deterministic fallback: female = first pool voice, male = last.
   return kind === "female" ? pool[0] ?? null : pool[pool.length - 1] ?? null;
 }
 
-/**
- * Devotional audio narration. Prefers a real audio_url when present; otherwise
- * uses the browser SpeechSynthesis API with male/female voice selection.
- * Fully client-side — no gateway calls, works offline once the page is cached.
- */
-const AudioNarration = ({ title, scripture, body, declaration, audioUrl }: Props) => {
+const AudioNarration = ({
+  title, scripture, body, declaration,
+  audioUrl, audioMaleUrl, audioFemaleUrl, defaultVoice,
+}: Props) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [state, setState] = useState<"idle" | "playing" | "paused">("idle");
-  const [voiceKind, setVoiceKind] = useState<VoiceKind>("female");
+  const [state, setState] = useState<"idle" | "loading" | "playing" | "paused">("idle");
+  const [voiceKind, setVoiceKind] = useState<VoiceKind>(() => defaultVoice ?? getVoicePreference());
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [supported] = useState(() => typeof window !== "undefined" && "speechSynthesis" in window);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [usingTts, setUsingTts] = useState(false);
+  const ttsSupported = typeof window !== "undefined" && "speechSynthesis" in window;
+
+  // Resolve the correct stored URL for the chosen voice, with fallbacks.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const primary = voiceKind === "female" ? audioFemaleUrl : audioMaleUrl;
+      const secondary = voiceKind === "female" ? audioMaleUrl : audioFemaleUrl;
+      const source = primary || secondary || audioUrl || null;
+      const url = await resolveAudioUrl(source);
+      if (!cancelled) {
+        setResolvedUrl(url);
+        setUsingTts(!url);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [voiceKind, audioFemaleUrl, audioMaleUrl, audioUrl]);
 
   useEffect(() => {
-    if (!supported) return;
+    if (!ttsSupported) return;
     const load = () => setVoices(window.speechSynthesis.getVoices());
     load();
     window.speechSynthesis.onvoiceschanged = load;
-    return () => {
-      try { window.speechSynthesis.cancel(); } catch {}
-    };
-  }, [supported]);
+    return () => { try { window.speechSynthesis.cancel(); } catch {} };
+  }, [ttsSupported]);
+
+  // Reset player when devotional/audio changes
+  useEffect(() => {
+    setState("idle");
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    if (ttsSupported) { try { window.speechSynthesis.cancel(); } catch {} }
+  }, [resolvedUrl]);
 
   const script = useMemo(() => {
     const parts = [title];
@@ -60,11 +90,11 @@ const AudioNarration = ({ title, scripture, body, declaration, audioUrl }: Props
     return parts.join(". ");
   }, [title, scripture, body, declaration]);
 
-  const startTTS = () => {
-    if (!supported) return;
+  const startTts = () => {
+    if (!ttsSupported) return;
     try { window.speechSynthesis.cancel(); } catch {}
     const utter = new SpeechSynthesisUtterance(script);
-    const v = pickVoice(voices, voiceKind);
+    const v = pickTtsVoice(voices, voiceKind);
     if (v) utter.voice = v;
     utter.rate = 0.98;
     utter.pitch = voiceKind === "female" ? 1.05 : 0.9;
@@ -75,42 +105,53 @@ const AudioNarration = ({ title, scripture, body, declaration, audioUrl }: Props
     track("devotional_open", { audio: "tts", voice: voiceKind });
   };
 
-  const onPlay = () => {
-    if (audioUrl && audioRef.current) {
-      audioRef.current.play();
-      setState("playing");
+  const onPlay = async () => {
+    if (resolvedUrl && audioRef.current) {
+      try {
+        setState("loading");
+        await audioRef.current.play();
+        setState("playing");
+        track("devotional_open", { audio: "stored", voice: voiceKind });
+      } catch {
+        setState("idle");
+      }
       return;
     }
-    if (state === "paused" && supported) {
+    if (state === "paused" && ttsSupported) {
       window.speechSynthesis.resume();
       setState("playing");
       return;
     }
-    startTTS();
+    startTts();
   };
 
   const onPause = () => {
-    if (audioUrl && audioRef.current) { audioRef.current.pause(); setState("paused"); return; }
-    if (supported) { window.speechSynthesis.pause(); setState("paused"); }
+    if (resolvedUrl && audioRef.current) { audioRef.current.pause(); setState("paused"); return; }
+    if (ttsSupported) { window.speechSynthesis.pause(); setState("paused"); }
   };
 
-  const onRestart = () => {
-    if (audioUrl && audioRef.current) {
+  const onRestart = async () => {
+    if (resolvedUrl && audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play();
-      setState("playing");
+      try { await audioRef.current.play(); setState("playing"); } catch { setState("idle"); }
       return;
     }
-    startTTS();
+    startTts();
   };
 
   const switchVoice = (kind: VoiceKind) => {
+    if (kind === voiceKind) return;
     setVoiceKind(kind);
-    if (audioUrl) return;
-    if (state !== "idle") startTTS();
+    setVoicePreference(kind);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    if (ttsSupported) { try { window.speechSynthesis.cancel(); } catch {} }
+    setState("idle");
   };
 
-  const usingHostedAudio = !!audioUrl;
+  const hasBothVersions = !!audioMaleUrl && !!audioFemaleUrl;
+  const hasStoredForSelected =
+    (voiceKind === "female" ? !!audioFemaleUrl : !!audioMaleUrl);
+  const usingFallbackVoice = !hasStoredForSelected && !!resolvedUrl;
 
   return (
     <section
@@ -124,14 +165,21 @@ const AudioNarration = ({ title, scripture, body, declaration, audioUrl }: Props
         </h3>
       </div>
 
-      {usingHostedAudio && (
-        <audio ref={audioRef} src={audioUrl!} preload="none" onEnded={() => setState("idle")} className="hidden" />
+      {resolvedUrl && (
+        <audio
+          ref={audioRef}
+          src={resolvedUrl}
+          preload="none"
+          onEnded={() => setState("idle")}
+          onCanPlay={() => setState((s) => (s === "loading" ? "paused" : s))}
+          className="hidden"
+        />
       )}
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {state !== "playing" ? (
           <Button onClick={onPlay} size="sm" className="gap-2 min-h-11" aria-label="Play narration">
-            <Play className="w-4 h-4" /> Play
+            {state === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Play
           </Button>
         ) : (
           <Button onClick={onPause} size="sm" variant="secondary" className="gap-2 min-h-11" aria-label="Pause narration">
@@ -142,33 +190,33 @@ const AudioNarration = ({ title, scripture, body, declaration, audioUrl }: Props
           <RotateCcw className="w-4 h-4" /> Restart
         </Button>
 
-        {!usingHostedAudio && supported && (
-          <div className="ml-auto inline-flex rounded-lg border border-border overflow-hidden" role="group" aria-label="Choose voice">
-            <button
-              onClick={() => switchVoice("female")}
-              className={`px-3 py-2 text-xs font-medium min-h-11 inline-flex items-center gap-1.5 ${voiceKind === "female" ? "bg-accent text-accent-foreground" : "bg-transparent text-foreground/80"}`}
-              aria-pressed={voiceKind === "female"}
-            >
-              <User2 className="w-3.5 h-3.5" /> Female
-            </button>
-            <button
-              onClick={() => switchVoice("male")}
-              className={`px-3 py-2 text-xs font-medium min-h-11 inline-flex items-center gap-1.5 ${voiceKind === "male" ? "bg-accent text-accent-foreground" : "bg-transparent text-foreground/80"}`}
-              aria-pressed={voiceKind === "male"}
-            >
-              <User className="w-3.5 h-3.5" /> Male
-            </button>
-          </div>
-        )}
+        <div className="ml-auto inline-flex rounded-lg border border-border overflow-hidden" role="group" aria-label="Choose voice">
+          <button
+            onClick={() => switchVoice("female")}
+            className={`px-3 py-2 text-xs font-medium min-h-11 inline-flex items-center gap-1.5 ${voiceKind === "female" ? "bg-accent text-accent-foreground" : "bg-transparent text-foreground/80"}`}
+            aria-pressed={voiceKind === "female"}
+          >
+            <User2 className="w-3.5 h-3.5" /> Jane
+          </button>
+          <button
+            onClick={() => switchVoice("male")}
+            className={`px-3 py-2 text-xs font-medium min-h-11 inline-flex items-center gap-1.5 ${voiceKind === "male" ? "bg-accent text-accent-foreground" : "bg-transparent text-foreground/80"}`}
+            aria-pressed={voiceKind === "male"}
+          >
+            <User className="w-3.5 h-3.5" /> Sam
+          </button>
+        </div>
       </div>
-      {!usingHostedAudio && !supported && (
-        <p className="text-xs text-muted-foreground">Audio narration isn't supported on this device's browser.</p>
-      )}
-      {!usingHostedAudio && supported && (
-        <p className="text-xs text-muted-foreground">
-          Narrated using your device's built-in voice. Choose male or female.
-        </p>
-      )}
+
+      <p className="text-xs text-muted-foreground">
+        {usingTts
+          ? "Premium narration coming soon — using your device's built-in voice for now."
+          : usingFallbackVoice
+            ? `Only the ${voiceKind === "female" ? "male (Sam)" : "female (Jane)"} version is available for this devotional — playing that instead.`
+            : hasBothVersions
+              ? "Choose Jane or Sam to switch between our premium narrators."
+              : "Premium narration by Doxazo Expressions."}
+      </p>
     </section>
   );
 };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,9 @@ import { CATEGORIES } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { slugify, slugifyWithDay } from "@/lib/devotionalSlug";
-import { Loader2, Save, Calendar, Globe, Trash2, X, Eye } from "lucide-react";
+import { Loader2, Save, Calendar, Globe, Trash2, X, Eye, Upload, Play } from "lucide-react";
 import { Link } from "react-router-dom";
+import { uploadDevotionalAudio, readAudioDurationSeconds, resolveAudioUrl, VoiceKind } from "@/lib/devotionalAudio";
 
 export type DevotionalRow = any;
 
@@ -46,6 +47,9 @@ const emptyForm = () => ({
   decree_and_declare: "",
   inspiration_caption: "",
   audio_url: "",
+  audio_male_url: "",
+  audio_female_url: "",
+  audio_default_voice: "female" as VoiceKind,
   seo_title: "",
   seo_description: "",
 });
@@ -78,6 +82,9 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
       decree_and_declare: initial.decree_and_declare ?? initial.declaration ?? "",
       inspiration_caption: initial.inspiration_caption ?? "",
       audio_url: initial.audio_url ?? "",
+      audio_male_url: initial.audio_male_url ?? "",
+      audio_female_url: initial.audio_female_url ?? "",
+      audio_default_voice: (initial.audio_default_voice as VoiceKind) ?? "female",
       seo_title: initial.seo_title ?? "",
       seo_description: initial.seo_description ?? "",
     };
@@ -144,6 +151,11 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
       declaration: form.decree_and_declare.trim() || null, // mirror legacy column
       inspiration_caption: form.inspiration_caption.trim() || null,
       audio_url: form.audio_url.trim() || null,
+      audio_male_url: form.audio_male_url.trim() || null,
+      audio_female_url: form.audio_female_url.trim() || null,
+      audio_default_voice: form.audio_default_voice,
+      audio_male_status: form.audio_male_url.trim() ? "published" : "none",
+      audio_female_status: form.audio_female_url.trim() ? "published" : "none",
       seo_title: form.seo_title.trim() || null,
       seo_description: form.seo_description.trim() || null,
       author_id: userId,
@@ -310,9 +322,55 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
             <Label>Inspiration Caption</Label>
             <Input value={form.inspiration_caption} onChange={(e) => update({ inspiration_caption: e.target.value })} />
           </div>
-          <div className="md:col-span-2">
-            <Label>Audio URL</Label>
-            <Input value={form.audio_url} onChange={(e) => update({ audio_url: e.target.value })} placeholder="https://…mp3" />
+          <div className="md:col-span-2 space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <Label className="text-sm font-semibold">Narration Audio</Label>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Default voice</span>
+                <Select
+                  value={form.audio_default_voice}
+                  onValueChange={(v: VoiceKind) => update({ audio_default_voice: v })}
+                >
+                  <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="female">Female (Jane)</SelectItem>
+                    <SelectItem value="male">Male (Sam)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {!editing && (
+              <p className="text-xs text-muted-foreground">
+                Save the devotional as a draft first, then upload audio files here.
+              </p>
+            )}
+            {editing && (
+              <div className="grid sm:grid-cols-2 gap-3">
+                <AudioSlot
+                  label="Female (Jane)"
+                  value={form.audio_female_url}
+                  onChange={(v) => update({ audio_female_url: v })}
+                  devotionalId={initial!.id}
+                  voice="female"
+                />
+                <AudioSlot
+                  label="Male (Sam)"
+                  value={form.audio_male_url}
+                  onChange={(v) => update({ audio_male_url: v })}
+                  devotionalId={initial!.id}
+                  voice="male"
+                />
+              </div>
+            )}
+            <details className="text-xs">
+              <summary className="cursor-pointer text-muted-foreground">Legacy external audio URL (optional fallback)</summary>
+              <Input
+                className="mt-2"
+                value={form.audio_url}
+                onChange={(e) => update({ audio_url: e.target.value })}
+                placeholder="https://…mp3"
+              />
+            </details>
           </div>
           <div>
             <Label>SEO Title</Label>
@@ -351,5 +409,81 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function AudioSlot({
+  label, value, onChange, devotionalId, voice,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  devotionalId: string;
+  voice: VoiceKind;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const u = await resolveAudioUrl(value);
+      if (!cancelled) setPreviewUrl(u);
+    })();
+    return () => { cancelled = true; };
+  }, [value]);
+
+  const onFile = async (file: File) => {
+    setUploading(true);
+    try {
+      const path = await uploadDevotionalAudio(devotionalId, voice, file);
+      await readAudioDurationSeconds(file); // best-effort; stored elsewhere if needed
+      onChange(path);
+      toast({ title: `${label} uploaded`, description: "Remember to save the devotional to persist this audio." });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message ?? String(err), variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-md border border-border bg-background p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold">{label}</span>
+        {value ? (
+          <Badge variant="secondary" className="text-[10px]">Attached</Badge>
+        ) : (
+          <Badge variant="outline" className="text-[10px]">None</Badge>
+        )}
+      </div>
+      {previewUrl && (
+        <audio controls preload="none" src={previewUrl} className="w-full h-9" />
+      )}
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="audio/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.currentTarget.value = ""; }}
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          className="flex-1"
+        >
+          {uploading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Upload className="w-3.5 h-3.5 mr-1" />}
+          {value ? "Replace" : "Upload"}
+        </Button>
+        {value && (
+          <Button type="button" size="sm" variant="ghost" onClick={() => onChange("")}>Remove</Button>
+        )}
+      </div>
+    </div>
   );
 }

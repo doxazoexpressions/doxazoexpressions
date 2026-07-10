@@ -79,6 +79,13 @@ export type Database = {
       }
       devotionals: {
         Row: {
+          audio_default_voice: string | null
+          audio_duration_seconds_female: number | null
+          audio_duration_seconds_male: number | null
+          audio_female_status: string | null
+          audio_female_url: string | null
+          audio_male_status: string | null
+          audio_male_url: string | null
           audio_url: string | null
           author_id: string | null
           body: string
@@ -106,6 +113,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audio_default_voice?: string | null
+          audio_duration_seconds_female?: number | null
+          audio_duration_seconds_male?: number | null
+          audio_female_status?: string | null
+          audio_female_url?: string | null
+          audio_male_status?: string | null
+          audio_male_url?: string | null
           audio_url?: string | null
           author_id?: string | null
           body: string
@@ -133,6 +147,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audio_default_voice?: string | null
+          audio_duration_seconds_female?: number | null
+          audio_duration_seconds_male?: number | null
+          audio_female_status?: string | null
+          audio_female_url?: string | null
+          audio_male_status?: string | null
+          audio_male_url?: string | null
           audio_url?: string | null
           author_id?: string | null
           body?: string
