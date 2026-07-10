@@ -171,3 +171,24 @@
     border-radius: 1px;
   }
 }
+
+/* Accessibility: respect prefers-reduced-motion — calmer devotional reading. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Neurodivergent-friendly reader — softer contrast, generous rhythm. */
+.reader-friendly p,
+.reader-friendly li {
+  line-height: 1.85;
+  letter-spacing: 0.005em;
+  max-width: 66ch;
+}
+.reader-friendly h2, .reader-friendly h3 {
+  line-height: 1.35;
+}

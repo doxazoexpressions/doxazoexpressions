@@ -23,9 +23,13 @@ import {
   getCachedRecentDevotionals,
 } from "@/lib/offlineCache";
 import { recordRead } from "@/lib/readingHistory";
+import { markReadToday } from "@/lib/streak";
+import { markPlanItemRead, planSlug } from "@/lib/planProgress";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { WifiOff } from "lucide-react";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
+import AudioNarration from "@/components/AudioNarration";
+import ShareVerseCard from "@/components/ShareVerseCard";
 
 type Devotional = {
   id: string;
@@ -145,6 +149,9 @@ const DailyDevotional = () => {
         scripture_reference: current.scripture_reference,
         publish_date: current.publish_date,
       });
+      markReadToday();
+      const plan = planSlug(current.series);
+      if (plan) markPlanItemRead(plan, current.id);
     }
   }, [current?.id]);
 
@@ -244,17 +251,13 @@ const DailyDevotional = () => {
                       </div>
                     )}
 
-                    {current.audio_url && (
-                      <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-2 text-sm font-medium text-foreground">
-                          <Play className="w-4 h-4 text-accent" />
-                          Listen to today's devotional
-                        </div>
-                        <audio controls src={current.audio_url} className="w-full" preload="none">
-                          Your browser does not support audio playback.
-                        </audio>
-                      </div>
-                    )}
+                    <AudioNarration
+                      title={current.title}
+                      scripture={current.scripture_text || current.scripture_reference}
+                      body={current.body}
+                      declaration={current.decree_and_declare || current.declaration}
+                      audioUrl={current.audio_url}
+                    />
 
                     {(() => {
                       const marker = /(\n\s*)INSPIRATION\s*(?::|—|-)?\s*(\n|$)/i;
@@ -270,7 +273,7 @@ const DailyDevotional = () => {
                               <h3 className="text-accent font-semibold text-xs uppercase tracking-[0.15em]">Today's Reflection</h3>
                             </div>
                             <div className="bg-muted/50 rounded-xl p-6 sm:p-8 md:p-10 border border-border/40">
-                              <div className="max-w-[66ch] mx-auto">
+                              <div className="max-w-[66ch] mx-auto reader-friendly">
                                 <DevotionalBody body={reflection} variant="full" />
                               </div>
                             </div>
@@ -326,6 +329,14 @@ const DailyDevotional = () => {
                           Browse Archive <ArrowRight className="w-4 h-4" />
                         </Link>
                       </Button>
+                    </div>
+
+                    <div className="mt-6 flex flex-col items-center gap-2">
+                      <ShareVerseCard
+                        title={current.title}
+                        scripture={current.scripture_reference}
+                        quote={current.decree_and_declare || current.declaration || current.excerpt || current.scripture_text}
+                      />
                     </div>
                   </CardContent>
                 </Card>
