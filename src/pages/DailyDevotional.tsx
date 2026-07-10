@@ -23,9 +23,13 @@ import {
   getCachedRecentDevotionals,
 } from "@/lib/offlineCache";
 import { recordRead } from "@/lib/readingHistory";
+import { markReadToday } from "@/lib/streak";
+import { markPlanItemRead, planSlug } from "@/lib/planProgress";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { WifiOff } from "lucide-react";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
+import AudioNarration from "@/components/AudioNarration";
+import ShareVerseCard from "@/components/ShareVerseCard";
 
 type Devotional = {
   id: string;
@@ -145,6 +149,9 @@ const DailyDevotional = () => {
         scripture_reference: current.scripture_reference,
         publish_date: current.publish_date,
       });
+      markReadToday();
+      const plan = planSlug(current.series);
+      if (plan) markPlanItemRead(plan, current.id);
     }
   }, [current?.id]);
 
