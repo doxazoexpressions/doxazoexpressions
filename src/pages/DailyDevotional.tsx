@@ -330,6 +330,14 @@ const DailyDevotional = () => {
                         </Link>
                       </Button>
                     </div>
+
+                    <div className="mt-6 flex flex-col items-center gap-2">
+                      <ShareVerseCard
+                        title={current.title}
+                        scripture={current.scripture_reference}
+                        quote={current.decree_and_declare || current.declaration || current.excerpt || current.scripture_text}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               </motion.article>
