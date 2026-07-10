@@ -25,6 +25,7 @@ import {
 import { recordRead } from "@/lib/readingHistory";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { WifiOff } from "lucide-react";
+import { liveDevotionalOr } from "@/lib/liveDevotional";
 
 type Devotional = {
   id: string;
