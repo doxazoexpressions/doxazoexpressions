@@ -411,3 +411,79 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
     </Card>
   );
 }
+
+function AudioSlot({
+  label, value, onChange, devotionalId, voice,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  devotionalId: string;
+  voice: VoiceKind;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const u = await resolveAudioUrl(value);
+      if (!cancelled) setPreviewUrl(u);
+    })();
+    return () => { cancelled = true; };
+  }, [value]);
+
+  const onFile = async (file: File) => {
+    setUploading(true);
+    try {
+      const path = await uploadDevotionalAudio(devotionalId, voice, file);
+      await readAudioDurationSeconds(file); // best-effort; stored elsewhere if needed
+      onChange(path);
+      toast({ title: `${label} uploaded`, description: "Remember to save the devotional to persist this audio." });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message ?? String(err), variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-md border border-border bg-background p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold">{label}</span>
+        {value ? (
+          <Badge variant="secondary" className="text-[10px]">Attached</Badge>
+        ) : (
+          <Badge variant="outline" className="text-[10px]">None</Badge>
+        )}
+      </div>
+      {previewUrl && (
+        <audio controls preload="none" src={previewUrl} className="w-full h-9" />
+      )}
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="audio/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.currentTarget.value = ""; }}
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          className="flex-1"
+        >
+          {uploading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Upload className="w-3.5 h-3.5 mr-1" />}
+          {value ? "Replace" : "Upload"}
+        </Button>
+        {value && (
+          <Button type="button" size="sm" variant="ghost" onClick={() => onChange("")}>Remove</Button>
+        )}
+      </div>
+    </div>
+  );
+}
