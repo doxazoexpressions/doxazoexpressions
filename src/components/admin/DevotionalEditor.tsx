@@ -422,6 +422,7 @@ function AudioSlot({
   voice: VoiceKind;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -448,6 +449,26 @@ function AudioSlot({
     }
   };
 
+  const onGenerate = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-devotional-audio", {
+        body: { devotionalId, voice },
+      });
+      if (error) throw error;
+      if (data?.path) {
+        onChange(data.path);
+        toast({ title: `${label} generated`, description: "ElevenLabs narration saved. Refresh preview to hear it." });
+      } else {
+        throw new Error("No path returned");
+      }
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message ?? String(err), variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="rounded-md border border-border bg-background p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -461,7 +482,7 @@ function AudioSlot({
       {previewUrl && (
         <audio controls preload="none" src={previewUrl} className="w-full h-9" />
       )}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <input
           ref={inputRef}
           type="file"
@@ -472,13 +493,22 @@ function AudioSlot({
         <Button
           type="button"
           size="sm"
+          disabled={generating || uploading}
+          onClick={onGenerate}
+          className="flex-1 min-w-[8rem]"
+        >
+          {generating ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Play className="w-3.5 h-3.5 mr-1" />}
+          {value ? "Regenerate" : "Generate"}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
           variant="outline"
-          disabled={uploading}
+          disabled={uploading || generating}
           onClick={() => inputRef.current?.click()}
-          className="flex-1"
         >
           {uploading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Upload className="w-3.5 h-3.5 mr-1" />}
-          {value ? "Replace" : "Upload"}
+          Upload
         </Button>
         {value && (
           <Button type="button" size="sm" variant="ghost" onClick={() => onChange("")}>Remove</Button>
@@ -487,3 +517,4 @@ function AudioSlot({
     </div>
   );
 }
+
