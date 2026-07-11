@@ -136,8 +136,11 @@ Deno.serve(async (req) => {
     if (!ttsRes.ok) {
       const detail = await ttsRes.text();
       console.error("ElevenLabs TTS failed", ttsRes.status, detail);
+      const friendly = ttsRes.status === 402
+        ? "Your ElevenLabs plan does not allow API access to these library voices. Upgrade the ElevenLabs account (Starter tier or higher) or clone Joy/Wisdom into your account and update the voice IDs."
+        : `ElevenLabs TTS failed (${ttsRes.status}).`;
       return new Response(
-        JSON.stringify({ error: "ElevenLabs TTS failed", status: ttsRes.status, details: detail }),
+        JSON.stringify({ error: friendly, status: ttsRes.status, details: detail }),
         { status: ttsRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
