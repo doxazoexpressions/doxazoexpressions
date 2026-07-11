@@ -7,6 +7,7 @@ import {
   getVoicePreference,
   setVoicePreference,
   resolveAudioUrl,
+  DEFAULT_VOICE_PATHS,
 } from "@/lib/devotionalAudio";
 
 type Props = {
