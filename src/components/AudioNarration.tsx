@@ -215,13 +215,11 @@ const AudioNarration = ({
       <p className="text-xs text-muted-foreground">
         {usingTts
           ? "Premium narration coming soon — using your device's built-in voice for now."
-          : usingDefault
-            ? `Narrated in our approved ${voiceKind === "female" ? "Jane" : "Sam"} voice — a custom recording for this devotional is on the way.`
-            : usingFallbackVoice
-              ? `Only the ${voiceKind === "female" ? "male (Sam)" : "female (Jane)"} version is available for this devotional — playing that instead.`
-              : hasBothVersions
-                ? "Choose Jane or Sam to switch between our premium narrators."
-                : "Premium narration by Doxazo Expressions."}
+          : usingFallbackVoice
+            ? `Only the ${voiceKind === "female" ? "male (Sam)" : "female (Jane)"} version is available for this devotional — playing that instead.`
+            : hasBothVersions
+              ? "Choose Jane or Sam to switch between our premium narrators."
+              : "Premium narration by Doxazo Expressions."}
       </p>
     </section>
   );
