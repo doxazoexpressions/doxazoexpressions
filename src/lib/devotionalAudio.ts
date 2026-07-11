@@ -4,6 +4,16 @@ export type VoiceKind = "female" | "male";
 export const AUDIO_BUCKET = "devotional-audio";
 const PREF_KEY = "doxazo:voice-preference";
 
+/**
+ * Approved Sam/Jane narration references — used as the standard voice
+ * whenever a specific devotional has no per-voice audio uploaded yet.
+ * Stored under devotional-audio/defaults/{voice}.mp3.
+ */
+export const DEFAULT_VOICE_PATHS: Record<VoiceKind, string> = {
+  male: "defaults/sam.mp3",
+  female: "defaults/jane.mp3",
+};
+
 export function getVoicePreference(): VoiceKind {
   if (typeof window === "undefined") return "female";
   const v = window.localStorage.getItem(PREF_KEY);

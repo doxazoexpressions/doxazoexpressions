@@ -7,6 +7,7 @@ import {
   getVoicePreference,
   setVoicePreference,
   resolveAudioUrl,
+  DEFAULT_VOICE_PATHS,
 } from "@/lib/devotionalAudio";
 
 type Props = {
@@ -46,19 +47,27 @@ const AudioNarration = ({
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [usingTts, setUsingTts] = useState(false);
+  const [usingDefault, setUsingDefault] = useState(false);
   const ttsSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
-  // Resolve the correct stored URL for the chosen voice, with fallbacks.
+  // Resolve the correct stored URL for the chosen voice, with fallbacks:
+  // 1) per-devotional audio for selected voice
+  // 2) per-devotional audio for the other voice
+  // 3) legacy single audio_url
+  // 4) approved Sam/Jane default narration (bucket: defaults/{voice}.mp3)
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const primary = voiceKind === "female" ? audioFemaleUrl : audioMaleUrl;
       const secondary = voiceKind === "female" ? audioMaleUrl : audioFemaleUrl;
-      const source = primary || secondary || audioUrl || null;
+      const perDevotional = primary || secondary || audioUrl || null;
+      const isDefault = !perDevotional;
+      const source = perDevotional || DEFAULT_VOICE_PATHS[voiceKind];
       const url = await resolveAudioUrl(source);
       if (!cancelled) {
         setResolvedUrl(url);
         setUsingTts(!url);
+        setUsingDefault(isDefault && !!url);
       }
     })();
     return () => { cancelled = true; };
@@ -211,11 +220,13 @@ const AudioNarration = ({
       <p className="text-xs text-muted-foreground">
         {usingTts
           ? "Premium narration coming soon — using your device's built-in voice for now."
-          : usingFallbackVoice
-            ? `Only the ${voiceKind === "female" ? "male (Sam)" : "female (Jane)"} version is available for this devotional — playing that instead.`
-            : hasBothVersions
-              ? "Choose Jane or Sam to switch between our premium narrators."
-              : "Premium narration by Doxazo Expressions."}
+          : usingDefault
+            ? `Narrated in our approved ${voiceKind === "female" ? "Jane" : "Sam"} voice — a custom recording for this devotional is on the way.`
+            : usingFallbackVoice
+              ? `Only the ${voiceKind === "female" ? "male (Sam)" : "female (Jane)"} version is available for this devotional — playing that instead.`
+              : hasBothVersions
+                ? "Choose Jane or Sam to switch between our premium narrators."
+                : "Premium narration by Doxazo Expressions."}
       </p>
     </section>
   );
