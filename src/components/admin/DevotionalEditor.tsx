@@ -333,28 +333,28 @@ export default function DevotionalEditor({ userId, initial, onSaved, onCancel, o
                 >
                   <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="female">Female (Jane)</SelectItem>
-                    <SelectItem value="male">Male (Sam)</SelectItem>
+                    <SelectItem value="female">Female (Joy)</SelectItem>
+                    <SelectItem value="male">Male (Wisdom)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             {!editing && (
               <p className="text-xs text-muted-foreground">
-                Save the devotional as a draft first, then upload audio files here.
+                Save the devotional as a draft first, then generate or upload audio here.
               </p>
             )}
             {editing && (
               <div className="grid sm:grid-cols-2 gap-3">
                 <AudioSlot
-                  label="Female (Jane)"
+                  label="Female (Joy)"
                   value={form.audio_female_url}
                   onChange={(v) => update({ audio_female_url: v })}
                   devotionalId={initial!.id}
                   voice="female"
                 />
                 <AudioSlot
-                  label="Male (Sam)"
+                  label="Male (Wisdom)"
                   value={form.audio_male_url}
                   onChange={(v) => update({ audio_male_url: v })}
                   devotionalId={initial!.id}
