@@ -7,7 +7,6 @@ import {
   getVoicePreference,
   setVoicePreference,
   resolveAudioUrl,
-  DEFAULT_VOICE_PATHS,
 } from "@/lib/devotionalAudio";
 
 type Props = {
@@ -47,27 +46,23 @@ const AudioNarration = ({
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [usingTts, setUsingTts] = useState(false);
-  const [usingDefault, setUsingDefault] = useState(false);
   const ttsSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
   // Resolve the correct stored URL for the chosen voice, with fallbacks:
   // 1) per-devotional audio for selected voice
   // 2) per-devotional audio for the other voice
   // 3) legacy single audio_url
-  // 4) approved Sam/Jane default narration (bucket: defaults/{voice}.mp3)
+  // (no static default — narration must be generated per devotional)
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const primary = voiceKind === "female" ? audioFemaleUrl : audioMaleUrl;
       const secondary = voiceKind === "female" ? audioMaleUrl : audioFemaleUrl;
-      const perDevotional = primary || secondary || audioUrl || null;
-      const isDefault = !perDevotional;
-      const source = perDevotional || DEFAULT_VOICE_PATHS[voiceKind];
+      const source = primary || secondary || audioUrl || null;
       const url = await resolveAudioUrl(source);
       if (!cancelled) {
         setResolvedUrl(url);
         setUsingTts(!url);
-        setUsingDefault(isDefault && !!url);
       }
     })();
     return () => { cancelled = true; };
