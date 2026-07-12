@@ -230,17 +230,12 @@ Deno.serve(async (req) => {
     }
     const narration = new Uint8Array(await ttsRes.arrayBuffer());
 
-    // Wrap with soft intro/outro music beds (cached in storage). MP3 frame
-    // concatenation plays back sequentially in standard audio elements.
-    const [intro, outro] = await Promise.all([
-      getMusicBed(admin, apiKey, "intro"),
-      getMusicBed(admin, apiKey, "outro"),
-    ]);
-    const chunks = [intro, narration, outro].filter(Boolean) as Uint8Array[];
-    const total = chunks.reduce((n, c) => n + c.byteLength, 0);
-    const audio = new Uint8Array(total);
-    let offset = 0;
-    for (const c of chunks) { audio.set(c, offset); offset += c.byteLength; }
+    // Ensure the background music bed exists in storage; the client layers
+    // it underneath narration playback at low volume (looped).
+    await ensureMusicBed(admin, apiKey);
+
+    const audio = narration;
+
 
     const path = `${devotionalId}/${voice}-${Date.now()}.mp3`;
     const { error: upErr } = await admin.storage.from(BUCKET).upload(path, audio, {
