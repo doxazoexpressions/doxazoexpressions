@@ -22,27 +22,113 @@ const VOICE_IDS: Record<VoiceKind, string> = {
 const BUCKET = "devotional-audio";
 const MODEL_ID = "eleven_multilingual_v2";
 
+const STANDARD_INTRO =
+  "Welcome to Doxazo Expressions, where the presence of God meets us daily, His glory is revealed, and Jesus is glorified through His Word. Let us receive today's devotional.";
+const STANDARD_CLOSING =
+  "This is Doxazo Expressions. May the presence of God remain with you, may His glory rest upon your day, and may Jesus Christ be revealed and glorified in your life. Amen.";
+
+// Narration order (Declaration is intentionally suppressed for now):
+//  1. soft intro music (prepended as audio, not narrated)
+//  2. standard Doxazo intro line
+//  3. devotional series / part
+//  4. today's title
+//  5. scripture
+//  6. reflection (body)
+//  7. prayer section only
+//  8. inspiration caption
+//  9. standard Doxazo closing line
+// 10. soft outro music (appended as audio)
 function buildScript(d: {
   title?: string | null;
+  series?: string | null;
+  day?: number | null;
   scripture_reference?: string | null;
   scripture_text?: string | null;
   body?: string | null;
-  decree_and_declare?: string | null;
-  declaration?: string | null;
   prayer_section?: string | null;
+  inspiration_caption?: string | null;
 }): string {
   const parts: string[] = [];
-  if (d.title) parts.push(d.title.trim());
+  parts.push(STANDARD_INTRO);
+
+  const seriesLine = [
+    d.series ? d.series.trim() : null,
+    d.day ? `Part ${d.day}` : null,
+  ].filter(Boolean).join(" — ");
+  if (seriesLine) parts.push(seriesLine + ".");
+
+  if (d.title) parts.push(`Today's title: ${d.title.trim()}.`);
+
   if (d.scripture_reference || d.scripture_text) {
+    const ref = d.scripture_reference?.trim();
+    const text = d.scripture_text?.trim();
     parts.push(
-      [d.scripture_reference, d.scripture_text].filter(Boolean).join(" — "),
+      `Scripture. ${[ref, text].filter(Boolean).join(" — ")}`,
     );
   }
-  if (d.body) parts.push(d.body.replace(/\s+/g, " ").trim());
+
+  if (d.body) parts.push(`Reflection. ${d.body.replace(/\s+/g, " ").trim()}`);
+
   if (d.prayer_section) parts.push(`Prayer. ${d.prayer_section.trim()}`);
-  const decl = d.decree_and_declare ?? d.declaration;
-  if (decl) parts.push(`Declaration. ${decl.trim()}`);
-  return parts.join(". ");
+
+  // Declaration / decree_and_declare intentionally omitted per current directive.
+
+  if (d.inspiration_caption) {
+    parts.push(`Inspiration. ${d.inspiration_caption.trim()}`);
+  }
+
+  parts.push(STANDARD_CLOSING);
+
+  return parts.join(" \n\n ");
+}
+
+// Generate (and cache) a short soft ambient music bed via ElevenLabs
+// sound-generation. Cached under `_music/{kind}.mp3` in the audio bucket so
+// we don't regenerate on every narration.
+async function getMusicBed(
+  admin: ReturnType<typeof createClient>,
+  apiKey: string,
+  kind: "intro" | "outro",
+): Promise<Uint8Array | null> {
+  const path = `_music/${kind}.mp3`;
+  try {
+    const { data: existing } = await admin.storage.from(BUCKET).download(path);
+    if (existing) return new Uint8Array(await existing.arrayBuffer());
+  } catch { /* fall through to generate */ }
+
+  const prompt = kind === "intro"
+    ? "Soft, reverent worship pad. Warm gentle piano and ambient strings, slow rise, peaceful and prayerful. No drums, no percussion, no vocals. Suitable as a devotional intro bed."
+    : "Soft, reverent worship pad. Warm gentle piano and ambient strings, slow gentle fade, peaceful and prayerful benediction. No drums, no percussion, no vocals. Suitable as a devotional outro bed.";
+
+  try {
+    const res = await fetch("https://api.elevenlabs.io/v1/sound-generation", {
+      method: "POST",
+      headers: {
+        "xi-api-key": apiKey,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg",
+      },
+      body: JSON.stringify({
+        text: prompt,
+        duration_seconds: 6,
+        prompt_influence: 0.5,
+      }),
+    });
+    if (!res.ok) {
+      console.warn(`music bed (${kind}) generation failed`, res.status, await res.text());
+      return null;
+    }
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    await admin.storage.from(BUCKET).upload(path, bytes, {
+      contentType: "audio/mpeg",
+      upsert: true,
+      cacheControl: "31536000",
+    });
+    return bytes;
+  } catch (e) {
+    console.warn(`music bed (${kind}) error`, (e as Error).message);
+    return null;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -144,7 +230,19 @@ Deno.serve(async (req) => {
         { status: ttsRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    const audio = new Uint8Array(await ttsRes.arrayBuffer());
+    const narration = new Uint8Array(await ttsRes.arrayBuffer());
+
+    // Wrap with soft intro/outro music beds (cached in storage). MP3 frame
+    // concatenation plays back sequentially in standard audio elements.
+    const [intro, outro] = await Promise.all([
+      getMusicBed(admin, apiKey, "intro"),
+      getMusicBed(admin, apiKey, "outro"),
+    ]);
+    const chunks = [intro, narration, outro].filter(Boolean) as Uint8Array[];
+    const total = chunks.reduce((n, c) => n + c.byteLength, 0);
+    const audio = new Uint8Array(total);
+    let offset = 0;
+    for (const c of chunks) { audio.set(c, offset); offset += c.byteLength; }
 
     const path = `${devotionalId}/${voice}-${Date.now()}.mp3`;
     const { error: upErr } = await admin.storage.from(BUCKET).upload(path, audio, {
