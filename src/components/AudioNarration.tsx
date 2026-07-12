@@ -266,6 +266,7 @@ const AudioNarration = ({
       {resolvedUrl && (
         <audio
           ref={audioRef}
+          crossOrigin="anonymous"
           src={resolvedUrl}
           preload="none"
           onEnded={() => { fadeBedGain(0, 1200); stopDuckingLoop(); window.setTimeout(() => bedRef.current?.pause(), 1250); setState("idle"); }}
@@ -276,6 +277,7 @@ const AudioNarration = ({
       {bedUrl && (
         <audio
           ref={bedRef}
+          crossOrigin="anonymous"
           src={bedUrl}
           preload="auto"
           loop
