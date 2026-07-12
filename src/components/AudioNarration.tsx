@@ -36,9 +36,11 @@ const AudioNarration = ({
   audioUrl, audioMaleUrl, audioFemaleUrl, defaultVoice,
 }: Props) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const bedRef = useRef<HTMLAudioElement | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const [voiceKind, setVoiceKind] = useState<VoiceKind>(() => defaultVoice ?? getVoicePreference());
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [bedUrl, setBedUrl] = useState<string | null>(null);
 
   // Only use per-devotional narration for the selected voice; fall back to
   // the other voice for this same devotional, or the legacy single URL.
@@ -55,6 +57,32 @@ const AudioNarration = ({
     return () => { cancelled = true; };
   }, [voiceKind, audioFemaleUrl, audioMaleUrl, audioUrl]);
 
+  // Load the shared background music bed once.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const url = await getMusicBedUrl();
+      if (!cancelled) setBedUrl(url);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fade helpers for the background bed so it eases in/out gracefully.
+  const BED_VOLUME = 0.18;
+  const fadeBed = (target: number, ms = 800) => {
+    const bed = bedRef.current;
+    if (!bed) return;
+    const start = bed.volume;
+    const startTime = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - startTime) / ms);
+      bed.volume = start + (target - start) * t;
+      if (t < 1) requestAnimationFrame(step);
+      else if (target === 0) bed.pause();
+    };
+    requestAnimationFrame(step);
+  };
+
   // Reset player when devotional/audio changes
   useEffect(() => {
     setState("idle");
@@ -62,13 +90,26 @@ const AudioNarration = ({
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
+    if (bedRef.current) {
+      bedRef.current.pause();
+      bedRef.current.currentTime = 0;
+    }
   }, [resolvedUrl]);
+
+  const startBed = async () => {
+    const bed = bedRef.current;
+    if (!bed) return;
+    bed.loop = true;
+    bed.volume = 0;
+    try { await bed.play(); fadeBed(BED_VOLUME); } catch { /* ignore */ }
+  };
 
   const onPlay = async () => {
     if (!resolvedUrl || !audioRef.current) return;
     try {
       setState("loading");
       await audioRef.current.play();
+      startBed();
       setState("playing");
       track("devotional_open", { audio: "stored", voice: voiceKind });
     } catch {
@@ -77,13 +118,18 @@ const AudioNarration = ({
   };
 
   const onPause = () => {
-    if (resolvedUrl && audioRef.current) { audioRef.current.pause(); setState("paused"); }
+    if (resolvedUrl && audioRef.current) {
+      audioRef.current.pause();
+      fadeBed(0, 400);
+      setState("paused");
+    }
   };
 
   const onRestart = async () => {
     if (!resolvedUrl || !audioRef.current) return;
     audioRef.current.currentTime = 0;
-    try { await audioRef.current.play(); setState("playing"); } catch { setState("idle"); }
+    if (bedRef.current) bedRef.current.currentTime = 0;
+    try { await audioRef.current.play(); startBed(); setState("playing"); } catch { setState("idle"); }
   };
 
   const switchVoice = (kind: VoiceKind) => {
@@ -91,8 +137,10 @@ const AudioNarration = ({
     setVoiceKind(kind);
     setVoicePreference(kind);
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    if (bedRef.current) { bedRef.current.pause(); bedRef.current.currentTime = 0; }
     setState("idle");
   };
+
 
   const hasBothVersions = !!audioMaleUrl && !!audioFemaleUrl;
   const hasStoredForSelected =
