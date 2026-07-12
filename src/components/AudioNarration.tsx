@@ -101,8 +101,10 @@ const AudioNarration = ({
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
       analyser.smoothingTimeConstant = 0.75;
+      // Main audible path: narration → destination (unchanged, full volume)
+      narrSrc.connect(ctx.destination);
+      // Side-chain tap for RMS-based ducking (analyser NOT connected to output)
       narrSrc.connect(analyser);
-      analyser.connect(ctx.destination);
       narrationAnalyserRef.current = analyser;
 
       const bedSrc = ctx.createMediaElementSource(bedEl);
