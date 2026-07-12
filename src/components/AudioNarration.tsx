@@ -68,17 +68,21 @@ const AudioNarration = ({
   }, []);
 
   // Fade helpers for the background bed so it eases in/out gracefully.
-  const BED_VOLUME = 0.18;
+  // Soft background bed sits well below narration; gentle ducking is applied
+  // automatically because narration plays at full volume on top of this bed.
+  const BED_VOLUME = 0.12;
+  const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
   const fadeBed = (target: number, ms = 800) => {
     const bed = bedRef.current;
     if (!bed) return;
     const start = bed.volume;
+    const safeTarget = clamp01(target);
     const startTime = performance.now();
     const step = (now: number) => {
       const t = Math.min(1, (now - startTime) / ms);
-      bed.volume = start + (target - start) * t;
+      bed.volume = clamp01(start + (safeTarget - start) * t);
       if (t < 1) requestAnimationFrame(step);
-      else if (target === 0) bed.pause();
+      else if (safeTarget === 0) bed.pause();
     };
     requestAnimationFrame(step);
   };
