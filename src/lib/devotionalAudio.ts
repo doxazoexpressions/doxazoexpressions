@@ -14,6 +14,20 @@ export function setVoicePreference(v: VoiceKind) {
   try { window.localStorage.setItem(PREF_KEY, v); } catch {}
 }
 
+/** Resolve the shared background music bed URL (cached signed URL). */
+let cachedBedUrl: { url: string; expires: number } | null = null;
+export async function getMusicBedUrl(): Promise<string | null> {
+  const now = Date.now();
+  if (cachedBedUrl && cachedBedUrl.expires > now) return cachedBedUrl.url;
+  const { data, error } = await supabase.storage
+    .from(AUDIO_BUCKET)
+    .createSignedUrl("_music/bed.mp3", 60 * 60);
+  if (error || !data?.signedUrl) return null;
+  cachedBedUrl = { url: data.signedUrl, expires: now + 50 * 60 * 1000 };
+  return data.signedUrl;
+}
+
+
 /** Resolve a stored value (external URL or bucket path) to a playable URL. */
 export async function resolveAudioUrl(value?: string | null): Promise<string | null> {
   if (!value) return null;
