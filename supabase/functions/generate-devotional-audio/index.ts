@@ -82,23 +82,22 @@ function buildScript(d: {
   return parts.join(" \n\n ");
 }
 
-// Generate (and cache) a short soft ambient music bed via ElevenLabs
-// sound-generation. Cached under `_music/{kind}.mp3` in the audio bucket so
-// we don't regenerate on every narration.
-async function getMusicBed(
+// Generate (and cache) a soft, loopable ambient music bed via ElevenLabs
+// sound-generation. Stored at `_music/bed.mp3` in the audio bucket so the
+// client can layer it underneath the narration at a low volume as calm
+// background atmosphere while Joy/Wisdom read the devotional.
+async function ensureMusicBed(
   admin: ReturnType<typeof createClient>,
   apiKey: string,
-  kind: "intro" | "outro",
-): Promise<Uint8Array | null> {
-  const path = `_music/${kind}.mp3`;
+): Promise<void> {
+  const path = `_music/bed.mp3`;
   try {
     const { data: existing } = await admin.storage.from(BUCKET).download(path);
-    if (existing) return new Uint8Array(await existing.arrayBuffer());
+    if (existing) return;
   } catch { /* fall through to generate */ }
 
-  const prompt = kind === "intro"
-    ? "Soft, reverent worship pad. Warm gentle piano and ambient strings, slow rise, peaceful and prayerful. No drums, no percussion, no vocals. Suitable as a devotional intro bed."
-    : "Soft, reverent worship pad. Warm gentle piano and ambient strings, slow gentle fade, peaceful and prayerful benediction. No drums, no percussion, no vocals. Suitable as a devotional outro bed.";
+  const prompt =
+    "Soft, reverent worship pad. Warm gentle piano and ambient strings, slow evolving, peaceful and prayerful. No drums, no percussion, no vocals, no melody hook. Seamless loopable devotional background bed.";
 
   try {
     const res = await fetch("https://api.elevenlabs.io/v1/sound-generation", {
@@ -110,13 +109,13 @@ async function getMusicBed(
       },
       body: JSON.stringify({
         text: prompt,
-        duration_seconds: 6,
+        duration_seconds: 22,
         prompt_influence: 0.5,
       }),
     });
     if (!res.ok) {
-      console.warn(`music bed (${kind}) generation failed`, res.status, await res.text());
-      return null;
+      console.warn("music bed generation failed", res.status, await res.text());
+      return;
     }
     const bytes = new Uint8Array(await res.arrayBuffer());
     await admin.storage.from(BUCKET).upload(path, bytes, {
@@ -124,12 +123,11 @@ async function getMusicBed(
       upsert: true,
       cacheControl: "31536000",
     });
-    return bytes;
   } catch (e) {
-    console.warn(`music bed (${kind}) error`, (e as Error).message);
-    return null;
+    console.warn("music bed error", (e as Error).message);
   }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
