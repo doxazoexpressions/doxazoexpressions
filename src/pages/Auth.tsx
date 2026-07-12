@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Cross, MailCheck, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { MailCheck, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import BrandMark from "@/components/BrandMark";
 import { z } from "zod";
 
 const emailSchema = z.string().trim().email("Please enter a valid email").max(255);
