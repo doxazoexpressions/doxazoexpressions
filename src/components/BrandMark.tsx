@@ -1,4 +1,4 @@
-import appIcon from "/app-icon-512.png";
+const appIcon = "/app-icon-512.png";
 
 interface BrandMarkProps {
   size?: number;
