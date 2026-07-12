@@ -91,9 +91,7 @@ const ResetPassword = () => {
       </Helmet>
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2.5 mb-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <Cross className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <BrandMark size={40} />
           <span className="text-2xl font-serif font-bold text-foreground">
             Doxazo<span className="text-accent"> Expressions</span>
           </span>
