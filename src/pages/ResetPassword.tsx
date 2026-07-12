@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Cross, Eye, EyeOff, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import BrandMark from "@/components/BrandMark";
 import { z } from "zod";
 
 type Status = "checking" | "ready" | "invalid" | "done";
