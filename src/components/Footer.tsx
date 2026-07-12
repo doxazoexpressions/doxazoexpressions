@@ -15,9 +15,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-3 gap-12 mb-16">
           <div>
             <Link to="/" className="flex items-center gap-2 mb-5">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <Cross className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <BrandMark size={40} />
               <span className="text-lg font-serif font-bold text-foreground leading-tight">
                 Doxazo<span className="text-accent"> Expressions</span>
               </span>
