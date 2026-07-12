@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, X, Cross, Search as SearchIcon, LogIn, LogOut, User } from "lucide-react";
+import { Menu, X, Search as SearchIcon, LogIn, LogOut, User } from "lucide-react";
+import BrandMark from "./BrandMark";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -39,9 +40,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 sm:h-18 py-3 sm:py-4 gap-4">
           <Link to="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <Cross className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <BrandMark size={40} />
             <span className="text-xl font-serif font-bold text-foreground">
               Doxazo<span className="text-accent"> Expressions</span>
             </span>
