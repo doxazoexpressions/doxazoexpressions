@@ -101,8 +101,10 @@ const AudioNarration = ({
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
       analyser.smoothingTimeConstant = 0.75;
+      // Main audible path: narration → destination (unchanged, full volume)
+      narrSrc.connect(ctx.destination);
+      // Side-chain tap for RMS-based ducking (analyser NOT connected to output)
       narrSrc.connect(analyser);
-      analyser.connect(ctx.destination);
       narrationAnalyserRef.current = analyser;
 
       const bedSrc = ctx.createMediaElementSource(bedEl);
@@ -185,7 +187,10 @@ const AudioNarration = ({
     const bed = bedRef.current;
     if (!bed) return;
     bed.loop = true;
-    bed.volume = 1; // gain is controlled by the Web Audio graph
+    // If the Web Audio graph is live, the <audio> element output is routed
+    // ONLY through the graph — set element volume to 1 and control level via
+    // the GainNode. If the graph failed to build, fall back to element volume.
+    bed.volume = graphBuiltRef.current ? 1 : BED_BASE;
     try {
       await bed.play();
       if (graphBuiltRef.current) {
