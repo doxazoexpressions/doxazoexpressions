@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Cross } from "lucide-react";
+import BrandMark from "./BrandMark";
 
 const Footer = () => {
   const navLinks = [
