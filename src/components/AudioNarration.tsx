@@ -165,11 +165,21 @@ const AudioNarration = ({
           ref={audioRef}
           src={resolvedUrl}
           preload="none"
-          onEnded={() => setState("idle")}
+          onEnded={() => { fadeBed(0, 1200); setState("idle"); }}
           onCanPlay={() => setState((s) => (s === "loading" ? "paused" : s))}
           className="hidden"
         />
       )}
+      {bedUrl && (
+        <audio
+          ref={bedRef}
+          src={bedUrl}
+          preload="auto"
+          loop
+          className="hidden"
+        />
+      )}
+
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {state !== "playing" ? (
