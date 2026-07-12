@@ -42,9 +42,22 @@ const AudioNarration = ({
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [bedUrl, setBedUrl] = useState<string | null>(null);
 
+  // Web Audio graph for real-time ducking
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const bedGainRef = useRef<GainNode | null>(null);
+  const narrationAnalyserRef = useRef<AnalyserNode | null>(null);
+  const graphBuiltRef = useRef(false);
+  const duckRafRef = useRef<number | null>(null);
+
+  // Ducking levels (linear gain on the bed):
+  //  BED_BASE  → when the narrator is quiet/paused between phrases
+  //  BED_DUCK  → when Joy/Wisdom is actively speaking (voice sits clearly on top)
+  const BED_BASE = 0.16;
+  const BED_DUCK = 0.05;
+  const SPEECH_THRESHOLD = 0.045; // RMS threshold on the narration signal
+
   // Only use per-devotional narration for the selected voice; fall back to
   // the other voice for this same devotional, or the legacy single URL.
-  // No device TTS, no static default clip.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -67,29 +80,90 @@ const AudioNarration = ({
     return () => { cancelled = true; };
   }, []);
 
-  // Fade helpers for the background bed so it eases in/out gracefully.
-  // Soft background bed sits well below narration; gentle ducking is applied
-  // automatically because narration plays at full volume on top of this bed.
-  const BED_VOLUME = 0.12;
-  const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
-  const fadeBed = (target: number, ms = 800) => {
-    const bed = bedRef.current;
-    if (!bed) return;
-    const start = bed.volume;
-    const safeTarget = clamp01(target);
-    const startTime = performance.now();
-    const step = (now: number) => {
-      const t = Math.min(1, (now - startTime) / ms);
-      bed.volume = clamp01(start + (safeTarget - start) * t);
-      if (t < 1) requestAnimationFrame(step);
-      else if (safeTarget === 0) bed.pause();
+  // Build the Web Audio graph on first play:
+  //   narration → analyser → destination
+  //   bed → highpass(~180Hz) → gainNode → destination
+  // The analyser measures narration RMS in real time and drives the bed gain
+  // for smooth broadcast-style ducking. The highpass carves low-mid space so
+  // Joy/Wisdom's warmth sits clearly on top of the pad.
+  const buildGraph = () => {
+    if (graphBuiltRef.current) return;
+    const audioEl = audioRef.current;
+    const bedEl = bedRef.current;
+    if (!audioEl || !bedEl) return;
+    try {
+      const Ctx: typeof AudioContext =
+        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new Ctx();
+      audioCtxRef.current = ctx;
+
+      const narrSrc = ctx.createMediaElementSource(audioEl);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.75;
+      narrSrc.connect(analyser);
+      analyser.connect(ctx.destination);
+      narrationAnalyserRef.current = analyser;
+
+      const bedSrc = ctx.createMediaElementSource(bedEl);
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.value = 180;
+      hp.Q.value = 0.7;
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      bedSrc.connect(hp);
+      hp.connect(gain);
+      gain.connect(ctx.destination);
+      bedGainRef.current = gain;
+
+      graphBuiltRef.current = true;
+    } catch (e) {
+      console.warn("Web Audio graph unavailable, falling back:", (e as Error).message);
+    }
+  };
+
+  const startDuckingLoop = () => {
+    if (duckRafRef.current != null) return;
+    const analyser = narrationAnalyserRef.current;
+    const ctx = audioCtxRef.current;
+    const gain = bedGainRef.current;
+    if (!analyser || !ctx || !gain) return;
+    const buf = new Float32Array(analyser.fftSize);
+    const tick = () => {
+      analyser.getFloatTimeDomainData(buf);
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      const rms = Math.sqrt(sum / buf.length);
+      const target = rms > SPEECH_THRESHOLD ? BED_DUCK : BED_BASE;
+      // ~120ms attack, ~350ms release for a natural sidechain feel
+      const tc = target < gain.gain.value ? 0.12 : 0.35;
+      gain.gain.setTargetAtTime(target, ctx.currentTime, tc);
+      duckRafRef.current = requestAnimationFrame(tick);
     };
-    requestAnimationFrame(step);
+    duckRafRef.current = requestAnimationFrame(tick);
+  };
+
+  const stopDuckingLoop = () => {
+    if (duckRafRef.current != null) {
+      cancelAnimationFrame(duckRafRef.current);
+      duckRafRef.current = null;
+    }
+  };
+
+  const fadeBedGain = (target: number, ms = 600) => {
+    const gain = bedGainRef.current;
+    const ctx = audioCtxRef.current;
+    if (!gain || !ctx) return;
+    gain.gain.cancelScheduledValues(ctx.currentTime);
+    gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(Math.max(0, Math.min(1, target)), ctx.currentTime + ms / 1000);
   };
 
   // Reset player when devotional/audio changes
   useEffect(() => {
     setState("idle");
+    stopDuckingLoop();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -100,18 +174,35 @@ const AudioNarration = ({
     }
   }, [resolvedUrl]);
 
+  useEffect(() => {
+    return () => {
+      stopDuckingLoop();
+      audioCtxRef.current?.close().catch(() => {});
+    };
+  }, []);
+
   const startBed = async () => {
     const bed = bedRef.current;
     if (!bed) return;
     bed.loop = true;
-    bed.volume = 0;
-    try { await bed.play(); fadeBed(BED_VOLUME); } catch { /* ignore */ }
+    bed.volume = 1; // gain is controlled by the Web Audio graph
+    try {
+      await bed.play();
+      if (graphBuiltRef.current) {
+        fadeBedGain(BED_BASE, 900);
+        startDuckingLoop();
+      }
+    } catch { /* ignore */ }
   };
 
   const onPlay = async () => {
     if (!resolvedUrl || !audioRef.current) return;
     try {
       setState("loading");
+      buildGraph();
+      if (audioCtxRef.current?.state === "suspended") {
+        await audioCtxRef.current.resume();
+      }
       await audioRef.current.play();
       startBed();
       setState("playing");
@@ -124,7 +215,9 @@ const AudioNarration = ({
   const onPause = () => {
     if (resolvedUrl && audioRef.current) {
       audioRef.current.pause();
-      fadeBed(0, 400);
+      fadeBedGain(0, 400);
+      stopDuckingLoop();
+      window.setTimeout(() => { bedRef.current?.pause(); }, 450);
       setState("paused");
     }
   };
@@ -135,6 +228,7 @@ const AudioNarration = ({
     if (bedRef.current) bedRef.current.currentTime = 0;
     try { await audioRef.current.play(); startBed(); setState("playing"); } catch { setState("idle"); }
   };
+
 
   const switchVoice = (kind: VoiceKind) => {
     if (kind === voiceKind) return;
@@ -169,7 +263,7 @@ const AudioNarration = ({
           ref={audioRef}
           src={resolvedUrl}
           preload="none"
-          onEnded={() => { fadeBed(0, 1200); setState("idle"); }}
+          onEnded={() => { fadeBedGain(0, 1200); stopDuckingLoop(); window.setTimeout(() => bedRef.current?.pause(), 1250); setState("idle"); }}
           onCanPlay={() => setState((s) => (s === "loading" ? "paused" : s))}
           className="hidden"
         />
