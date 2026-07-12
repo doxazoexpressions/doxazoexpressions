@@ -263,7 +263,7 @@ const AudioNarration = ({
           ref={audioRef}
           src={resolvedUrl}
           preload="none"
-          onEnded={() => { fadeBed(0, 1200); setState("idle"); }}
+          onEnded={() => { fadeBedGain(0, 1200); stopDuckingLoop(); window.setTimeout(() => bedRef.current?.pause(), 1250); setState("idle"); }}
           onCanPlay={() => setState((s) => (s === "loading" ? "paused" : s))}
           className="hidden"
         />
