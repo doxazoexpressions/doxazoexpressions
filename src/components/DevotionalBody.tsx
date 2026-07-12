@@ -95,27 +95,28 @@ const DevotionalBody = ({ body, variant = "full", className = "" }: DevotionalBo
     return { paragraphs, emphasisKey, closingIdx };
   }, [body]);
 
-  const spacing = variant === "compact" ? "space-y-2.5" : "space-y-3 md:space-y-4";
-  const leading = variant === "compact" ? "leading-[1.62]" : "leading-[1.72]";
+  const spacing = variant === "compact" ? "space-y-4" : "space-y-5 md:space-y-6";
+  const leading = variant === "compact" ? "leading-[1.72]" : "leading-[1.85]";
   const size = variant === "compact" ? "text-[15.5px] md:text-[16px]" : "text-[16.5px] md:text-[18px]";
 
   if (paragraphs.length === 0) return null;
 
   return (
-    <div className={`font-serif text-foreground/90 ${size} ${leading} ${spacing} ${className}`}>
+    <div className={`font-serif text-foreground/90 text-left ${size} ${leading} ${spacing} ${className}`}>
       {paragraphs.map((p, i) => {
         if (i === closingIdx) {
+          // Keep the closing highlighted quote centered
           return (
-            <p key={i} className="text-center italic text-primary font-medium pt-1">
+            <p key={i} className="text-center italic text-primary font-medium pt-2">
               {p}
             </p>
           );
         }
         const sentences = splitSentences(p);
-        // Single short standalone sentence (and not the closing line) → centered emphasis line
+        // Short standalone emphasis line — keep visual weight but align left with the body
         if (sentences.length === 1 && p.length < 110 && paragraphs.length > 2) {
           return (
-            <p key={i} className="text-center font-semibold text-primary">
+            <p key={i} className="font-semibold text-primary">
               {p}
             </p>
           );
