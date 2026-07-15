@@ -33,6 +33,8 @@ import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import Plans from "./pages/Plans";
 import PlanDetail from "./pages/PlanDetail";
+import Journal from "./pages/Journal";
+import Highlights from "./pages/Highlights";
 
 const queryClient = new QueryClient();
 
