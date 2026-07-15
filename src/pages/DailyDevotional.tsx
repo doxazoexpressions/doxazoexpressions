@@ -253,6 +253,14 @@ const DailyDevotional = () => {
                         {current.scripture_text && (
                           <p className="italic text-foreground/90 font-serif leading-relaxed">"{current.scripture_text}"</p>
                         )}
+                        {current.scripture_text && (
+                          <HighlightVerseButton
+                            devotionalId={current.id}
+                            devotionalTitle={current.title}
+                            reference={current.scripture_reference}
+                            verseText={current.scripture_text}
+                          />
+                        )}
                       </div>
                     )}
 
