@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, RotateCcw, Volume2, User, User2, Loader2 } from "lucide-react";
+import { Play, Pause, RotateCcw, Volume2, User, User2, Loader2, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
 import {
@@ -41,6 +41,9 @@ const AudioNarration = ({
   const [voiceKind, setVoiceKind] = useState<VoiceKind>(() => defaultVoice ?? getVoicePreference());
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [bedUrl, setBedUrl] = useState<string | null>(null);
+  // Sleep-timer minutes remaining (null = off). When it hits 0 we fade out and pause.
+  const [sleepMinutes, setSleepMinutes] = useState<number | null>(null);
+  const sleepTimerRef = useRef<number | null>(null);
 
   // Web Audio graph for real-time ducking
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -200,6 +203,34 @@ const AudioNarration = ({
     } catch { /* ignore */ }
   };
 
+  // Populate the OS "Now Playing" tile (iOS lock-screen, Android media
+  // notification, Bluetooth car head units) so background audio behaves like
+  // a real native audio app — Apple looks for this specifically.
+  const applyMediaSession = () => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title,
+        artist: voiceKind === "male" ? "Wisdom · Doxazo Expressions" : "Joy · Doxazo Expressions",
+        album: scripture ?? "Doxazo Expressions",
+        artwork: [
+          { src: "/app-icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/app-icon-512.png", sizes: "512x512", type: "image/png" },
+        ],
+      });
+      navigator.mediaSession.setActionHandler("play", () => { void onPlay(); });
+      navigator.mediaSession.setActionHandler("pause", () => { onPause(); });
+      navigator.mediaSession.setActionHandler("seekbackward", (e) => {
+        const step = (e as MediaSessionActionDetails).seekOffset ?? 15;
+        if (audioRef.current) audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - step);
+      });
+      navigator.mediaSession.setActionHandler("seekforward", (e) => {
+        const step = (e as MediaSessionActionDetails).seekOffset ?? 30;
+        if (audioRef.current) audioRef.current.currentTime = Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + step);
+      });
+    } catch { /* older browsers */ }
+  };
+
   const onPlay = async () => {
     if (!resolvedUrl || !audioRef.current) return;
     try {
@@ -211,6 +242,10 @@ const AudioNarration = ({
       await audioRef.current.play();
       startBed();
       setState("playing");
+      applyMediaSession();
+      if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
+      }
       track("devotional_open", { audio: "stored", voice: voiceKind });
     } catch {
       setState("idle");
@@ -224,6 +259,9 @@ const AudioNarration = ({
       stopDuckingLoop();
       window.setTimeout(() => { bedRef.current?.pause(); }, 450);
       setState("paused");
+      if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+      }
     }
   };
 
@@ -231,9 +269,32 @@ const AudioNarration = ({
     if (!resolvedUrl || !audioRef.current) return;
     audioRef.current.currentTime = 0;
     if (bedRef.current) bedRef.current.currentTime = 0;
-    try { await audioRef.current.play(); startBed(); setState("playing"); } catch { setState("idle"); }
+    try { await audioRef.current.play(); startBed(); setState("playing"); applyMediaSession(); } catch { setState("idle"); }
   };
 
+  // Sleep timer: countdown that pauses playback when it hits zero.
+  useEffect(() => {
+    if (sleepTimerRef.current) { window.clearInterval(sleepTimerRef.current); sleepTimerRef.current = null; }
+    if (sleepMinutes == null) return;
+    const stopAt = Date.now() + sleepMinutes * 60 * 1000;
+    sleepTimerRef.current = window.setInterval(() => {
+      const remaining = Math.max(0, Math.round((stopAt - Date.now()) / 60000));
+      if (Date.now() >= stopAt) {
+        onPause();
+        setSleepMinutes(null);
+      } else {
+        setSleepMinutes(remaining);
+      }
+    }, 15_000);
+    return () => { if (sleepTimerRef.current) window.clearInterval(sleepTimerRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sleepMinutes != null]);
+
+  const cycleSleepTimer = () => {
+    // Off → 5 → 15 → 30 → 60 → Off
+    const map: Record<string, number | null> = { "null": 5, "5": 15, "15": 30, "30": 60, "60": null };
+    setSleepMinutes(map[String(sleepMinutes)] ?? 5);
+  };
 
   const switchVoice = (kind: VoiceKind) => {
     if (kind === voiceKind) return;
@@ -298,6 +359,17 @@ const AudioNarration = ({
         )}
         <Button onClick={onRestart} size="sm" variant="outline" className="gap-2 min-h-11" aria-label="Restart narration" disabled={noAudioAvailable}>
           <RotateCcw className="w-4 h-4" /> Restart
+        </Button>
+        <Button
+          onClick={cycleSleepTimer}
+          size="sm"
+          variant={sleepMinutes != null ? "secondary" : "outline"}
+          className="gap-2 min-h-11"
+          aria-label="Sleep timer"
+          disabled={noAudioAvailable}
+        >
+          <Moon className="w-4 h-4" />
+          {sleepMinutes != null ? `${sleepMinutes}m` : "Sleep"}
         </Button>
 
         <div className="ml-auto inline-flex rounded-lg border border-border overflow-hidden" role="group" aria-label="Choose voice">

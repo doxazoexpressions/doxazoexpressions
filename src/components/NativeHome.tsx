@@ -19,6 +19,7 @@ import { CATEGORIES } from "@/lib/categories";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import StreakCard from "@/components/StreakCard";
 import ThemesGrid from "@/components/ThemesGrid";
+import ForYouRail from "@/components/ForYouRail";
 import { hapticLight } from "@/lib/haptics";
 const devotionalHref = (d: { slug?: string | null; id: string }) =>
   `/devotional/${d.slug || d.id}`;
@@ -180,6 +181,9 @@ const NativeHome = () => {
       <div className="px-5 mt-5">
         <StreakCard />
       </div>
+      {/* For You — personalized by onboarding preferences */}
+      <ForYouRail />
+
 
       {/* Continue reading */}
       {continueEntry && (

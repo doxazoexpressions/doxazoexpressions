@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import AVFoundation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,7 +8,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Configure the shared audio session so devotional narration keeps
+        // playing when the screen locks or the user switches apps, and so
+        // iOS shows the lock-screen "Now Playing" controls fed by the JS
+        // MediaSession API.
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            NSLog("[Doxazo] AVAudioSession setup failed: \(error)")
+        }
         return true
     }
 
