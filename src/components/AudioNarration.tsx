@@ -360,6 +360,17 @@ const AudioNarration = ({
         <Button onClick={onRestart} size="sm" variant="outline" className="gap-2 min-h-11" aria-label="Restart narration" disabled={noAudioAvailable}>
           <RotateCcw className="w-4 h-4" /> Restart
         </Button>
+        <Button
+          onClick={cycleSleepTimer}
+          size="sm"
+          variant={sleepMinutes != null ? "secondary" : "outline"}
+          className="gap-2 min-h-11"
+          aria-label="Sleep timer"
+          disabled={noAudioAvailable}
+        >
+          <Moon className="w-4 h-4" />
+          {sleepMinutes != null ? `${sleepMinutes}m` : "Sleep"}
+        </Button>
 
         <div className="ml-auto inline-flex rounded-lg border border-border overflow-hidden" role="group" aria-label="Choose voice">
           <button
