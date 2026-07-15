@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
-import { planSlug, planDisplayName, getPlanCompleted } from "@/lib/planProgress";
+import { planSlug, planDisplayName, getPlanCompleted, syncPlanProgressFromCloud } from "@/lib/planProgress";
 
 type Row = { id: string; title: string; series: string | null; publish_date: string; slug: string | null; day: number | null };
 type Plan = { slug: string; name: string; items: Row[]; completed: number };
@@ -18,6 +18,7 @@ const Plans = () => {
 
   useEffect(() => {
     (async () => {
+      await syncPlanProgressFromCloud().catch(() => { /* offline OK */ });
       const { data } = await supabase
         .from("devotionals")
         .select("id,title,series,publish_date,slug,day")

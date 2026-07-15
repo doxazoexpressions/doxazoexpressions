@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, ArrowRight, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
-import { planSlug, planDisplayName, getPlanCompleted } from "@/lib/planProgress";
+import { planSlug, planDisplayName, getPlanCompleted, syncPlanProgressFromCloud } from "@/lib/planProgress";
 
 type Row = { id: string; title: string; series: string | null; publish_date: string; slug: string | null; day: number | null; scripture_reference: string | null };
 
@@ -21,6 +21,7 @@ const PlanDetail = () => {
   useEffect(() => {
     if (!planId) return;
     (async () => {
+      await syncPlanProgressFromCloud().catch(() => { /* offline OK */ });
       const { data } = await supabase
         .from("devotionals")
         .select("id,title,series,publish_date,slug,day,scripture_reference")

@@ -30,6 +30,8 @@ import { WifiOff } from "lucide-react";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import AudioNarration from "@/components/AudioNarration";
 import ShareVerseCard from "@/components/ShareVerseCard";
+import JournalPanel from "@/components/JournalPanel";
+import HighlightVerseButton from "@/components/HighlightVerseButton";
 
 type Devotional = {
   id: string;
@@ -251,6 +253,14 @@ const DailyDevotional = () => {
                         {current.scripture_text && (
                           <p className="italic text-foreground/90 font-serif leading-relaxed">"{current.scripture_text}"</p>
                         )}
+                        {current.scripture_text && (
+                          <HighlightVerseButton
+                            devotionalId={current.id}
+                            devotionalTitle={current.title}
+                            reference={current.scripture_reference}
+                            verseText={current.scripture_text}
+                          />
+                        )}
                       </div>
                     )}
 
@@ -344,6 +354,8 @@ const DailyDevotional = () => {
                         quote={current.decree_and_declare || current.declaration || current.excerpt || current.scripture_text}
                       />
                     </div>
+
+                    <JournalPanel devotionalId={current.id} devotionalTitle={current.title} />
                   </CardContent>
                 </Card>
               </motion.article>

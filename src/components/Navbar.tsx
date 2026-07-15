@@ -16,11 +16,12 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Today", href: "/devotional" },
+    { name: "Plans", href: "/plans" },
+    { name: "Journal", href: "/journal" },
+    { name: "Highlights", href: "/highlights" },
     { name: "Archive", href: "/archive" },
-    { name: "Categories", href: "/categories" },
     { name: "Favorites", href: "/favorites" },
     { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
   ];
 
   const isActive = (href: string) =>
