@@ -21,6 +21,7 @@ const PlanDetail = () => {
   useEffect(() => {
     if (!planId) return;
     (async () => {
+      await syncPlanProgressFromCloud().catch(() => { /* offline OK */ });
       const { data } = await supabase
         .from("devotionals")
         .select("id,title,series,publish_date,slug,day,scripture_reference")
