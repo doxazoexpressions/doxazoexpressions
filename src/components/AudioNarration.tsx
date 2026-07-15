@@ -41,6 +41,9 @@ const AudioNarration = ({
   const [voiceKind, setVoiceKind] = useState<VoiceKind>(() => defaultVoice ?? getVoicePreference());
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [bedUrl, setBedUrl] = useState<string | null>(null);
+  // Sleep-timer minutes remaining (null = off). When it hits 0 we fade out and pause.
+  const [sleepMinutes, setSleepMinutes] = useState<number | null>(null);
+  const sleepTimerRef = useRef<number | null>(null);
 
   // Web Audio graph for real-time ducking
   const audioCtxRef = useRef<AudioContext | null>(null);
