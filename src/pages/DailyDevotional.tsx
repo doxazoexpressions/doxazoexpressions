@@ -354,6 +354,8 @@ const DailyDevotional = () => {
                         quote={current.decree_and_declare || current.declaration || current.excerpt || current.scripture_text}
                       />
                     </div>
+
+                    <JournalPanel devotionalId={current.id} devotionalTitle={current.title} />
                   </CardContent>
                 </Card>
               </motion.article>
