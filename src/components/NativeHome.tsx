@@ -181,6 +181,9 @@ const NativeHome = () => {
       <div className="px-5 mt-5">
         <StreakCard />
       </div>
+      {/* For You — personalized by onboarding preferences */}
+      <ForYouRail />
+
 
       {/* Continue reading */}
       {continueEntry && (
