@@ -298,6 +298,79 @@ export type Database = {
           },
         ]
       }
+      journal_entries: {
+        Row: {
+          content: string
+          created_at: string
+          devotional_id: string | null
+          devotional_title: string | null
+          id: string
+          mood: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          devotional_id?: string | null
+          devotional_title?: string | null
+          id?: string
+          mood?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          devotional_id?: string | null
+          devotional_title?: string | null
+          id?: string
+          mood?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_devotional_id_fkey"
+            columns: ["devotional_id"]
+            isOneToOne: false
+            referencedRelation: "devotionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_progress: {
+        Row: {
+          completed_at: string
+          devotional_id: string
+          id: string
+          plan_slug: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          devotional_id: string
+          id?: string
+          plan_slug: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          devotional_id?: string
+          id?: string
+          plan_slug?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_progress_devotional_id_fkey"
+            columns: ["devotional_id"]
+            isOneToOne: false
+            referencedRelation: "devotionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prayers: {
         Row: {
           author_id: string | null
@@ -641,6 +714,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      verse_highlights: {
+        Row: {
+          color: string
+          created_at: string
+          devotional_id: string | null
+          devotional_title: string | null
+          id: string
+          note: string | null
+          reference: string | null
+          user_id: string
+          verse_text: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          devotional_id?: string | null
+          devotional_title?: string | null
+          id?: string
+          note?: string | null
+          reference?: string | null
+          user_id: string
+          verse_text: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          devotional_id?: string | null
+          devotional_title?: string | null
+          id?: string
+          note?: string | null
+          reference?: string | null
+          user_id?: string
+          verse_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verse_highlights_devotional_id_fkey"
+            columns: ["devotional_id"]
+            isOneToOne: false
+            referencedRelation: "devotionals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
