@@ -69,7 +69,7 @@ const ForYouRail = () => {
           >
             {d.category && (
               <div className="mb-2">
-                <CategoryBadge category={d.category} />
+                <CategoryBadge slug={d.category} />
               </div>
             )}
             <p className="font-serif font-semibold text-sm leading-snug line-clamp-2">
