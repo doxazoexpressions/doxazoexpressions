@@ -30,6 +30,8 @@ import { WifiOff } from "lucide-react";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import AudioNarration from "@/components/AudioNarration";
 import ShareVerseCard from "@/components/ShareVerseCard";
+import JournalPanel from "@/components/JournalPanel";
+import HighlightVerseButton from "@/components/HighlightVerseButton";
 
 type Devotional = {
   id: string;
