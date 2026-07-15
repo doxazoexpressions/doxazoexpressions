@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, RotateCcw, Volume2, User, User2, Loader2 } from "lucide-react";
+import { Play, Pause, RotateCcw, Volume2, User, User2, Loader2, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
 import {
