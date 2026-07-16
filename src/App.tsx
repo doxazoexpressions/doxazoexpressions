@@ -35,6 +35,8 @@ import Plans from "./pages/Plans";
 import PlanDetail from "./pages/PlanDetail";
 import Journal from "./pages/Journal";
 import Highlights from "./pages/Highlights";
+import Prayers from "./pages/Prayers";
+import Downloads from "./pages/Downloads";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,8 @@ const App = () => (
             <Route path="/plans/:slug" element={<PlanDetail />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="/highlights" element={<Highlights />} />
+            <Route path="/prayers" element={<Prayers />} />
+            <Route path="/downloads" element={<Downloads />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

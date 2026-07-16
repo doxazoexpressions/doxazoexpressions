@@ -95,37 +95,73 @@ struct TodayWidgetView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            LinearGradient(colors: [navy, navy.opacity(0.85)], startPoint: .topLeading, endPoint: .bottomTrailing)
-            VStack(alignment: .leading, spacing: 6) {
+        switch family {
+        case .accessoryInline:
+            // Lock Screen inline (single line above the clock).
+            Text(entry.scripture.isEmpty ? entry.title : "\(entry.scripture) — \(entry.title)")
+                .widgetURL(entry.deeplink)
+
+        case .accessoryRectangular:
+            // Lock Screen rectangular widget.
+            VStack(alignment: .leading, spacing: 2) {
                 Text("TODAY'S WORD")
-                    .font(.system(size: 10, weight: .bold))
-                    .tracking(2)
-                    .foregroundColor(gold)
+                    .font(.system(size: 9, weight: .bold)).tracking(1.5)
                 Text(entry.title)
-                    .font(.system(size: family == .systemSmall ? 15 : 18, weight: .bold, design: .serif))
-                    .foregroundColor(.white)
-                    .lineLimit(family == .systemSmall ? 3 : 2)
+                    .font(.system(size: 13, weight: .semibold, design: .serif))
+                    .lineLimit(2)
                 if !entry.scripture.isEmpty {
                     Text(entry.scripture)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(gold)
+                        .font(.system(size: 10, weight: .medium))
                         .lineLimit(1)
                 }
-                if family != .systemSmall && !entry.excerpt.isEmpty {
-                    Text(entry.excerpt)
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.85))
-                        .lineLimit(3)
-                }
-                Spacer(minLength: 0)
-                Text("Open Doxazo →")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(gold)
             }
-            .padding(14)
+            .widgetURL(entry.deeplink)
+
+        case .accessoryCircular:
+            // Lock Screen circular badge.
+            ZStack {
+                Circle().strokeBorder(.white.opacity(0.6), lineWidth: 1)
+                VStack(spacing: 0) {
+                    Text("WORD").font(.system(size: 8, weight: .bold)).tracking(1)
+                    Text("Today").font(.system(size: 10, weight: .semibold, design: .serif))
+                }
+            }
+            .widgetURL(entry.deeplink)
+
+        default:
+            // Home Screen (systemSmall / systemMedium).
+            ZStack(alignment: .topLeading) {
+                LinearGradient(colors: [navy, navy.opacity(0.85)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("TODAY'S WORD")
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(2)
+                        .foregroundColor(gold)
+                    Text(entry.title)
+                        .font(.system(size: family == .systemSmall ? 15 : 18, weight: .bold, design: .serif))
+                        .foregroundColor(.white)
+                        .lineLimit(family == .systemSmall ? 3 : 2)
+                    if !entry.scripture.isEmpty {
+                        Text(entry.scripture)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(gold)
+                            .lineLimit(1)
+                    }
+                    if family != .systemSmall && !entry.excerpt.isEmpty {
+                        Text(entry.excerpt)
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.85))
+                            .lineLimit(3)
+                    }
+                    Spacer(minLength: 0)
+                    Text("Open Doxazo →")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(gold)
+                }
+                .padding(14)
+            }
+            .widgetURL(entry.deeplink)
         }
-        .widgetURL(entry.deeplink)
     }
 }
 
@@ -145,7 +181,10 @@ struct TodayWidget: Widget {
             }
         }
         .configurationDisplayName("Today's Word")
-        .description("A fresh devotional from Doxazo Expressions, on your Home Screen.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("A fresh devotional from Doxazo Expressions — on Home Screen and Lock Screen.")
+        .supportedFamilies([
+            .systemSmall, .systemMedium,
+            .accessoryInline, .accessoryRectangular, .accessoryCircular,
+        ])
     }
 }
