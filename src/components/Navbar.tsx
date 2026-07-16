@@ -17,10 +17,12 @@ const Navbar = () => {
   const navLinks = [
     { name: "Today", href: "/devotional" },
     { name: "Plans", href: "/plans" },
+    { name: "Scripture", href: "/scripture" },
     { name: "Prayers", href: "/prayers" },
     { name: "Journal", href: "/journal" },
     { name: "Highlights", href: "/highlights" },
-    { name: "Downloads", href: "/downloads" },
+    { name: "Goals", href: "/goals" },
+    { name: "Groups", href: "/groups" },
     { name: "Archive", href: "/archive" },
     { name: "About", href: "/about" },
   ];

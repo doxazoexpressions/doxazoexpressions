@@ -37,6 +37,9 @@ import Journal from "./pages/Journal";
 import Highlights from "./pages/Highlights";
 import Prayers from "./pages/Prayers";
 import Downloads from "./pages/Downloads";
+import Goals from "./pages/Goals";
+import Scripture from "./pages/Scripture";
+import Groups from "./pages/Groups";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +75,9 @@ const App = () => (
             <Route path="/highlights" element={<Highlights />} />
             <Route path="/prayers" element={<Prayers />} />
             <Route path="/downloads" element={<Downloads />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/scripture" element={<Scripture />} />
+            <Route path="/groups" element={<Groups />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
