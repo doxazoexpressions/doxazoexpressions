@@ -105,7 +105,7 @@ const Prayers = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <SEO title="Prayer List — Doxazo Expressions" description="Keep a private prayer list, mark answered prayers, and remember what God has done." />
+      <SEO title="Prayer List — Doxazo Expressions" description="Keep a private prayer list, mark answered prayers, and remember what God has done." path="/prayers" />
       <Navbar />
       <main className="container mx-auto px-4 pt-28 pb-16 max-w-3xl">
         <div className="mb-8">
