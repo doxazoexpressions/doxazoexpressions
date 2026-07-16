@@ -30,7 +30,7 @@ const Downloads = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <SEO title="Downloads — Doxazo Expressions" description="Your offline devotionals — read and listen without a connection." canonical="/downloads" />
+      <SEO title="Downloads — Doxazo Expressions" description="Your offline devotionals — read and listen without a connection." />
       <Navbar />
       <main className="container mx-auto px-4 pt-28 pb-16 max-w-3xl">
         <div className="mb-8 flex items-end justify-between gap-4">
