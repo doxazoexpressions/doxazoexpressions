@@ -73,17 +73,11 @@ const Groups = () => {
     if (!user || !joinCode.trim()) return;
     setBusy(true);
     const code = joinCode.trim().toUpperCase();
-    const { data: g } = await supabase
-      .from("groups" as any)
-      .select("id")
-      .eq("invite_code", code)
-      .maybeSingle();
-    if (!g) { toast.error("Invite code not found"); setBusy(false); return; }
-    const { error } = await supabase
-      .from("group_members" as any)
-      .insert({ group_id: (g as any).id, user_id: user.id });
-    if (error && !String(error.message).includes("duplicate")) {
+    const { data, error } = await (supabase as any).rpc("join_group_by_code", { _code: code });
+    if (error) {
       toast.error(error.message);
+    } else if (!data) {
+      toast.error("Invite code not found");
     } else {
       toast.success("Joined group");
     }
