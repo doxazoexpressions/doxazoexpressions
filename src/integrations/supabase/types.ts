@@ -371,6 +371,68 @@ export type Database = {
           },
         ]
       }
+      prayer_requests: {
+        Row: {
+          answered_at: string | null
+          answered_note: string | null
+          archived: boolean
+          body: string | null
+          category: string | null
+          created_at: string
+          devotional_id: string | null
+          id: string
+          is_answered: boolean
+          remind_at: string | null
+          remind_frequency: string | null
+          scripture_reference: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string | null
+          answered_note?: string | null
+          archived?: boolean
+          body?: string | null
+          category?: string | null
+          created_at?: string
+          devotional_id?: string | null
+          id?: string
+          is_answered?: boolean
+          remind_at?: string | null
+          remind_frequency?: string | null
+          scripture_reference?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answered_at?: string | null
+          answered_note?: string | null
+          archived?: boolean
+          body?: string | null
+          category?: string | null
+          created_at?: string
+          devotional_id?: string | null
+          id?: string
+          is_answered?: boolean
+          remind_at?: string | null
+          remind_frequency?: string | null
+          scripture_reference?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_requests_devotional_id_fkey"
+            columns: ["devotional_id"]
+            isOneToOne: false
+            referencedRelation: "devotionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prayers: {
         Row: {
           author_id: string | null
