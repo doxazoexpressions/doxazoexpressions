@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, X, Search as SearchIcon, LogIn, LogOut, User } from "lucide-react";
+import { Menu, Search as SearchIcon, LogIn, LogOut, User } from "lucide-react";
 import BrandMark from "./BrandMark";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
+import { openMobileMenu } from "./MobileNav";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [q, setQ] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
@@ -35,7 +35,6 @@ const Navbar = () => {
     if (q.trim()) {
       navigate(`/search?q=${encodeURIComponent(q.trim())}`);
       setQ("");
-      setIsOpen(false);
     }
   };
 
@@ -97,64 +96,18 @@ const Navbar = () => {
             </Button>
           </div>
 
-          <div className="flex lg:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-1">
             <ThemeToggle />
             <button
               className="text-foreground p-2 -mr-2"
-              onClick={() => setIsOpen(!isOpen)}
-              aria-label={isOpen ? "Close menu" : "Open menu"}
+              onClick={openMobileMenu}
+              aria-label="Open menu"
             >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <Menu className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        {isOpen && (
-          <div className="lg:hidden py-4 border-t border-border">
-            <form onSubmit={onSearch} className="relative mb-4">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search devotionals…"
-                className="pl-9"
-                aria-label="Search devotionals"
-              />
-            </form>
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                className={`block py-3 text-sm font-medium transition-colors ${
-                  isActive(link.href)
-                    ? "text-accent"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                onClick={() => setIsOpen(false)}
-              >
-                {link.name}
-              </Link>
-            ))}
-            <Button asChild className="w-full mt-4">
-              <Link to="/devotional" onClick={() => setIsOpen(false)}>Today's Devotional</Link>
-            </Button>
-            {user ? (
-              <div className="mt-3 space-y-2">
-                <p className="text-xs text-muted-foreground px-1 truncate">Signed in as {user.email}</p>
-                <Button asChild variant="outline" className="w-full">
-                  <Link to="/settings" onClick={() => setIsOpen(false)}>Account Settings</Link>
-                </Button>
-                <Button onClick={() => { signOut(); setIsOpen(false); }} variant="ghost" className="w-full gap-1.5">
-                  <LogOut className="w-4 h-4" /> Sign Out
-                </Button>
-              </div>
-            ) : (
-              <Button asChild variant="outline" className="w-full mt-3 gap-1.5">
-                <Link to="/auth" onClick={() => setIsOpen(false)}><LogIn className="w-4 h-4" /> Sign In</Link>
-              </Button>
-            )}
-          </div>
-        )}
       </div>
     </nav>
   );
