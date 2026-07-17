@@ -7,7 +7,7 @@ import { track } from "@/lib/analytics";
 
 const Hero = () => {
   return (
-    <section className="relative flex items-center justify-center pt-[calc(env(safe-area-inset-top)+5rem)] pb-10 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
+    <section className="relative flex items-center justify-center pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-6 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={heroImg}
