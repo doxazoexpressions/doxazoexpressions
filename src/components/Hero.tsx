@@ -43,7 +43,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-[1.875rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-4 sm:mb-8 text-primary"
+            className="text-[1.75rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-3 sm:mb-8 text-primary"
           >
             A fresh <span className="text-accent">devotional</span> every morning to anchor your{" "}
             <span className="text-accent">walk with God</span>
