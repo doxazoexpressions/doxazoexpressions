@@ -53,7 +53,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-sm sm:text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed font-medium"
+            className="text-sm sm:text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-5 sm:mb-12 leading-relaxed font-medium"
           >
             Move from sporadic inspiration to disciplined spiritual growth. Scripture-rooted devotionals
             built for a consistent morning rhythm.
