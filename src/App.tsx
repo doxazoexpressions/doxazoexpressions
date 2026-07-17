@@ -40,6 +40,7 @@ import Downloads from "./pages/Downloads";
 import Goals from "./pages/Goals";
 import Scripture from "./pages/Scripture";
 import Groups from "./pages/Groups";
+import MobileNav from "./components/MobileNav";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <NativeBootstrap />
+          <MobileNav />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
