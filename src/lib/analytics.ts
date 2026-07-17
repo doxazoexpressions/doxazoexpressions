@@ -99,7 +99,7 @@ const initNative = async () => {
   nativeReady = true;
   try {
     const { FirebaseAnalytics } = await import("@capacitor-firebase/analytics");
-    await FirebaseAnalytics.setCollectionEnabled({ enabled: true });
+    await FirebaseAnalytics.setEnabled({ enabled: true });
   } catch (err) {
     if (import.meta.env.DEV) console.debug("[analytics] Firebase Analytics unavailable", err);
   }
@@ -184,8 +184,12 @@ export const reportError = (error: unknown, context?: Params) => {
   try {
     if (isNative) {
       void import("@capacitor-firebase/crashlytics").then(({ FirebaseCrashlytics }) => {
-        if (context) FirebaseCrashlytics.setCustomKeys?.({ attributes: context as Record<string, string> });
-        FirebaseCrashlytics.recordException({ message, stacktrace: stack ? [{ fileName: "js", lineNumber: 0, methodName: stack.split("\n")[0] ?? "" }] : undefined });
+        if (context) {
+          for (const [key, value] of Object.entries(context)) {
+            try { FirebaseCrashlytics.setCustomKey({ key, value: String(value), type: "string" }); } catch { /* ignore */ }
+          }
+        }
+        FirebaseCrashlytics.recordException({ message, stacktrace: stack ? [{ fileName: "js", lineNumber: 0 }] : undefined });
       }).catch(() => {});
     } else if (import.meta.env.PROD) {
       // Kept intentionally quiet on web — no third-party monitoring bundled.
