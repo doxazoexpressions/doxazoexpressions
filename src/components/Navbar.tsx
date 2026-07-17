@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { openMobileMenu } from "./MobileNav";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [q, setQ] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
