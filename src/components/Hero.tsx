@@ -7,7 +7,7 @@ import { track } from "@/lib/analytics";
 
 const Hero = () => {
   return (
-    <section className="relative flex items-center justify-center pt-[calc(env(safe-area-inset-top)+5rem)] pb-10 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
+    <section className="relative flex items-center justify-center pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-6 md:min-h-screen md:pt-20 md:pb-16 overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={heroImg}
@@ -31,7 +31,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-accent/40 mb-5 sm:mb-8 shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-accent/40 mb-3 sm:mb-8 shadow-sm"
           >
             <Sparkles className="w-4 h-4 text-accent" />
             <span className="text-xs sm:text-sm text-primary font-semibold">
@@ -43,7 +43,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-[1.875rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-4 sm:mb-8 text-primary"
+            className="text-[1.75rem] leading-[1.15] sm:text-5xl lg:text-7xl font-serif font-bold mb-3 sm:mb-8 text-primary"
           >
             A fresh <span className="text-accent">devotional</span> every morning to anchor your{" "}
             <span className="text-accent">walk with God</span>
@@ -53,7 +53,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-sm sm:text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed font-medium"
+            className="text-sm sm:text-lg md:text-xl text-foreground max-w-2xl mx-auto mb-5 sm:mb-12 leading-relaxed font-medium"
           >
             Move from sporadic inspiration to disciplined spiritual growth. Scripture-rooted devotionals
             built for a consistent morning rhythm.
@@ -63,7 +63,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-6 sm:mb-8"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-4 sm:mb-8"
           >
             <Button
               asChild
@@ -94,7 +94,7 @@ const Hero = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.45 }}
-            className="mb-6 md:mb-12"
+            className="mb-3 md:mb-12"
           >
             <Link
               to="/categories"

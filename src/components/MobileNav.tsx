@@ -35,17 +35,37 @@ const primaryTabs = [
   { name: "Journal", to: "/journal", icon: NotebookPen, match: (p: string) => p.startsWith("/journal") },
 ];
 
-const moreLinks = [
-  { name: "Scripture", to: "/scripture", icon: Book },
-  { name: "Prayers", to: "/prayers", icon: HeartHandshake },
-  { name: "Highlights", to: "/highlights", icon: Highlighter },
-  { name: "Goals", to: "/goals", icon: Target },
-  { name: "Groups", to: "/groups", icon: Users },
-  { name: "Favorites", to: "/favorites", icon: Heart },
-  { name: "Downloads", to: "/downloads", icon: Download },
-  { name: "Archive", to: "/archive", icon: ArchiveIcon },
-  { name: "About", to: "/about", icon: Info },
-  { name: "Settings", to: "/settings", icon: SettingsIcon },
+const moreGroups: { label: string; links: { name: string; to: string; icon: typeof Book }[] }[] = [
+  {
+    label: "Spiritual tools",
+    links: [
+      { name: "Scripture", to: "/scripture", icon: Book },
+      { name: "Prayers", to: "/prayers", icon: HeartHandshake },
+      { name: "Highlights", to: "/highlights", icon: Highlighter },
+    ],
+  },
+  {
+    label: "Growth",
+    links: [
+      { name: "Goals", to: "/goals", icon: Target },
+      { name: "Groups", to: "/groups", icon: Users },
+    ],
+  },
+  {
+    label: "Library",
+    links: [
+      { name: "Favorites", to: "/favorites", icon: Heart },
+      { name: "Downloads", to: "/downloads", icon: Download },
+      { name: "Archive", to: "/archive", icon: ArchiveIcon },
+    ],
+  },
+  {
+    label: "App",
+    links: [
+      { name: "About", to: "/about", icon: Info },
+      { name: "Settings", to: "/settings", icon: SettingsIcon },
+    ],
+  },
 ];
 
 const MobileNav = () => {
@@ -115,28 +135,36 @@ const MobileNav = () => {
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto py-2">
-            <ul>
-              {moreLinks.map((l) => {
-                const active = pathname.startsWith(l.to) && l.to !== "/";
-                const Icon = l.icon;
-                return (
-                  <li key={l.to}>
-                    <Link
-                      to={l.to}
-                      className={`flex items-center gap-3 px-5 py-3 text-sm font-medium transition-colors ${
-                        active
-                          ? "text-accent bg-accent/5"
-                          : "text-foreground hover:bg-muted/50"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {l.name}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            {moreGroups.map((group) => (
+              <div key={group.label} className="mb-2">
+                <p className="px-5 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold">
+                  {group.label}
+                </p>
+                <ul>
+                  {group.links.map((l) => {
+                    const active = pathname.startsWith(l.to) && l.to !== "/";
+                    const Icon = l.icon;
+                    return (
+                      <li key={l.to}>
+                        <Link
+                          to={l.to}
+                          className={`flex items-center gap-3 px-5 py-2.5 text-sm font-medium transition-colors ${
+                            active
+                              ? "text-accent bg-accent/5"
+                              : "text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {l.name}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </div>
+
 
           <div className="border-t border-border p-4" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
             {user ? (
