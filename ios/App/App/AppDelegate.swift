@@ -1,6 +1,9 @@
 import UIKit
 import Capacitor
 import AVFoundation
+#if canImport(FirebaseCore)
+import FirebaseCore
+#endif
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -8,6 +11,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Firebase (Analytics + Crashlytics). Guarded so builds without
+        // GoogleService-Info.plist / FirebaseCore still compile.
+        #if canImport(FirebaseCore)
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
+        #endif
+
         // Configure the shared audio session so devotional narration keeps
         // playing when the screen locks or the user switches apps, and so
         // iOS shows the lock-screen "Now Playing" controls fed by the JS

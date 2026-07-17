@@ -41,6 +41,7 @@ import Goals from "./pages/Goals";
 import Scripture from "./pages/Scripture";
 import Groups from "./pages/Groups";
 import MobileNav from "./components/MobileNav";
+import RouteAnalytics from "./components/RouteAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <NativeBootstrap />
+          <RouteAnalytics />
           <MobileNav />
           <Routes>
             <Route path="/" element={<Index />} />
