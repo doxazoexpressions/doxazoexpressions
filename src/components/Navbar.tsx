@@ -41,7 +41,7 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 sm:h-18 py-3 sm:py-4 gap-4">
+        <div className="flex items-center justify-between h-14 sm:h-18 py-2 sm:py-4 gap-4">
           <Link to="/" className="flex items-center gap-2.5 shrink-0">
             <BrandMark size={40} />
             <span className="text-xl font-serif font-bold text-foreground">
