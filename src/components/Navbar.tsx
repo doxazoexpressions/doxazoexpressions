@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, X, Search as SearchIcon, LogIn, LogOut, User } from "lucide-react";
+import { Menu, Search as SearchIcon, LogIn, LogOut, User } from "lucide-react";
 import BrandMark from "./BrandMark";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
+import { openMobileMenu } from "./MobileNav";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
