@@ -198,13 +198,15 @@ export const reportError = (error: unknown, context?: Params) => {
   const stack = error instanceof Error ? error.stack : undefined;
   try {
     if (isNative) {
-      void import("@capacitor-firebase/crashlytics").then(({ FirebaseCrashlytics }) => {
+      void loadFirebaseCrashlytics().then((mod) => {
+        const FC = mod?.FirebaseCrashlytics;
+        if (!FC) return;
         if (context) {
           for (const [key, value] of Object.entries(context)) {
-            try { FirebaseCrashlytics.setCustomKey({ key, value: String(value), type: "string" }); } catch { /* ignore */ }
+            try { FC.setCustomKey({ key, value: String(value), type: "string" }); } catch { /* ignore */ }
           }
         }
-        FirebaseCrashlytics.recordException({ message, stacktrace: stack ? [{ fileName: "js", lineNumber: 0 }] : undefined });
+        FC.recordException({ message, stacktrace: stack ? [{ fileName: "js", lineNumber: 0 }] : undefined });
       }).catch(() => {});
     } else if (import.meta.env.PROD) {
       // Kept intentionally quiet on web — no third-party monitoring bundled.
