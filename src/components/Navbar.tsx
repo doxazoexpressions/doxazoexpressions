@@ -35,7 +35,6 @@ const Navbar = () => {
     if (q.trim()) {
       navigate(`/search?q=${encodeURIComponent(q.trim())}`);
       setQ("");
-      setIsOpen(false);
     }
   };
 
