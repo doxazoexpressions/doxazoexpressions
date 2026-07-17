@@ -35,17 +35,37 @@ const primaryTabs = [
   { name: "Journal", to: "/journal", icon: NotebookPen, match: (p: string) => p.startsWith("/journal") },
 ];
 
-const moreLinks = [
-  { name: "Scripture", to: "/scripture", icon: Book },
-  { name: "Prayers", to: "/prayers", icon: HeartHandshake },
-  { name: "Highlights", to: "/highlights", icon: Highlighter },
-  { name: "Goals", to: "/goals", icon: Target },
-  { name: "Groups", to: "/groups", icon: Users },
-  { name: "Favorites", to: "/favorites", icon: Heart },
-  { name: "Downloads", to: "/downloads", icon: Download },
-  { name: "Archive", to: "/archive", icon: ArchiveIcon },
-  { name: "About", to: "/about", icon: Info },
-  { name: "Settings", to: "/settings", icon: SettingsIcon },
+const moreGroups: { label: string; links: { name: string; to: string; icon: typeof Book }[] }[] = [
+  {
+    label: "Spiritual tools",
+    links: [
+      { name: "Scripture", to: "/scripture", icon: Book },
+      { name: "Prayers", to: "/prayers", icon: HeartHandshake },
+      { name: "Highlights", to: "/highlights", icon: Highlighter },
+    ],
+  },
+  {
+    label: "Growth",
+    links: [
+      { name: "Goals", to: "/goals", icon: Target },
+      { name: "Groups", to: "/groups", icon: Users },
+    ],
+  },
+  {
+    label: "Library",
+    links: [
+      { name: "Favorites", to: "/favorites", icon: Heart },
+      { name: "Downloads", to: "/downloads", icon: Download },
+      { name: "Archive", to: "/archive", icon: ArchiveIcon },
+    ],
+  },
+  {
+    label: "App",
+    links: [
+      { name: "About", to: "/about", icon: Info },
+      { name: "Settings", to: "/settings", icon: SettingsIcon },
+    ],
+  },
 ];
 
 const MobileNav = () => {
