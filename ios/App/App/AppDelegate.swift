@@ -11,11 +11,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Firebase (Analytics + Crashlytics). Guarded so builds without
-        // GoogleService-Info.plist / FirebaseCore still compile.
+        // Firebase (Analytics + Crashlytics). Guarded two ways:
+        //  1. #if canImport — builds without FirebaseCore still compile.
+        //  2. Runtime check for GoogleService-Info.plist — without it,
+        //     FirebaseApp.configure() throws a fatal NSException and the
+        //     app crashes on launch (this was the TestFlight regression).
         #if canImport(FirebaseCore)
-        if FirebaseApp.app() == nil {
+        if FirebaseApp.app() == nil,
+           Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
             FirebaseApp.configure()
+        } else if FirebaseApp.app() == nil {
+            NSLog("[Doxazo] Skipping FirebaseApp.configure(): GoogleService-Info.plist missing")
         }
         #endif
 
