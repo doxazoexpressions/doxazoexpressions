@@ -31,7 +31,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-accent/40 mb-5 sm:mb-8 shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-accent/40 mb-3 sm:mb-8 shadow-sm"
           >
             <Sparkles className="w-4 h-4 text-accent" />
             <span className="text-xs sm:text-sm text-primary font-semibold">
