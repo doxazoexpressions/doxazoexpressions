@@ -135,28 +135,36 @@ const MobileNav = () => {
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto py-2">
-            <ul>
-              {moreLinks.map((l) => {
-                const active = pathname.startsWith(l.to) && l.to !== "/";
-                const Icon = l.icon;
-                return (
-                  <li key={l.to}>
-                    <Link
-                      to={l.to}
-                      className={`flex items-center gap-3 px-5 py-3 text-sm font-medium transition-colors ${
-                        active
-                          ? "text-accent bg-accent/5"
-                          : "text-foreground hover:bg-muted/50"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {l.name}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            {moreGroups.map((group) => (
+              <div key={group.label} className="mb-2">
+                <p className="px-5 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold">
+                  {group.label}
+                </p>
+                <ul>
+                  {group.links.map((l) => {
+                    const active = pathname.startsWith(l.to) && l.to !== "/";
+                    const Icon = l.icon;
+                    return (
+                      <li key={l.to}>
+                        <Link
+                          to={l.to}
+                          className={`flex items-center gap-3 px-5 py-2.5 text-sm font-medium transition-colors ${
+                            active
+                              ? "text-accent bg-accent/5"
+                              : "text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {l.name}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </div>
+
 
           <div className="border-t border-border p-4" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
             {user ? (
