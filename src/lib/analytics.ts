@@ -94,12 +94,26 @@ const loadGA4 = () => {
   document.head.appendChild(s);
 };
 
+// Hide Firebase plugin specifiers from Rollup so the web build doesn't try to
+// resolve their optional `firebase/*` peer dep. These modules only execute on
+// native, where Capacitor bridges to the Swift/Kotlin impl.
+const loadFirebaseAnalytics = async (): Promise<any> => {
+  if (!isNative) return null;
+  const id = "@capacitor-firebase" + "/analytics";
+  return import(/* @vite-ignore */ id).catch(() => null);
+};
+const loadFirebaseCrashlytics = async (): Promise<any> => {
+  if (!isNative) return null;
+  const id = "@capacitor-firebase" + "/crashlytics";
+  return import(/* @vite-ignore */ id).catch(() => null);
+};
+
 const initNative = async () => {
   if (nativeReady || !isNative) return;
   nativeReady = true;
+  const mod = await loadFirebaseAnalytics();
   try {
-    const { FirebaseAnalytics } = await import("@capacitor-firebase/analytics");
-    await FirebaseAnalytics.setEnabled({ enabled: true });
+    await mod?.FirebaseAnalytics?.setEnabled({ enabled: true });
   } catch (err) {
     if (import.meta.env.DEV) console.debug("[analytics] Firebase Analytics unavailable", err);
   }
@@ -109,6 +123,7 @@ if (typeof window !== "undefined") {
   loadGA4();
   void initNative();
 }
+
 
 const sanitizeParams = (props?: Params): Params | undefined => {
   if (!props) return undefined;
@@ -132,8 +147,8 @@ export const track = (event: AnalyticsEvent, props?: Params) => {
       window.plausible(event, params ? { props: params } : undefined);
     }
     if (isNative) {
-      void import("@capacitor-firebase/analytics").then(({ FirebaseAnalytics }) =>
-        FirebaseAnalytics.logEvent({ name: event, params: (params as Record<string, string | number | boolean>) ?? {} }),
+      void loadFirebaseAnalytics().then((mod) =>
+        mod?.FirebaseAnalytics?.logEvent({ name: event, params: (params as Record<string, string | number | boolean>) ?? {} }),
       ).catch(() => {});
     }
     if (import.meta.env.DEV) console.debug("[analytics]", event, params ?? {});
@@ -152,8 +167,8 @@ export const trackPageView = (path: string, title?: string) => {
     });
   }
   if (isNative) {
-    void import("@capacitor-firebase/analytics").then(({ FirebaseAnalytics }) =>
-      FirebaseAnalytics.setCurrentScreen({ screenName: path, screenClassOverride: title ?? path }),
+    void loadFirebaseAnalytics().then((mod) =>
+      mod?.FirebaseAnalytics?.setCurrentScreen({ screenName: path, screenClassOverride: title ?? path }),
     ).catch(() => {});
   }
   if (import.meta.env.DEV) console.debug("[analytics] page_view", path);
@@ -165,11 +180,11 @@ export const setAnalyticsUser = (userId: string | null) => {
       window.gtag("config", GA4_ID, { user_id: userId ?? undefined });
     }
     if (isNative) {
-      void import("@capacitor-firebase/analytics").then(({ FirebaseAnalytics }) =>
-        userId
-          ? FirebaseAnalytics.setUserId({ userId })
-          : FirebaseAnalytics.setUserId({ userId: null as unknown as string }),
-      ).catch(() => {});
+      void loadFirebaseAnalytics().then((mod) => {
+        const FA = mod?.FirebaseAnalytics;
+        if (!FA) return;
+        return userId ? FA.setUserId({ userId }) : FA.setUserId({ userId: null as unknown as string });
+      }).catch(() => {});
     }
   } catch {
     /* swallow */
@@ -183,13 +198,15 @@ export const reportError = (error: unknown, context?: Params) => {
   const stack = error instanceof Error ? error.stack : undefined;
   try {
     if (isNative) {
-      void import("@capacitor-firebase/crashlytics").then(({ FirebaseCrashlytics }) => {
+      void loadFirebaseCrashlytics().then((mod) => {
+        const FC = mod?.FirebaseCrashlytics;
+        if (!FC) return;
         if (context) {
           for (const [key, value] of Object.entries(context)) {
-            try { FirebaseCrashlytics.setCustomKey({ key, value: String(value), type: "string" }); } catch { /* ignore */ }
+            try { FC.setCustomKey({ key, value: String(value), type: "string" }); } catch { /* ignore */ }
           }
         }
-        FirebaseCrashlytics.recordException({ message, stacktrace: stack ? [{ fileName: "js", lineNumber: 0 }] : undefined });
+        FC.recordException({ message, stacktrace: stack ? [{ fileName: "js", lineNumber: 0 }] : undefined });
       }).catch(() => {});
     } else if (import.meta.env.PROD) {
       // Kept intentionally quiet on web — no third-party monitoring bundled.
