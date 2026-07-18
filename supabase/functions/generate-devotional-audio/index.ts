@@ -4,7 +4,7 @@
 //
 // FIXED VOICE MAPPING (do not change without product confirmation):
 //   UI "Joy"    (female) → ElevenLabs voice ID: Qggl4b0xRMiqOwhPtVWT
-//   UI "Wisdom" (male)   → ElevenLabs voice ID: V904i8ujLitGpMyoTznT
+//   UI "Wisdom" (male)   → ElevenLabs voice ID: Xju4Klbc1r0SkckSAl5Q
 //
 // Auth: this function requires a valid Supabase user JWT belonging to a user
 // with the `admin` role (checked via public.has_role).
@@ -16,7 +16,7 @@ type VoiceKind = "female" | "male";
 
 const VOICE_IDS: Record<VoiceKind, string> = {
   female: "Qggl4b0xRMiqOwhPtVWT", // Joy
-  male:   "V904i8ujLitGpMyoTznT", // Wisdom
+  male:   "Xju4Klbc1r0SkckSAl5Q", // Wisdom (warm, calm, reverent)
 };
 
 const BUCKET = "devotional-audio";
