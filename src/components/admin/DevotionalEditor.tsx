@@ -455,7 +455,37 @@ function AudioSlot({
       const { data, error } = await supabase.functions.invoke("generate-devotional-audio", {
         body: { devotionalId, voice },
       });
-      if (error) throw error;
+      // Surface the real ElevenLabs error body instead of the generic
+      // "non-2xx status code" toast so quota / voice / auth failures are visible.
+      if (error) {
+        let detail = error.message ?? String(error);
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.text === "function") {
+            const body = await ctx.text();
+            try {
+              const parsed = JSON.parse(body);
+              const inner = typeof parsed?.details === "string"
+                ? (() => { try { return JSON.parse(parsed.details); } catch { return null; } })()
+                : null;
+              const elevenMsg = inner?.detail?.message;
+              const elevenCode = inner?.detail?.code;
+              if (elevenCode === "quota_exceeded") {
+                detail = "ElevenLabs credits exhausted. Top up or upgrade the ElevenLabs plan, then retry.";
+              } else if (elevenMsg) {
+                detail = `ElevenLabs: ${elevenMsg}`;
+              } else if (parsed?.error) {
+                detail = parsed.error;
+              } else {
+                detail = body;
+              }
+            } catch {
+              detail = body || detail;
+            }
+          }
+        } catch {}
+        throw new Error(detail);
+      }
       if (data?.path) {
         onChange(data.path);
         toast({ title: `${label} generated`, description: "ElevenLabs narration saved. Refresh preview to hear it." });
