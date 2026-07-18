@@ -23,21 +23,20 @@ const BUCKET = "devotional-audio";
 const MODEL_ID = "eleven_multilingual_v2";
 
 const STANDARD_INTRO =
-  "Welcome to Doxazo Expressions, where the presence of God meets us daily, His glory is revealed, and Jesus is glorified through His Word. Let us receive today's devotional.";
+  "Welcome to Doxazo Expressions, where the presence of God meets us daily, His glory is revealed, and Jesus is glorified through His Word.";
 const STANDARD_CLOSING =
   "This is Doxazo Expressions. May the presence of God remain with you, may His glory rest upon your day, and may Jesus Christ be revealed and glorified in your life. Amen.";
 
-// Narration order (Declaration is intentionally suppressed for now):
-//  1. soft intro music (prepended as audio, not narrated)
-//  2. standard Doxazo intro line
-//  3. devotional series / part
-//  4. today's title
-//  5. scripture
-//  6. reflection (body)
-//  7. prayer section only
-//  8. inspiration caption
-//  9. standard Doxazo closing line
-// 10. soft outro music (appended as audio)
+// ElevenLabs supports `<break time="Xs"/>` SSML pause tags inside the text
+// for the multilingual_v2 model. We use them to shape a calm, reverent,
+// unhurried devotional cadence with intentional section breaks.
+const B = (sec: number) => `<break time="${sec.toFixed(1)}s"/>`;
+
+// Narration flow (Joy + Wisdom, identical script):
+//   Welcome → series/part → title → Reflection → Scripture →
+//   Prayer/Decree (ends in Amen with a longer reverent pause) →
+//   Inspirational Quote for the day → Closing.
+// Declaration/decree is intentionally merged into Prayer per product spec.
 function buildScript(d: {
   title?: string | null;
   series?: string | null;
@@ -49,37 +48,49 @@ function buildScript(d: {
   inspiration_caption?: string | null;
 }): string {
   const parts: string[] = [];
-  parts.push(STANDARD_INTRO);
 
-  const seriesLine = [
-    d.series ? d.series.trim() : null,
-    d.day ? `Part ${d.day}` : null,
-  ].filter(Boolean).join(" — ");
-  if (seriesLine) parts.push(seriesLine + ".");
+  parts.push(STANDARD_INTRO + " " + B(0.8));
 
-  if (d.title) parts.push(`Today's title: ${d.title.trim()}.`);
+  const seriesName = d.series?.trim();
+  const partLabel = d.day ? `Part ${d.day}` : null;
+  if (seriesName || partLabel) {
+    const seriesPhrase = [seriesName, partLabel].filter(Boolean).join(", ");
+    parts.push(`Let us receive today's devotional from our wonderful series, ${seriesPhrase}. ${B(1.0)}`);
+  } else {
+    parts.push(`Let us receive today's devotional. ${B(1.0)}`);
+  }
+
+  if (d.title) {
+    parts.push(`Today's Title: ${d.title.trim()}. ${B(1.0)}`);
+  }
+
+  if (d.body) {
+    parts.push(`Reflection: ${B(0.9)} ${d.body.replace(/\s+/g, " ").trim()} ${B(1.0)}`);
+  }
 
   if (d.scripture_reference || d.scripture_text) {
     const ref = d.scripture_reference?.trim();
     const text = d.scripture_text?.trim();
-    parts.push(
-      `Scripture. ${[ref, text].filter(Boolean).join(" — ")}`,
-    );
+    const scripture = [ref, text].filter(Boolean).join(". ");
+    parts.push(`Scripture for the day: ${B(0.9)} ${scripture} ${B(1.0)}`);
   }
 
-  if (d.body) parts.push(`Reflection. ${d.body.replace(/\s+/g, " ").trim()}`);
-
-  if (d.prayer_section) parts.push(`Prayer. ${d.prayer_section.trim()}`);
-
-  // Declaration / decree_and_declare intentionally omitted per current directive.
+  if (d.prayer_section) {
+    let prayer = d.prayer_section.replace(/\s+/g, " ").trim();
+    // Guarantee Amen closes the section for a proper spiritual ending.
+    const endsWithAmen = /amen\.?\s*$/i.test(prayer);
+    if (!endsWithAmen) prayer = prayer.replace(/[.\s]*$/, "") + ". Amen.";
+    // Longer reverent pause after Amen before moving to the quote.
+    parts.push(`Prayer and Decree: ${B(0.9)} ${prayer} ${B(1.8)}`);
+  }
 
   if (d.inspiration_caption) {
-    parts.push(`Inspiration. ${d.inspiration_caption.trim()}`);
+    parts.push(`Inspirational Quote for the day: ${B(0.8)} ${d.inspiration_caption.trim()} ${B(1.0)}`);
   }
 
   parts.push(STANDARD_CLOSING);
 
-  return parts.join(" \n\n ");
+  return parts.join(" ");
 }
 
 // Generate (and cache) a soft, loopable ambient music bed via ElevenLabs
