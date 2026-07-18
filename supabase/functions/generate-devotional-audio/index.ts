@@ -77,11 +77,12 @@ function buildScript(d: {
 
   if (d.prayer_section) {
     let prayer = d.prayer_section.replace(/\s+/g, " ").trim();
-    // Guarantee Amen closes the section for a proper spiritual ending.
-    const endsWithAmen = /amen\.?\s*$/i.test(prayer);
-    if (!endsWithAmen) prayer = prayer.replace(/[.\s]*$/, "") + ". Amen.";
-    // Longer reverent pause after Amen before moving to the quote.
-    parts.push(`Prayer and Decree: ${B(0.9)} ${prayer} ${B(1.8)}`);
+    // Collapse any repeated trailing Amens (e.g. "Amen. Amen.") to a single Amen
+    // for proper spiritual reverence — never say "Amen" twice at the close.
+    prayer = prayer.replace(/(?:[.\s]*\bamen\b\.?)+\s*$/i, "").replace(/[.\s]*$/, "");
+    prayer = prayer + ". Amen.";
+    // Longer reverent pause after the single Amen before moving to the quote.
+    parts.push(`Prayer: ${B(0.9)} ${prayer} ${B(1.8)}`);
   }
 
   if (d.inspiration_caption) {
