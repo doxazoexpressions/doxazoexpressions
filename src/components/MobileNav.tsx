@@ -23,6 +23,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { isNative } from "@/lib/native";
+
 
 export const MOBILE_MENU_EVENT = "doxazo:open-mobile-menu";
 export const openMobileMenu = () =>
@@ -68,10 +70,32 @@ const moreGroups: { label: string; links: { name: string; to: string; icon: type
   },
 ];
 
+const webGroups: { label: string; links: { name: string; to: string; icon: typeof Book }[] }[] = [
+  {
+    label: "Read",
+    links: [
+      { name: "Home", to: "/", icon: Home },
+      { name: "Today's Devotional", to: "/devotional", icon: Sun },
+      { name: "Plans", to: "/plans", icon: BookOpen },
+      { name: "Archive", to: "/archive", icon: ArchiveIcon },
+    ],
+  },
+  {
+    label: "About",
+    links: [
+      { name: "About", to: "/about", icon: Info },
+      { name: "Contact", to: "/contact", icon: HeartHandshake },
+    ],
+  },
+];
+
 const MobileNav = () => {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [native, setNative] = useState(false);
   const { user, signOut } = useAuth();
+
+  useEffect(() => { setNative(isNative()); }, []);
 
   useEffect(() => {
     const handler = () => setOpen(true);
@@ -84,47 +108,52 @@ const MobileNav = () => {
   }, [pathname]);
 
   const isMoreActive = ![...primaryTabs].some((t) => t.match(pathname));
+  const groups = native ? moreGroups : webGroups;
+
 
   return (
     <>
-      <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-        aria-label="Primary"
-      >
-        <ul className="grid grid-cols-5">
-          {primaryTabs.map((tab) => {
-            const active = tab.match(pathname);
-            const Icon = tab.icon;
-            return (
-              <li key={tab.name}>
-                <Link
-                  to={tab.to}
-                  className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
-                    active ? "text-accent" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <Icon className={`w-5 h-5 ${active ? "text-accent" : ""}`} />
-                  {tab.name}
-                </Link>
-              </li>
-            );
-          })}
-          <li>
-            <button
-              onClick={() => setOpen(true)}
-              className={`w-full flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
-                isMoreActive && open ? "text-accent" : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-label="Open more menu"
-            >
-              <Menu className="w-5 h-5" />
-              More
-            </button>
-          </li>
-        </ul>
-      </nav>
+      {native && (
+        <nav
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          aria-label="Primary"
+        >
+          <ul className="grid grid-cols-5">
+            {primaryTabs.map((tab) => {
+              const active = tab.match(pathname);
+              const Icon = tab.icon;
+              return (
+                <li key={tab.name}>
+                  <Link
+                    to={tab.to}
+                    className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
+                      active ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <Icon className={`w-5 h-5 ${active ? "text-accent" : ""}`} />
+                    {tab.name}
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <button
+                onClick={() => setOpen(true)}
+                className={`w-full flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
+                  isMoreActive && open ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-label="Open more menu"
+              >
+                <Menu className="w-5 h-5" />
+                More
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
+
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-[85vw] sm:w-96 p-0 flex flex-col">
@@ -135,7 +164,7 @@ const MobileNav = () => {
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto py-2">
-            {moreGroups.map((group) => (
+            {groups.map((group) => (
               <div key={group.label} className="mb-2">
                 <p className="px-5 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold">
                   {group.label}
