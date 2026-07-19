@@ -164,7 +164,7 @@ const MobileNav = () => {
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto py-2">
-            {moreGroups.map((group) => (
+            {groups.map((group) => (
               <div key={group.label} className="mb-2">
                 <p className="px-5 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold">
                   {group.label}
