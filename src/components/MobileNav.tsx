@@ -23,6 +23,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { isNative } from "@/lib/native";
+
 
 export const MOBILE_MENU_EVENT = "doxazo:open-mobile-menu";
 export const openMobileMenu = () =>
