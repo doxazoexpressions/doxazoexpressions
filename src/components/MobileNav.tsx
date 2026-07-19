@@ -70,10 +70,32 @@ const moreGroups: { label: string; links: { name: string; to: string; icon: type
   },
 ];
 
+const webGroups: { label: string; links: { name: string; to: string; icon: typeof Book }[] }[] = [
+  {
+    label: "Read",
+    links: [
+      { name: "Home", to: "/", icon: Home },
+      { name: "Today's Devotional", to: "/devotional", icon: Sun },
+      { name: "Plans", to: "/plans", icon: BookOpen },
+      { name: "Archive", to: "/archive", icon: ArchiveIcon },
+    ],
+  },
+  {
+    label: "About",
+    links: [
+      { name: "About", to: "/about", icon: Info },
+      { name: "Contact", to: "/contact", icon: HeartHandshake },
+    ],
+  },
+];
+
 const MobileNav = () => {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [native, setNative] = useState(false);
   const { user, signOut } = useAuth();
+
+  useEffect(() => { setNative(isNative()); }, []);
 
   useEffect(() => {
     const handler = () => setOpen(true);
@@ -86,6 +108,8 @@ const MobileNav = () => {
   }, [pathname]);
 
   const isMoreActive = ![...primaryTabs].some((t) => t.match(pathname));
+  const groups = native ? moreGroups : webGroups;
+
 
   return (
     <>
