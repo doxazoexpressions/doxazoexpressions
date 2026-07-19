@@ -113,44 +113,47 @@ const MobileNav = () => {
 
   return (
     <>
-      <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-        aria-label="Primary"
-      >
-        <ul className="grid grid-cols-5">
-          {primaryTabs.map((tab) => {
-            const active = tab.match(pathname);
-            const Icon = tab.icon;
-            return (
-              <li key={tab.name}>
-                <Link
-                  to={tab.to}
-                  className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
-                    active ? "text-accent" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <Icon className={`w-5 h-5 ${active ? "text-accent" : ""}`} />
-                  {tab.name}
-                </Link>
-              </li>
-            );
-          })}
-          <li>
-            <button
-              onClick={() => setOpen(true)}
-              className={`w-full flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
-                isMoreActive && open ? "text-accent" : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-label="Open more menu"
-            >
-              <Menu className="w-5 h-5" />
-              More
-            </button>
-          </li>
-        </ul>
-      </nav>
+      {native && (
+        <nav
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          aria-label="Primary"
+        >
+          <ul className="grid grid-cols-5">
+            {primaryTabs.map((tab) => {
+              const active = tab.match(pathname);
+              const Icon = tab.icon;
+              return (
+                <li key={tab.name}>
+                  <Link
+                    to={tab.to}
+                    className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
+                      active ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <Icon className={`w-5 h-5 ${active ? "text-accent" : ""}`} />
+                    {tab.name}
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <button
+                onClick={() => setOpen(true)}
+                className={`w-full flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
+                  isMoreActive && open ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-label="Open more menu"
+              >
+                <Menu className="w-5 h-5" />
+                More
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
+
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-[85vw] sm:w-96 p-0 flex flex-col">
