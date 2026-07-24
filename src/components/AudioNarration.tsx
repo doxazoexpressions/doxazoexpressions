@@ -386,8 +386,22 @@ const AudioNarration = ({
           crossOrigin="anonymous"
           src={resolvedUrl}
           preload="none"
-          onEnded={() => { fadeBedGain(0, 1200); stopDuckingLoop(); window.setTimeout(() => bedRef.current?.pause(), 1250); setState("idle"); }}
+          onEnded={() => {
+            if (devotionalId) clearAudioProgress(devotionalId);
+            fadeBedGain(0, 1200);
+            stopDuckingLoop();
+            window.setTimeout(() => bedRef.current?.pause(), 1250);
+            setState("idle");
+          }}
           onCanPlay={() => setState((s) => (s === "loading" ? "paused" : s))}
+          onTimeUpdate={() => {
+            // Save every ~5s while playing so a background/lock-screen close resumes correctly.
+            const now = Date.now();
+            if (now - progressSaveRef.current > 5000) {
+              progressSaveRef.current = now;
+              persistProgress();
+            }
+          }}
           className="hidden"
         />
       )}
