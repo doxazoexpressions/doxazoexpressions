@@ -248,6 +248,29 @@ const AudioNarration = ({
     } catch { /* older browsers */ }
   };
 
+  const persistProgress = () => {
+    const el = audioRef.current;
+    if (!el || !devotionalId) return;
+    const pos = el.currentTime;
+    const dur = el.duration || 0;
+    if (dur && pos / dur > 0.97) {
+      // Near the end — clear resume so next play starts fresh.
+      clearAudioProgress(devotionalId);
+    } else if (pos >= 5) {
+      saveAudioProgress(devotionalId, pos, dur);
+      setLastListened({
+        devotionalId,
+        title,
+        slug: devotionalSlug ?? null,
+        scripture_reference: scripture ?? null,
+        position: Math.floor(pos),
+        duration: Math.floor(dur),
+        voice: voiceKind,
+        updatedAt: Date.now(),
+      });
+    }
+  };
+
   const onPlay = async () => {
     if (!resolvedUrl || !audioRef.current) return;
     try {
@@ -256,10 +279,18 @@ const AudioNarration = ({
       if (audioCtxRef.current?.state === "suspended") {
         await audioCtxRef.current.resume();
       }
+      // Restore resume position on the first play of this source.
+      if (devotionalId && audioRef.current.currentTime < 0.5) {
+        const saved = getAudioProgress(devotionalId);
+        if (saved && saved.position > 5 && (saved.duration === 0 || saved.position < saved.duration - 5)) {
+          try { audioRef.current.currentTime = saved.position; } catch {}
+        }
+      }
       await audioRef.current.play();
       startBed();
       setState("playing");
       applyMediaSession();
+      setResumeHint(null);
       if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
         navigator.mediaSession.playbackState = "playing";
       }
@@ -272,6 +303,7 @@ const AudioNarration = ({
   const onPause = () => {
     if (resolvedUrl && audioRef.current) {
       audioRef.current.pause();
+      persistProgress();
       fadeBedGain(0, 400);
       stopDuckingLoop();
       window.setTimeout(() => { bedRef.current?.pause(); }, 450);
@@ -286,6 +318,8 @@ const AudioNarration = ({
     if (!resolvedUrl || !audioRef.current) return;
     audioRef.current.currentTime = 0;
     if (bedRef.current) bedRef.current.currentTime = 0;
+    if (devotionalId) clearAudioProgress(devotionalId);
+    setResumeHint(null);
     try { await audioRef.current.play(); startBed(); setState("playing"); applyMediaSession(); } catch { setState("idle"); }
   };
 
