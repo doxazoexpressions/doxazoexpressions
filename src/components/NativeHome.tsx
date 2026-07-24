@@ -267,6 +267,36 @@ const NativeHome = () => {
       <ForYouRail />
 
 
+      {/* Continue listening — resume audio narration where you left off */}
+      {lastListened && lastListened.position > 8 && (
+        <section className="px-5 mt-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Headphones className="w-4 h-4 text-accent" />
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Continue listening
+            </h3>
+          </div>
+          <Card className="border-accent/30 bg-accent/5">
+            <CardContent className="p-4">
+              <p className="text-[11px] uppercase tracking-widest text-accent font-semibold mb-1">
+                {lastListened.voice === "male" ? "Wisdom" : "Joy"} · paused at {Math.floor(lastListened.position / 60)}:{String(Math.floor(lastListened.position % 60)).padStart(2, "0")}
+              </p>
+              <p className="font-serif font-semibold text-base leading-snug mb-1 line-clamp-2">
+                {lastListened.title}
+              </p>
+              {lastListened.scripture_reference && (
+                <p className="text-xs text-accent mb-3">{lastListened.scripture_reference}</p>
+              )}
+              <Button asChild size="sm" className="gap-2" onClick={() => hapticLight()}>
+                <Link to={`/devotional/${lastListened.slug || lastListened.devotionalId}`}>
+                  Resume playback <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
       {/* Continue reading */}
       {continueEntry && (
         <section className="px-5 mt-6">
@@ -278,6 +308,11 @@ const NativeHome = () => {
           </div>
           <Card className="border-border">
             <CardContent className="p-4">
+              {isCompleted(continueEntry.id) && (
+                <p className="text-[11px] uppercase tracking-widest text-accent font-semibold mb-1 inline-flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Completed · revisit
+                </p>
+              )}
               <p className="font-serif font-semibold text-base leading-snug mb-1 line-clamp-2">
                 {continueEntry.title}
               </p>
@@ -294,8 +329,101 @@ const NativeHome = () => {
         </section>
       )}
 
+      {/* Current reading plan progress */}
+      {currentPlan && currentPlan.total > 0 && (
+        <section className="px-5 mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-accent" />
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Your current plan
+              </h3>
+            </div>
+            <Link to={`/plans/${currentPlan.slug}`} className="text-xs text-accent inline-flex items-center gap-1">
+              Open <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <Card className="border-border">
+            <CardContent className="p-4">
+              <p className="font-serif font-semibold text-base leading-snug mb-2">{currentPlan.name}</p>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full bg-accent" style={{ width: `${Math.round((currentPlan.completed / currentPlan.total) * 100)}%` }} />
+                </div>
+                <span className="text-xs text-muted-foreground">{currentPlan.completed}/{currentPlan.total}</span>
+              </div>
+              {currentPlan.next ? (
+                <>
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">Up next</p>
+                  <p className="text-sm font-serif leading-snug line-clamp-2 mb-3">{currentPlan.next.title}</p>
+                  <Button asChild size="sm" className="gap-2" onClick={() => hapticLight()}>
+                    <Link to={`/devotional/${currentPlan.next.slug || currentPlan.next.id}`}>
+                      Resume plan <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">Plan complete — well done.</p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* Journal reminder */}
+      {user && (() => {
+        const daysSince = lastJournalAt ? (Date.now() - lastJournalAt) / 86400000 : Infinity;
+        if (journalCount > 0 && daysSince < 2) return null;
+        return (
+          <section className="px-5 mt-6">
+            <Card className="border-accent/30 bg-gradient-to-br from-accent/10 to-transparent">
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
+                  <NotebookPen className="w-5 h-5 text-accent" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-serif font-semibold text-sm leading-snug">
+                    {journalCount === 0 ? "Write your first reflection" : "Add today's reflection"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Private to your account. Sync across your devices.
+                  </p>
+                </div>
+                <Button asChild size="sm" variant="outline" className="shrink-0">
+                  <Link to={today ? devotionalHref(today) : "/journal"}>Open</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </section>
+        );
+      })()}
+
       {/* Quick actions */}
       <section className="px-5 mt-6 grid grid-cols-2 gap-3">
+        <Link
+          to="/journal"
+          className="rounded-xl border border-border bg-card p-4 flex flex-col items-start gap-2 active:scale-[0.98] transition"
+        >
+          <NotebookPen className="w-5 h-5 text-accent" />
+          <div>
+            <p className="font-semibold text-sm">Journal</p>
+            <p className="text-xs text-muted-foreground">
+              {journalCount} {journalCount === 1 ? "entry" : "entries"}
+            </p>
+          </div>
+        </Link>
+        <Link
+          to="/highlights"
+          className="rounded-xl border border-border bg-card p-4 flex flex-col items-start gap-2 active:scale-[0.98] transition"
+        >
+          <Highlighter className="w-5 h-5 text-accent" />
+          <div>
+            <p className="font-semibold text-sm">Highlights</p>
+            <p className="text-xs text-muted-foreground">
+              {highlightCount} verse{highlightCount === 1 ? "" : "s"}
+            </p>
+          </div>
+        </Link>
         <Link
           to="/favorites"
           className="rounded-xl border border-border bg-card p-4 flex flex-col items-start gap-2 active:scale-[0.98] transition"
@@ -309,36 +437,17 @@ const NativeHome = () => {
           </div>
         </Link>
         <Link
-          to="/archive"
+          to="/scripture"
           className="rounded-xl border border-border bg-card p-4 flex flex-col items-start gap-2 active:scale-[0.98] transition"
         >
           <BookOpen className="w-5 h-5 text-accent" />
           <div>
-            <p className="font-semibold text-sm">Archive</p>
-            <p className="text-xs text-muted-foreground">Past devotionals</p>
-          </div>
-        </Link>
-        <Link
-          to="/categories"
-          className="rounded-xl border border-border bg-card p-4 flex flex-col items-start gap-2 active:scale-[0.98] transition"
-        >
-          <Compass className="w-5 h-5 text-accent" />
-          <div>
-            <p className="font-semibold text-sm">Themes</p>
-            <p className="text-xs text-muted-foreground">Browse by topic</p>
-          </div>
-        </Link>
-        <Link
-          to="/settings"
-          className="rounded-xl border border-border bg-card p-4 flex flex-col items-start gap-2 active:scale-[0.98] transition"
-        >
-          <Sparkles className="w-5 h-5 text-accent" />
-          <div>
-            <p className="font-semibold text-sm">Rhythm</p>
-            <p className="text-xs text-muted-foreground">Notifications & offline</p>
+            <p className="font-semibold text-sm">Scripture</p>
+            <p className="text-xs text-muted-foreground">Lookup & save</p>
           </div>
         </Link>
       </section>
+
 
       {/* Saved snippet */}
       {savedFromRecent.length > 0 && (
