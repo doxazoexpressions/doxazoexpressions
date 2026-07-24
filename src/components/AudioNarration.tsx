@@ -349,10 +349,15 @@ const AudioNarration = ({
 
   const switchVoice = (kind: VoiceKind) => {
     if (kind === voiceKind) return;
+    // Save progress against the current voice's source before switching.
+    persistProgress();
     setVoiceKind(kind);
     setVoicePreference(kind);
+    if (devotionalId) setVoiceForDevotional(devotionalId, kind);
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
     if (bedRef.current) { bedRef.current.pause(); bedRef.current.currentTime = 0; }
+    // Show resume hint for the new voice if we have a saved position.
+    setResumeHint(devotionalId ? getAudioProgress(devotionalId)?.position ?? null : null);
     setState("idle");
   };
 
