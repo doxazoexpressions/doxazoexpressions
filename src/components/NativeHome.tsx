@@ -79,6 +79,68 @@ const NativeHome = () => {
 
   useEffect(() => {
     setLastRead(getLastRead());
+    setLastListened(getLastListened());
+  }, []);
+
+  // Personal library counts + last-journal recency
+  useEffect(() => {
+    if (!user) { setJournalCount(0); setHighlightCount(0); setLastJournalAt(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [j, h] = await Promise.all([listJournalEntries(), listHighlights()]);
+        if (cancelled) return;
+        setJournalCount(j.length);
+        setHighlightCount(h.length);
+        setLastJournalAt(j[0]?.created_at ? new Date(j[0].created_at).getTime() : null);
+      } catch { /* offline */ }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // Current plan continuity — pick the last-touched plan (or biggest with progress).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await syncPlanProgressFromCloud().catch(() => {});
+        const { data } = await supabase
+          .from("devotionals")
+          .select("id,title,series,publish_date,slug,scripture_reference")
+          .or(liveDevotionalOr())
+          .not("series", "is", null)
+          .order("publish_date", { ascending: true });
+        if (!data || cancelled) return;
+        const groups = new Map<string, { name: string; items: any[] }>();
+        for (const r of data as any[]) {
+          const slug = planSlug(r.series);
+          if (!slug) continue;
+          const g = groups.get(slug) ?? { name: planDisplayName(r.series || ""), items: [] };
+          g.items.push(r);
+          groups.set(slug, g);
+        }
+        const preferred = getLastPlan();
+        const candidateSlugs = preferred && groups.has(preferred)
+          ? [preferred, ...Array.from(groups.keys()).filter((s) => s !== preferred)]
+          : Array.from(groups.keys());
+        for (const slug of candidateSlugs) {
+          const g = groups.get(slug)!;
+          const done = getPlanCompleted(slug);
+          const completed = g.items.filter((i) => done.includes(i.id)).length;
+          if (completed === 0 && slug !== preferred) continue;
+          const next = g.items.find((i) => !done.includes(i.id)) ?? null;
+          setCurrentPlan({
+            slug,
+            name: g.name,
+            completed,
+            total: g.items.length,
+            next: next ? { id: next.id, title: next.title, slug: next.slug ?? null, scripture_reference: next.scripture_reference ?? null } : null,
+          });
+          return;
+        }
+      } catch { /* offline */ }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
