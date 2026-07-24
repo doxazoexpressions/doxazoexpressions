@@ -25,6 +25,7 @@ import {
 import { recordRead } from "@/lib/readingHistory";
 import { markReadToday } from "@/lib/streak";
 import { markPlanItemRead, planSlug } from "@/lib/planProgress";
+import { markStarted, markCompleted, setLastPlan } from "@/lib/devotionalProgress";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { WifiOff } from "lucide-react";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
