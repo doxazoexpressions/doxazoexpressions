@@ -416,6 +416,11 @@ const AudioNarration = ({
         />
       )}
 
+      {resumeHint != null && resumeHint > 5 && state !== "playing" && (
+        <p className="text-[11px] text-accent font-medium mb-2">
+          Continue listening from {Math.floor(resumeHint / 60)}:{String(Math.floor(resumeHint % 60)).padStart(2, "0")}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {state !== "playing" ? (
