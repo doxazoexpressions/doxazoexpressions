@@ -9,7 +9,14 @@ import {
   getMusicBedUrl,
   resolveAudioUrl,
 } from "@/lib/devotionalAudio";
-
+import {
+  getAudioProgress,
+  saveAudioProgress,
+  clearAudioProgress,
+  getVoiceForDevotional,
+  setVoiceForDevotional,
+  setLastListened,
+} from "@/lib/audioProgress";
 
 type Props = {
   title: string;
@@ -21,6 +28,9 @@ type Props = {
   audioMaleUrl?: string | null;
   audioFemaleUrl?: string | null;
   defaultVoice?: VoiceKind | null;
+  /** When provided, playback position + voice choice are remembered per devotional. */
+  devotionalId?: string;
+  devotionalSlug?: string | null;
 };
 
 // Voice UI names (backend voice IDs are fixed in the edge function):
