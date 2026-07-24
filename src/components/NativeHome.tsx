@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sun, BookOpen, Heart, Compass, ArrowRight, Clock, Sparkles, WifiOff } from "lucide-react";
+import { Sun, BookOpen, Heart, Compass, ArrowRight, Clock, Sparkles, WifiOff, Headphones, Highlighter, NotebookPen, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import {
   getCachedRecentDevotionals,
 } from "@/lib/offlineCache";
 import { getLastRead, getReadHistory, type ReadEntry } from "@/lib/readingHistory";
+import { useAuth } from "@/hooks/useAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import CategoryBadge from "@/components/CategoryBadge";
@@ -21,6 +22,11 @@ import StreakCard from "@/components/StreakCard";
 import ThemesGrid from "@/components/ThemesGrid";
 import ForYouRail from "@/components/ForYouRail";
 import { hapticLight } from "@/lib/haptics";
+import { getLastListened, type LastListened } from "@/lib/audioProgress";
+import { getLastPlan, isCompleted } from "@/lib/devotionalProgress";
+import { getPlanCompleted, planDisplayName, planSlug, syncPlanProgressFromCloud } from "@/lib/planProgress";
+import { listJournalEntries } from "@/lib/journal";
+import { listHighlights } from "@/lib/highlights";
 const devotionalHref = (d: { slug?: string | null; id: string }) =>
   `/devotional/${d.slug || d.id}`;
 
