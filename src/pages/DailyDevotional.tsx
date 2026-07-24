@@ -156,9 +156,27 @@ const DailyDevotional = () => {
         publish_date: current.publish_date,
       });
       markReadToday();
+      markStarted(current.id);
       const plan = planSlug(current.series);
-      if (plan) markPlanItemRead(plan, current.id);
+      if (plan) {
+        markPlanItemRead(plan, current.id);
+        setLastPlan(plan);
+      }
     }
+  }, [current?.id]);
+
+  // Mark completed when the reader reaches the bottom of the article (Prayer section visible).
+  useEffect(() => {
+    if (!current) return;
+    const onScroll = () => {
+      const scrolled = window.innerHeight + window.scrollY;
+      const total = document.body.scrollHeight;
+      if (total > 0 && scrolled >= total - 400) {
+        markCompleted(current.id);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, [current?.id]);
 
   const seoTitle = current?.title ?? "Today's Devotional";
