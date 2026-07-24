@@ -47,14 +47,28 @@ type Devotional = {
  * shell (see Index.tsx). Emphasizes daily devotional utility, reading continuity,
  * saved library, and thematic browsing — not marketing copy.
  */
+type PlanState = {
+  slug: string;
+  name: string;
+  completed: number;
+  total: number;
+  next: { id: string; title: string; slug: string | null; scripture_reference: string | null } | null;
+};
+
 const NativeHome = () => {
   const online = useOnlineStatus();
+  const { user } = useAuth();
   const { ids: favoriteIds } = useFavorites();
   const [today, setToday] = useState<Devotional | null>(() => getCachedCurrentDevotional<Devotional>());
   const [recent, setRecent] = useState<Devotional[]>(() => getCachedRecentDevotionals<Devotional>());
   const [lastRead, setLastRead] = useState<ReadEntry | null>(() => getLastRead());
   const [history] = useState<ReadEntry[]>(() => getReadHistory());
   const [loading, setLoading] = useState(!today);
+  const [lastListened, setLastListened] = useState<LastListened | null>(() => getLastListened());
+  const [currentPlan, setCurrentPlan] = useState<PlanState | null>(null);
+  const [journalCount, setJournalCount] = useState<number>(0);
+  const [highlightCount, setHighlightCount] = useState<number>(0);
+  const [lastJournalAt, setLastJournalAt] = useState<number | null>(null);
 
   const greet = (() => {
     const h = new Date().getHours();
