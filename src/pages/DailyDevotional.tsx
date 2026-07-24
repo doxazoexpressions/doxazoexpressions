@@ -25,6 +25,7 @@ import {
 import { recordRead } from "@/lib/readingHistory";
 import { markReadToday } from "@/lib/streak";
 import { markPlanItemRead, planSlug } from "@/lib/planProgress";
+import { markStarted, markCompleted, setLastPlan } from "@/lib/devotionalProgress";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { WifiOff } from "lucide-react";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
@@ -155,9 +156,27 @@ const DailyDevotional = () => {
         publish_date: current.publish_date,
       });
       markReadToday();
+      markStarted(current.id);
       const plan = planSlug(current.series);
-      if (plan) markPlanItemRead(plan, current.id);
+      if (plan) {
+        markPlanItemRead(plan, current.id);
+        setLastPlan(plan);
+      }
     }
+  }, [current?.id]);
+
+  // Mark completed when the reader reaches the bottom of the article (Prayer section visible).
+  useEffect(() => {
+    if (!current) return;
+    const onScroll = () => {
+      const scrolled = window.innerHeight + window.scrollY;
+      const total = document.body.scrollHeight;
+      if (total > 0 && scrolled >= total - 400) {
+        markCompleted(current.id);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, [current?.id]);
 
   const seoTitle = current?.title ?? "Today's Devotional";
@@ -273,6 +292,8 @@ const DailyDevotional = () => {
                       audioMaleUrl={(current as any).audio_male_url}
                       audioFemaleUrl={(current as any).audio_female_url}
                       defaultVoice={(current as any).audio_default_voice}
+                      devotionalId={current.id}
+                      devotionalSlug={current.slug}
                     />
 
                     {(() => {

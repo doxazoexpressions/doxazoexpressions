@@ -9,7 +9,14 @@ import {
   getMusicBedUrl,
   resolveAudioUrl,
 } from "@/lib/devotionalAudio";
-
+import {
+  getAudioProgress,
+  saveAudioProgress,
+  clearAudioProgress,
+  getVoiceForDevotional,
+  setVoiceForDevotional,
+  setLastListened,
+} from "@/lib/audioProgress";
 
 type Props = {
   title: string;
@@ -21,6 +28,9 @@ type Props = {
   audioMaleUrl?: string | null;
   audioFemaleUrl?: string | null;
   defaultVoice?: VoiceKind | null;
+  /** When provided, playback position + voice choice are remembered per devotional. */
+  devotionalId?: string;
+  devotionalSlug?: string | null;
 };
 
 // Voice UI names (backend voice IDs are fixed in the edge function):
@@ -34,13 +44,20 @@ const VOICE_LABEL: Record<VoiceKind, string> = {
 const AudioNarration = ({
   title, scripture, body, declaration,
   audioUrl, audioMaleUrl, audioFemaleUrl, defaultVoice,
+  devotionalId, devotionalSlug,
 }: Props) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const bedRef = useRef<HTMLAudioElement | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "playing" | "paused">("idle");
-  const [voiceKind, setVoiceKind] = useState<VoiceKind>(() => defaultVoice ?? getVoicePreference());
+  const [voiceKind, setVoiceKind] = useState<VoiceKind>(
+    () => (devotionalId && getVoiceForDevotional(devotionalId)) || defaultVoice || getVoicePreference()
+  );
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [bedUrl, setBedUrl] = useState<string | null>(null);
+  const [resumeHint, setResumeHint] = useState<number | null>(
+    () => (devotionalId ? getAudioProgress(devotionalId)?.position ?? null : null)
+  );
+  const progressSaveRef = useRef<number>(0);
   // Sleep-timer minutes remaining (null = off). When it hits 0 we fade out and pause.
   const [sleepMinutes, setSleepMinutes] = useState<number | null>(null);
   const sleepTimerRef = useRef<number | null>(null);
@@ -231,6 +248,29 @@ const AudioNarration = ({
     } catch { /* older browsers */ }
   };
 
+  const persistProgress = () => {
+    const el = audioRef.current;
+    if (!el || !devotionalId) return;
+    const pos = el.currentTime;
+    const dur = el.duration || 0;
+    if (dur && pos / dur > 0.97) {
+      // Near the end — clear resume so next play starts fresh.
+      clearAudioProgress(devotionalId);
+    } else if (pos >= 5) {
+      saveAudioProgress(devotionalId, pos, dur);
+      setLastListened({
+        devotionalId,
+        title,
+        slug: devotionalSlug ?? null,
+        scripture_reference: scripture ?? null,
+        position: Math.floor(pos),
+        duration: Math.floor(dur),
+        voice: voiceKind,
+        updatedAt: Date.now(),
+      });
+    }
+  };
+
   const onPlay = async () => {
     if (!resolvedUrl || !audioRef.current) return;
     try {
@@ -239,10 +279,18 @@ const AudioNarration = ({
       if (audioCtxRef.current?.state === "suspended") {
         await audioCtxRef.current.resume();
       }
+      // Restore resume position on the first play of this source.
+      if (devotionalId && audioRef.current.currentTime < 0.5) {
+        const saved = getAudioProgress(devotionalId);
+        if (saved && saved.position > 5 && (saved.duration === 0 || saved.position < saved.duration - 5)) {
+          try { audioRef.current.currentTime = saved.position; } catch {}
+        }
+      }
       await audioRef.current.play();
       startBed();
       setState("playing");
       applyMediaSession();
+      setResumeHint(null);
       if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
         navigator.mediaSession.playbackState = "playing";
       }
@@ -255,6 +303,7 @@ const AudioNarration = ({
   const onPause = () => {
     if (resolvedUrl && audioRef.current) {
       audioRef.current.pause();
+      persistProgress();
       fadeBedGain(0, 400);
       stopDuckingLoop();
       window.setTimeout(() => { bedRef.current?.pause(); }, 450);
@@ -269,6 +318,8 @@ const AudioNarration = ({
     if (!resolvedUrl || !audioRef.current) return;
     audioRef.current.currentTime = 0;
     if (bedRef.current) bedRef.current.currentTime = 0;
+    if (devotionalId) clearAudioProgress(devotionalId);
+    setResumeHint(null);
     try { await audioRef.current.play(); startBed(); setState("playing"); applyMediaSession(); } catch { setState("idle"); }
   };
 
@@ -298,10 +349,15 @@ const AudioNarration = ({
 
   const switchVoice = (kind: VoiceKind) => {
     if (kind === voiceKind) return;
+    // Save progress against the current voice's source before switching.
+    persistProgress();
     setVoiceKind(kind);
     setVoicePreference(kind);
+    if (devotionalId) setVoiceForDevotional(devotionalId, kind);
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
     if (bedRef.current) { bedRef.current.pause(); bedRef.current.currentTime = 0; }
+    // Show resume hint for the new voice if we have a saved position.
+    setResumeHint(devotionalId ? getAudioProgress(devotionalId)?.position ?? null : null);
     setState("idle");
   };
 
@@ -330,8 +386,22 @@ const AudioNarration = ({
           crossOrigin="anonymous"
           src={resolvedUrl}
           preload="none"
-          onEnded={() => { fadeBedGain(0, 1200); stopDuckingLoop(); window.setTimeout(() => bedRef.current?.pause(), 1250); setState("idle"); }}
+          onEnded={() => {
+            if (devotionalId) clearAudioProgress(devotionalId);
+            fadeBedGain(0, 1200);
+            stopDuckingLoop();
+            window.setTimeout(() => bedRef.current?.pause(), 1250);
+            setState("idle");
+          }}
           onCanPlay={() => setState((s) => (s === "loading" ? "paused" : s))}
+          onTimeUpdate={() => {
+            // Save every ~5s while playing so a background/lock-screen close resumes correctly.
+            const now = Date.now();
+            if (now - progressSaveRef.current > 5000) {
+              progressSaveRef.current = now;
+              persistProgress();
+            }
+          }}
           className="hidden"
         />
       )}
@@ -346,6 +416,11 @@ const AudioNarration = ({
         />
       )}
 
+      {resumeHint != null && resumeHint > 5 && state !== "playing" && (
+        <p className="text-[11px] text-accent font-medium mb-2">
+          Continue listening from {Math.floor(resumeHint / 60)}:{String(Math.floor(resumeHint % 60)).padStart(2, "0")}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {state !== "playing" ? (
