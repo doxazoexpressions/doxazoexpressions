@@ -292,6 +292,8 @@ const DailyDevotional = () => {
                       audioMaleUrl={(current as any).audio_male_url}
                       audioFemaleUrl={(current as any).audio_female_url}
                       defaultVoice={(current as any).audio_default_voice}
+                      devotionalId={current.id}
+                      devotionalSlug={current.slug}
                     />
 
                     {(() => {
