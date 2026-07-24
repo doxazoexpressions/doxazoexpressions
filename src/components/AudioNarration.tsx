@@ -44,13 +44,20 @@ const VOICE_LABEL: Record<VoiceKind, string> = {
 const AudioNarration = ({
   title, scripture, body, declaration,
   audioUrl, audioMaleUrl, audioFemaleUrl, defaultVoice,
+  devotionalId, devotionalSlug,
 }: Props) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const bedRef = useRef<HTMLAudioElement | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "playing" | "paused">("idle");
-  const [voiceKind, setVoiceKind] = useState<VoiceKind>(() => defaultVoice ?? getVoicePreference());
+  const [voiceKind, setVoiceKind] = useState<VoiceKind>(
+    () => (devotionalId && getVoiceForDevotional(devotionalId)) || defaultVoice || getVoicePreference()
+  );
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [bedUrl, setBedUrl] = useState<string | null>(null);
+  const [resumeHint, setResumeHint] = useState<number | null>(
+    () => (devotionalId ? getAudioProgress(devotionalId)?.position ?? null : null)
+  );
+  const progressSaveRef = useRef<number>(0);
   // Sleep-timer minutes remaining (null = off). When it hits 0 we fade out and pause.
   const [sleepMinutes, setSleepMinutes] = useState<number | null>(null);
   const sleepTimerRef = useRef<number | null>(null);
