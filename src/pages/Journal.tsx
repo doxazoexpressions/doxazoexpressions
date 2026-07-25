@@ -62,31 +62,42 @@ const Journal = () => {
               <div className="mt-4"><Button asChild><Link to="/devotional">Read today's devotional</Link></Button></div>
             </CardContent></Card>
           ) : (
-            <ul className="space-y-3">
-              {entries.map((e) => (
-                <li key={e.id} className="rounded-lg border border-border bg-card p-5">
-                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                    <div>
-                      <p className="text-[11px] uppercase tracking-widest text-accent font-semibold">
-                        {new Date(e.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
-                        {e.mood && <span className="ml-2 text-muted-foreground">· {e.mood}</span>}
-                      </p>
-                      {e.devotional_title && (
-                        <p className="font-serif font-semibold mt-1">
-                          {e.devotional_id
-                            ? <Link className="hover:text-accent" to={`/devotional/${e.devotional_id}`}>{e.devotional_title}</Link>
-                            : e.devotional_title}
+            <section aria-labelledby="journal-section-title">
+              <div className="flex items-baseline justify-between mb-3">
+                <h2 id="journal-section-title" className="text-xs uppercase tracking-[0.2em] text-accent font-semibold">
+                  Journal
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  {entries.length} {entries.length === 1 ? "entry" : "entries"}
+                </span>
+              </div>
+              <ul className="space-y-3">
+                {entries.map((e) => (
+                  <li key={e.id} className="rounded-lg border border-border bg-card p-5">
+                    <div className="flex items-start justify-between gap-3 mb-2 flex-nowrap">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] uppercase tracking-widest text-accent font-semibold">
+                          {new Date(e.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                          {e.mood && <span className="ml-2 text-muted-foreground">· {e.mood}</span>}
                         </p>
-                      )}
+                        {e.devotional_title && (
+                          <p className="font-serif font-semibold mt-1 break-words">
+                            {e.devotional_id
+                              ? <Link className="hover:text-accent" to={`/devotional/${e.devotional_id}`}>{e.devotional_title}</Link>
+                              : e.devotional_title}
+                          </p>
+                        )}
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-destructive" onClick={() => onDelete(e.id)} aria-label="Delete">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => onDelete(e.id)} aria-label="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{e.content}</p>
-                </li>
-              ))}
-            </ul>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{e.content}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
           )}
         </div>
       </main>
