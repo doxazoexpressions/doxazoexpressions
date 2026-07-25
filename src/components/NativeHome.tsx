@@ -184,7 +184,7 @@ const NativeHome = () => {
 
   return (
     <div
-      className="min-h-screen bg-background pb-24"
+      className="min-h-screen bg-background pb-24 mx-auto w-full max-w-2xl"
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 4rem)" }}
     >
       {!online && (
