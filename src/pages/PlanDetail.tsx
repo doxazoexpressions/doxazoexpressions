@@ -61,7 +61,7 @@ const PlanDetail = () => {
             <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
               <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
             </div>
-            <span className="text-sm text-muted-foreground">{completed.length}/{items.length}</span>
+            <span className="text-sm text-muted-foreground">{completedCount}/{items.length}</span>
           </div>
 
           {nextItem && (
