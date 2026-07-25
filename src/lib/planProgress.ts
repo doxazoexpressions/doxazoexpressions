@@ -50,7 +50,11 @@ export function markPlanItemRead(plan: string, devotionalId: string) {
 }
 
 export function getPlanCompleted(plan: string): string[] {
-  return read()[plan]?.completed ?? [];
+  const raw = read()[plan]?.completed ?? [];
+  // Dedupe defensively — legacy writes (pre-sync) could contain duplicate ids
+  // which would otherwise inflate completion counts on any surface that used
+  // the raw length instead of intersecting with the current plan items.
+  return Array.from(new Set(raw));
 }
 
 export function resetPlanCompleted(plan: string, ids: string[]) {
