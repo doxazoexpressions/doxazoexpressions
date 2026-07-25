@@ -35,8 +35,16 @@ const PlanDetail = () => {
     })();
   }, [planId]);
 
+  // Only count completions that map to a devotional actually in this plan.
+  // Prevents impossible states like "18/5" when legacy/stale ids linger in local
+  // storage or cloud rows reference devotionals no longer in the live plan.
+  const itemIds = new Set(items.map((i) => i.id));
+  const completedCount = Math.min(
+    items.length,
+    completed.filter((id) => itemIds.has(id)).length,
+  );
   const nextItem = items.find((i) => !completed.includes(i.id)) ?? items[0];
-  const pct = items.length ? Math.round((completed.length / items.length) * 100) : 0;
+  const pct = items.length ? Math.round((completedCount / items.length) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background">
