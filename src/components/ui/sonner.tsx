@@ -10,6 +10,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // Push toasts below the fixed app header and iOS safe area so they
+      // never overlap the status bar or the hamburger menu button.
+      offset="calc(env(safe-area-inset-top) + 4.5rem)"
+      mobileOffset="calc(env(safe-area-inset-top) + 4.5rem)"
+      position="top-center"
       toastOptions={{
         classNames: {
           toast:
