@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import BrandMark from "./BrandMark";
+import { useAuth } from "@/hooks/useAuth";
 
 const Footer = () => {
+  const { user, loading, signOut } = useAuth();
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Daily Devotional", href: "/devotional" },
