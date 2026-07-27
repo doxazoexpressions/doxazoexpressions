@@ -3,9 +3,11 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bell, Wifi, WifiOff, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Bell, Wifi, WifiOff, Heart, User, LogIn, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAuth } from "@/hooks/useAuth";
 import {
   getCachedCurrentDevotional,
   getCachedRecentDevotionals,
@@ -14,6 +16,7 @@ import { useEffect, useState } from "react";
 
 const Settings = () => {
   const online = useOnlineStatus();
+  const { user, loading, signOut } = useAuth();
   const [cachedInfo, setCachedInfo] = useState({ hasToday: false, recentCount: 0 });
 
   useEffect(() => {
