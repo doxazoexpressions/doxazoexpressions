@@ -21,7 +21,9 @@ const Search = () => {
   const [ran, setRan] = useState(false);
 
   useEffect(() => {
-    const term = (params.get("q") ?? "").trim();
+    const raw = (params.get("q") ?? "").trim();
+    // Normalize: collapse whitespace, strip surrounding punctuation.
+    const term = raw.replace(/\s+/g, " ").replace(/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu, "");
     if (!term) {
       setResults([]);
       setRan(false);
@@ -30,14 +32,36 @@ const Search = () => {
     (async () => {
       setLoading(true);
       track("search_submit", { q: term });
-      const like = `%${term.replace(/[%_]/g, "")}%`;
-      const { data } = await supabase
+
+      // Build singular/plural variants so "Prayer" also matches "Prayers", etc.
+      const lower = term.toLowerCase();
+      const variants = new Set<string>([lower]);
+      if (lower.endsWith("ies") && lower.length > 4) variants.add(lower.slice(0, -3) + "y"); // categories -> category
+      else if (lower.endsWith("es") && lower.length > 3) variants.add(lower.slice(0, -2)); // favourites (n/a), classes -> class
+      else if (lower.endsWith("s") && lower.length > 3) variants.add(lower.slice(0, -1)); // prayers -> prayer
+      if (lower.endsWith("y") && lower.length > 2) variants.add(lower.slice(0, -1) + "ies"); // category -> categories
+      if (!lower.endsWith("s")) variants.add(lower + "s"); // prayer -> prayers
+
+      const escaped = Array.from(variants)
+        .map((v) => v.replace(/[%_,()]/g, "").trim())
+        .filter(Boolean);
+
+      const fields = ["title", "scripture_reference", "body", "excerpt", "category", "series"];
+      const orFilter = escaped
+        .flatMap((v) => fields.map((f) => `${f}.ilike.%${v}%`))
+        .join(",");
+
+      if (import.meta.env.DEV) console.info("[search] execute", { term, variants: escaped });
+
+      const { data, error } = await supabase
         .from("devotionals")
         .select("id,title,scripture_reference,excerpt,body,category,series,publish_date")
         .or(liveDevotionalOr())
-        .or(`title.ilike.${like},scripture_reference.ilike.${like},body.ilike.${like},excerpt.ilike.${like}`)
+        .or(orFilter)
         .order("publish_date", { ascending: false })
         .limit(50);
+
+      if (error && import.meta.env.DEV) console.warn("[search] error", error.message);
       setResults((data as DevotionalCardData[]) ?? []);
       setLoading(false);
       setRan(true);
