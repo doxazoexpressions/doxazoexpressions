@@ -48,7 +48,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    const eParse = emailSchema.safeParse(email);
+    const eParse = emailSchema.safeParse(email.trim());
     const pParse = passwordSchema.safeParse(password);
     if (!eParse.success) return toast({ title: "Check your email", description: eParse.error.issues[0].message, variant: "destructive" });
     if (!pParse.success) return toast({ title: "Check your password", description: pParse.error.issues[0].message, variant: "destructive" });
