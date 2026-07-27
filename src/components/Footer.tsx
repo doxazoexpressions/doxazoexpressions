@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import BrandMark from "./BrandMark";
+import { useAuth } from "@/hooks/useAuth";
 
 const Footer = () => {
+  const { user, loading, signOut } = useAuth();
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Daily Devotional", href: "/devotional" },
@@ -42,7 +44,26 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-foreground mb-5 text-sm uppercase tracking-wider">Account & Legal</h4>
             <ul className="space-y-3">
-              <li><Link to="/auth" className="text-muted-foreground hover:text-accent transition-colors text-sm">Sign In</Link></li>
+              {loading ? null : user ? (
+                <>
+                  <li>
+                    <Link to="/settings" className="text-muted-foreground hover:text-accent transition-colors text-sm break-all">
+                      {user.email ?? "Account"}
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => signOut()}
+                      className="text-muted-foreground hover:text-accent transition-colors text-sm text-left"
+                    >
+                      Sign Out
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <li><Link to="/auth" className="text-muted-foreground hover:text-accent transition-colors text-sm">Sign In</Link></li>
+              )}
               <li><Link to="/settings" className="text-muted-foreground hover:text-accent transition-colors text-sm">Settings</Link></li>
               <li><Link to="/privacy" className="text-muted-foreground hover:text-accent transition-colors text-sm">Privacy Policy</Link></li>
               <li><Link to="/terms" className="text-muted-foreground hover:text-accent transition-colors text-sm">Terms of Use</Link></li>
