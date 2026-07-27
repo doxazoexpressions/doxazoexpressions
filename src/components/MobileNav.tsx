@@ -198,9 +198,14 @@ const MobileNav = () => {
           <div className="border-t border-border p-4" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
             {user ? (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
-                  <User className="w-3 h-3" /> {user.email}
-                </p>
+                <Link
+                  to="/settings"
+                  className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Open account settings"
+                >
+                  <User className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{user.email}</span>
+                </Link>
                 <Button onClick={() => signOut()} variant="outline" className="w-full gap-1.5">
                   <LogOut className="w-4 h-4" /> Sign Out
                 </Button>

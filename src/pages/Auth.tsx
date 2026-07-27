@@ -48,7 +48,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    const eParse = emailSchema.safeParse(email);
+    const eParse = emailSchema.safeParse(email.trim());
     const pParse = passwordSchema.safeParse(password);
     if (!eParse.success) return toast({ title: "Check your email", description: eParse.error.issues[0].message, variant: "destructive" });
     if (!pParse.success) return toast({ title: "Check your password", description: pParse.error.issues[0].message, variant: "destructive" });
@@ -74,21 +74,51 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    const eParse = emailSchema.safeParse(email);
+    const eParse = emailSchema.safeParse(email.trim());
     const pParse = passwordSchema.safeParse(password);
     if (!eParse.success) return toast({ title: "Check your email", description: eParse.error.issues[0].message, variant: "destructive" });
     if (!pParse.success) return toast({ title: "Check your password", description: pParse.error.issues[0].message, variant: "destructive" });
 
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: eParse.data, password: pParse.data });
+    if (import.meta.env.DEV) console.info("[auth] signIn:start", { email: eParse.data });
+    let result;
+    try {
+      result = await supabase.auth.signInWithPassword({ email: eParse.data, password: pParse.data });
+    } catch (networkErr: any) {
+      setBusy(false);
+      if (import.meta.env.DEV) console.warn("[auth] signIn:network-error", networkErr?.message);
+      return toast({
+        title: "Network error",
+        description: "We couldn't reach the server. Check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+    const { error } = result;
     setBusy(false);
 
     if (error) {
-      let description = error.message;
-      if (/email not confirmed/i.test(error.message)) description = "Please confirm your email first. Check your inbox (and spam folder) for the link.";
-      else if (/invalid login credentials/i.test(error.message)) description = "Email or password is incorrect.";
-      return toast({ title: "Sign in failed", description, variant: "destructive" });
+      const m = error.message || "";
+      const status = (error as any).status as number | undefined;
+      if (import.meta.env.DEV) console.warn("[auth] signIn:error", { status, message: m });
+      let title = "Sign in failed";
+      let description = m;
+      if (/email not confirmed/i.test(m)) {
+        description = "Please confirm your email first. Check your inbox (and spam folder) for the link.";
+      } else if (/invalid login credentials|invalid_grant/i.test(m)) {
+        description = "Email or password is incorrect.";
+      } else if (status === 429 || /rate limit|too many/i.test(m)) {
+        title = "Too many attempts";
+        description = "Please wait a moment and try again.";
+      } else if (status && status >= 500) {
+        title = "Server error";
+        description = "Something went wrong on our side. Please try again in a moment.";
+      } else if (/failed to fetch|network/i.test(m)) {
+        title = "Network error";
+        description = "We couldn't reach the server. Check your connection and try again.";
+      }
+      return toast({ title, description, variant: "destructive" });
     }
+    if (import.meta.env.DEV) console.info("[auth] signIn:success");
     toast({ title: "Welcome back!" });
     navigate("/");
   };

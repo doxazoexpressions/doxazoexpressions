@@ -3,9 +3,11 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bell, Wifi, WifiOff, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Bell, Wifi, WifiOff, Heart, User, LogIn, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAuth } from "@/hooks/useAuth";
 import {
   getCachedCurrentDevotional,
   getCachedRecentDevotionals,
@@ -14,6 +16,7 @@ import { useEffect, useState } from "react";
 
 const Settings = () => {
   const online = useOnlineStatus();
+  const { user, loading, signOut } = useAuth();
   const [cachedInfo, setCachedInfo] = useState({ hasToday: false, recentCount: 0 });
 
   useEffect(() => {
@@ -42,6 +45,43 @@ const Settings = () => {
 
         <section className="py-10">
           <div className="container mx-auto px-4 max-w-3xl space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <User className="w-5 h-5 text-accent" />
+                  <h2 className="text-xl font-serif font-semibold">Account</h2>
+                </div>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">Checking your account…</p>
+                ) : user ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Signed in as{" "}
+                      <span className="font-medium text-foreground break-all">{user.email}</span>
+                    </p>
+                    <Button
+                      onClick={() => signOut()}
+                      variant="outline"
+                      className="gap-1.5"
+                    >
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Sign in to sync your journal, highlights, favorites, and progress across devices.
+                    </p>
+                    <Button asChild className="gap-1.5">
+                      <Link to="/auth">
+                        <LogIn className="w-4 h-4" /> Sign In
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
