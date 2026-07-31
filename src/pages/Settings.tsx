@@ -1,23 +1,82 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useTheme } from "next-themes";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bell, Wifi, WifiOff, Heart, User, LogIn, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Bell,
+  Wifi,
+  WifiOff,
+  Heart,
+  User,
+  LogIn,
+  LogOut,
+  Palette,
+  Headphones,
+  Languages,
+  Info,
+  Trash2,
+  ChevronRight,
+} from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { track } from "@/lib/analytics";
+import { getPrefs, setPrefs } from "@/lib/prefs";
 import {
   getCachedCurrentDevotional,
   getCachedRecentDevotionals,
 } from "@/lib/offlineCache";
-import { useEffect, useState } from "react";
+
+const Row = ({
+  to,
+  label,
+  external,
+}: { to: string; label: string; external?: boolean }) =>
+  external ? (
+    <a
+      href={to}
+      className="flex items-center justify-between py-3 text-sm border-b border-border/60 last:border-0"
+    >
+      {label}
+      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+    </a>
+  ) : (
+    <Link
+      to={to}
+      className="flex items-center justify-between py-3 text-sm border-b border-border/60 last:border-0"
+    >
+      {label}
+      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+    </Link>
+  );
 
 const Settings = () => {
   const online = useOnlineStatus();
   const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [cachedInfo, setCachedInfo] = useState({ hasToday: false, recentCount: 0 });
+  const [narrator, setNarrator] = useState<"female" | "male">("female");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -31,9 +90,38 @@ const Settings = () => {
     return () => window.removeEventListener("focus", refresh);
   }, [online]);
 
+  useEffect(() => {
+    const p = getPrefs() as unknown as { narrator?: "female" | "male" };
+    if (p?.narrator === "male" || p?.narrator === "female") setNarrator(p.narrator);
+  }, []);
+
+  const chooseNarrator = (v: "female" | "male") => {
+    setNarrator(v);
+    setPrefs({ narrator: v } as never);
+  };
+
+  // Guideline 5.1.1(v) — in-app account deletion, no second factor required.
+  const deleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) throw error;
+      track("auth_signout", { method: "account_deleted" });
+      await supabase.auth.signOut();
+      navigate("/auth");
+    } catch (e) {
+      setDeleteError(
+        (e as Error).message || "We couldn't delete your account. Please try again.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <SEO title="Settings" description="Manage notifications, offline reading, and favorites on Doxazo Expressions." path="/settings" />
+      <SEO title="Settings" description="Manage your account, appearance, audio, notifications and privacy on Doxazo Expressions." path="/settings" />
       <Navbar />
       <main className="pt-16">
         <section className="py-12 md:py-16 bg-secondary/30">
@@ -45,7 +133,8 @@ const Settings = () => {
 
         <section className="py-10">
           <div className="container mx-auto px-4 max-w-3xl space-y-6">
-            <Card>
+            {/* Account */}
+            <Card id="account">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <User className="w-5 h-5 text-accent" />
@@ -55,17 +144,50 @@ const Settings = () => {
                   <p className="text-sm text-muted-foreground">Checking your account…</p>
                 ) : user ? (
                   <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Signed in as{" "}
-                      <span className="font-medium text-foreground break-all">{user.email}</span>
-                    </p>
-                    <Button
-                      onClick={() => signOut()}
-                      variant="outline"
-                      className="gap-1.5"
-                    >
-                      <LogOut className="w-4 h-4" /> Sign Out
+                    <div className="text-sm">
+                      <p className="font-medium">
+                        {(user.user_metadata?.display_name as string | undefined) ??
+                          user.email?.split("@")[0] ??
+                          "Friend"}
+                      </p>
+                      <p className="text-muted-foreground break-all">{user.email}</p>
+                    </div>
+                    <Button onClick={() => signOut()} variant="outline" className="gap-1.5">
+                      <LogOut className="w-4 h-4" /> Sign out
                     </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          className="w-full flex items-center gap-2 text-sm text-destructive py-3 mt-1 border-t border-border/60"
+                          disabled={deleting}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {deleting ? "Deleting account…" : "Delete account"}
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete account</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Deleting this account permanently removes all journal entries,
+                            plans, and synced data. This cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={deleteAccount}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete account
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    {deleteError && (
+                      <p className="text-xs text-destructive">{deleteError}</p>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -82,19 +204,89 @@ const Settings = () => {
               </CardContent>
             </Card>
 
+            {/* Appearance */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <Palette className="w-5 h-5 text-accent" />
+                  <h2 className="text-xl font-serif font-semibold">Appearance</h2>
+                </div>
+                <RadioGroup
+                  value={theme ?? "system"}
+                  onValueChange={(v) => setTheme(v)}
+                  className="space-y-1"
+                >
+                  {[
+                    { v: "dark", label: "Dark mode" },
+                    { v: "light", label: "Light theme" },
+                    { v: "system", label: "Follow system" },
+                  ].map((o) => (
+                    <div key={o.v} className="flex items-center gap-3 py-2">
+                      <RadioGroupItem value={o.v} id={`theme-${o.v}`} />
+                      <Label htmlFor={`theme-${o.v}`} className="text-sm font-normal">{o.label}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </CardContent>
+            </Card>
+
+            {/* Audio */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <Headphones className="w-5 h-5 text-accent" />
+                  <h2 className="text-xl font-serif font-semibold">Audio</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">Narrator voice</p>
+                <RadioGroup value={narrator} onValueChange={(v) => chooseNarrator(v as "female" | "male")} className="space-y-1">
+                  <div className="flex items-center gap-3 py-2">
+                    <RadioGroupItem value="female" id="narrator-female" />
+                    <Label htmlFor="narrator-female" className="text-sm font-normal">Female (Joy)</Label>
+                  </div>
+                  <div className="flex items-center gap-3 py-2">
+                    <RadioGroupItem value="male" id="narrator-male" />
+                    <Label htmlFor="narrator-male" className="text-sm font-normal">Male (Wisdom)</Label>
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+
+            {/* Language */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <Languages className="w-5 h-5 text-accent" />
+                  <h2 className="text-xl font-serif font-semibold">Language</h2>
+                </div>
+                <select
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  defaultValue="en"
+                  aria-label="App language"
+                >
+                  <option value="en">English</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-2">More languages are planned.</p>
+              </CardContent>
+            </Card>
+
+            {/* Notifications */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <Bell className="w-5 h-5 text-accent" />
-                  <h2 className="text-xl font-serif font-semibold">Daily notifications</h2>
+                  <h2 className="text-xl font-serif font-semibold">Notifications</h2>
                 </div>
                 <p className="text-muted-foreground text-sm mb-4">
                   Receive a gentle nudge when a new devotional is published. We never send anything else.
                 </p>
                 <PushNotificationToggle />
+                <div className="mt-3">
+                  <Row to="/settings/notifications" label="More notification options" />
+                </div>
               </CardContent>
             </Card>
 
+            {/* Offline */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
@@ -105,11 +297,7 @@ const Settings = () => {
                   )}
                   <h2 className="text-xl font-serif font-semibold">Offline reading</h2>
                 </div>
-                <p className="text-muted-foreground text-sm">
-                  Today's devotional and your most recent reads are saved on this device so you
-                  can keep reading even with no connection.
-                </p>
-                <div className="mt-3 space-y-1 text-sm">
+                <div className="space-y-1 text-sm">
                   <p>
                     Connection:{" "}
                     <span className={online ? "text-accent font-medium" : "text-destructive font-medium"}>
@@ -123,47 +311,44 @@ const Settings = () => {
                       : ""}
                     .
                   </p>
-                  {!cachedInfo.hasToday && online && (
-                    <p className="text-muted-foreground">
-                      Open{" "}
-                      <Link to="/devotional" className="text-accent underline">
-                        today's devotional
-                      </Link>{" "}
-                      once while online to save it for offline reading.
-                    </p>
-                  )}
                 </div>
               </CardContent>
             </Card>
 
-
-
+            {/* Favorites */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <Heart className="w-5 h-5 text-accent" />
                   <h2 className="text-xl font-serif font-semibold">Favorites</h2>
                 </div>
-                <p className="text-muted-foreground text-sm mb-3">
-                  Saved devotionals live on this device and sync to your account when you sign in.
-                </p>
-                <Link to="/favorites" className="text-accent underline text-sm">
-                  Open your favorites →
-                </Link>
+                <Row to="/favorites" label="Open your favorites" />
               </CardContent>
             </Card>
 
+            {/* About */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-serif font-semibold mb-2">Delete your account</h2>
-                <p className="text-muted-foreground text-sm mb-3">
-                  Permanently remove your account and all associated data. This cannot be undone.
-                </p>
-                <Link to="/delete-account" className="text-destructive underline text-sm">
-                  Delete my account →
-                </Link>
+                <div className="flex items-center gap-3 mb-3">
+                  <Info className="w-5 h-5 text-accent" />
+                  <h2 className="text-xl font-serif font-semibold">About</h2>
+                </div>
+                <div>
+                  <Row to="/about" label="About us" />
+                  <Row to="/settings/bible-versions" label="Bible versions" />
+                  <Row to="/terms" label="Terms & Conditions" />
+                  <Row to="/privacy" label="Privacy policy" />
+                  <Row to="mailto:hello@doxazoexpressions.com?subject=Doxazo%20feedback" label="Give feedback" external />
+                  <Row to="mailto:hello@doxazoexpressions.com?subject=Contact%20Doxazo" label="Contact us" external />
+                </div>
               </CardContent>
             </Card>
+
+            {user && (
+              <Button onClick={() => signOut()} variant="outline" className="w-full gap-1.5">
+                <LogOut className="w-4 h-4" /> LOG OUT
+              </Button>
+            )}
           </div>
         </section>
       </main>
