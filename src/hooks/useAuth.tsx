@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { track } from "@/lib/analytics";
 import type { Session, User } from "@supabase/supabase-js";
+
+// Provider label only — never send emails, user IDs, or other PII to analytics.
+const authMethod = (u: User | null): "google" | "apple" | "email" => {
+  const p = (u?.app_metadata?.provider as string | undefined) ?? "email";
+  return p === "google" || p === "apple" ? p : "email";
+};
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -12,6 +19,8 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
+      if (_event === "SIGNED_IN") track("auth_signin", { method: authMethod(s?.user ?? null) });
+      if (_event === "SIGNED_OUT") track("auth_signout", { method: "email" });
       if (s?.user) {
         setTimeout(async () => {
           const { data } = await supabase

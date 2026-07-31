@@ -133,6 +133,7 @@ const MobileNav = () => {
                 <li key={tab.name}>
                   <Link
                     to={tab.to}
+                    onClick={() => trackTab(tab.name)}
                     className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
                       active ? "text-accent" : "text-muted-foreground hover:text-foreground"
                     }`}
@@ -146,7 +147,7 @@ const MobileNav = () => {
             })}
             <li>
               <button
-                onClick={() => setOpen(true)}
+                onClick={() => { trackTab("More"); setOpen(true); }}
                 className={`w-full flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
                   isMoreActive && open ? "text-accent" : "text-muted-foreground hover:text-foreground"
                 }`}
