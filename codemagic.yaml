@@ -34,78 +34,124 @@ workflows:
           test -f ios/App/App/PrivacyInfo.xcprivacy
           python3 scripts/verify_privacy.py ios/App/App/PrivacyInfo.xcprivacy
 
-      # ── Existing native push wiring check (unchanged) ────────────────
-            - name: Verify native push wiring (resolved Release build settings)
+      # ── Native push wiring (self-reporting, release-resolved) ─────────
+      - name: Verify native push wiring
         script: |
           set +e
           FAILED=0
+          ENT=ios/App/App/App.entitlements
+          INF=ios/App/App/Info.plist
+
           echo '=== Native push wiring check for com.doxazo.expressions (Release) ==='
 
-          # (1)(2)(3) AppDelegate location discovered, not asserted
-          DELEGATE=$(find ios -name 'AppDelegate*.swift' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*' -print -quit 2>/dev/null)
+          # (1) AppDelegate location auto-discovered (capacitor moves it on regen)
+          DELEGATE=$(find ios -name 'AppDelegate*.swift' \
+              -not -path '*/Pods/*' -not -path '*/build/*' \
+              -not -path '*/.build/*' -print -quit 2>/dev/null)
 
           if [ -z "$DELEGATE" ]; then
             echo '(1) FAIL : AppDelegate.swift not found anywhere under ios/'
-            echo '----- every Swift file under ios/ that mentions APNs -----'
-            grep -rln -E 'didRegisterForRemoteNotificationsWithDeviceToken|didFailToRegisterForRemoteNotificationsWithError' ios 2>/dev/null | grep -v Pods | grep -v build | grep -v .build
-            find ios/App -name '*.swift' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*'
+            echo '----- swift files in the iOS project -----'
+            find ios/App -name '*.swift' -not -path '*/Pods/*' \
+                -not -path '*/build/*' -not -path '*/.build/*' 2>/dev/null
+            echo '----- any file referencing APNs hooks anywhere -----'
+            grep -rln -E \
+                'didRegisterForRemoteNotificationsWithDeviceToken|didFailToRegisterForRemoteNotificationsWithError' \
+                ios 2>/dev/null | grep -v 'Pods' | grep -v '\.build' | grep -v 'build/'
             FAILED=$((FAILED+1))
+            DEL=""
           else
             echo "(1) OK   : AppDelegate at $DELEGATE"
-            if grep -qF 'didRegisterForRemoteNotificationsWithDeviceToken' "$DELEGATE"; then
+            DEL="$DELEGATE"
+          fi
+
+          # (2)(3) APNs register + fail callbacks (only if AppDelegate located)
+          if [ -n "$DEL" ]; then
+            if grep -qF 'didRegisterForRemoteNotificationsWithDeviceToken' "$DEL"; then
               echo '(2) OK   : didRegisterForRemoteNotificationsWithDeviceToken present'
             else
-              echo '(2) FAIL : didRegisterForRemoteNotificationsWithDeviceToken missing in '"$DELEGATE"
-              head -n 60 "$DELEGATE"
+              echo "(2) FAIL : didRegisterForRemoteNotificationsWithDeviceToken missing in $DEL"
+              head -n 80 "$DEL"
               FAILED=$((FAILED+1))
             fi
-            if grep -qF 'didFailToRegisterForRemoteNotificationsWithError' "$DELEGATE"; then
+            if grep -qF 'didFailToRegisterForRemoteNotificationsWithError' "$DEL"; then
               echo '(3) OK   : didFailToRegisterForRemoteNotificationsWithError present'
             else
-              echo '(3) FAIL : didFailToRegisterForRemoteNotificationsWithError missing in '"$DELEGATE"
+              echo "(3) FAIL : didFailToRegisterForRemoteNotificationsWithError missing in $DEL"
               FAILED=$((FAILED+1))
             fi
+          else
+            echo '(2)(3) SKIPPED : no AppDelegate file to inspect'
+            FAILED=$((FAILED+2))
           fi
 
           # (4) UIBackgroundModes contains remote-notification (index-agnostic)
-          INFO=ios/App/App/Info.plist
-          if [ -f "$INFO" ]; then
-            MODES=$(/usr/libexec/PlistBuddy -c 'Print :UIBackgroundModes' "$INFO" 2>/dev/null)
+          if [ -f "$INF" ]; then
+            MODES=$(/usr/libexec/PlistBuddy -c 'Print :UIBackgroundModes' "$INF" 2>/dev/null)
             if echo "$MODES" | grep -qF 'remote-notification'; then
               echo '(4) OK   : UIBackgroundModes contains remote-notification'
             else
               echo "(4) FAIL : UIBackgroundModes lacks remote-notification"
+              echo "----- UIBackgroundModes raw -----"
               echo "$MODES"
               FAILED=$((FAILED+1))
             fi
           else
-            echo "(4) FAIL : $INFO missing"
+            echo "(4) FAIL : $INF missing"
             FAILED=$((FAILED+1))
           fi
 
-          # (5) RESOLVED APS_ENVIRONMENT for Release archive — evaluates $(APS_ENVIRONMENT)
-          #     This is the value xcodebuild will actually inject into the entitlements.
-          RESOLVED=$(xcodebuild -project ios/App/App.xcodeproj -target App -configuration Release -showBuildSettings 2>/dev/null | awk -F' = ' '/^[[:space:]]*APS_ENVIRONMENT[[:space:]]*=/{print $2}' | head -n1)
+          # (5) RESOLVED APS_ENVIRONMENT for Release archive
+          #     The entitlements file just contains `aps-environment = $(APS_ENVIRONMENT)`;
+          #     xcodebuild expands the variable at archive time. Read it from the
+          #     actual resolved Release build settings instead of grepping the literal.
+          SETTINGS=$(xcodebuild -project ios/App/App.xcodeproj \
+              -target App -configuration Release -showBuildSettings 2>/dev/null)
+          RESOLVED=$(echo "$SETTINGS" | awk -F' = ' \
+              '/^[[:space:]]*APS_ENVIRONMENT[[:space:]]*=/{print $2}' | head -n1)
+
           if [ "$RESOLVED" = "production" ]; then
-            echo "(5) OK   : APS_ENVIRONMENT resolves to 'production' for Release"
+            echo '(5) OK   : APS_ENVIRONMENT resolves to production for Release'
           else
             echo "(5) FAIL : APS_ENVIRONMENT resolved to '$RESOLVED' (expected 'production')"
-            echo '----- APS-related resolved Release output -----'
-            xcodebuild -project ios/App/App.xcodeproj -target App -configuration Release -showBuildSettings 2>/dev/null | grep -iE '^[[:space:]]*APS_|CODE_SIGN_ENTITLEMENTS'
-            echo '----- candidate xcconfig files -----'
-            ls -la ios/App/*.xcconfig 2>/dev/null
-            for f in $(find ios -name '*.xcconfig' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*' 2>/dev/null); do
+            echo '----- relevant resolved Release settings -----'
+            echo "$SETTINGS" | grep -iE '^[[:space:]]*(APS_|CODE_SIGN_ENTITLEMENTS|PRODUCT_BUNDLE_IDENTIFIER)'
+            echo '----- *.xcconfig candidates that may set it -----'
+            for f in $(find ios -name '*.xcconfig' -not -path '*/Pods/*' \
+                -not -path '*/build/*' -not -path '*/.build/*' 2>/dev/null); do
               echo "==> $f"
-              grep -nE 'APS_ENVIRONMENT|CODE_SIGN_ENTITLEMENTS' "$f" 2>/dev/null
+              grep -nE 'APS_ENVIRONMENT|CODE_SIGN_ENTITLEMENTS' "$f" 2>/dev/null || true
             done
+            FAILED=$((FAILED+1))
+          fi
+
+          # (6) App.entitlements file exists with both expected keys (plist-loadable)
+          if [ -f "$ENT" ]; then
+            echo "(6) OK   : $ENT exists"
+            HAS_APS=$(/usr/libexec/PlistBuddy -c 'Print :aps-environment' "$ENT" 2>/dev/null)
+            if [ -n "$HAS_APS" ]; then
+              echo "(6a) OK  : aps-environment key present (definition: $HAS_APS)"
+            else
+              echo "(6a) FAIL: aps-environment key missing in $ENT"
+              FAILED=$((FAILED+1))
+            fi
+            HAS_SIA=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.developer.applesignin:0' "$ENT" 2>/dev/null)
+            if [ "$HAS_SIA" = "Default" ]; then
+              echo "(6b) OK  : com.apple.developer.applesignin = Default"
+            else
+              echo "(6b) FAIL: com.apple.developer.applesignin missing (or value != 'Default')"
+              /usr/libexec/PlistBuddy -c 'Print' "$ENT" 2>&1 || true
+              FAILED=$((FAILED+1))
+            fi
+          else
+            echo "(6) FAIL : $ENT not found"
             FAILED=$((FAILED+1))
           fi
 
           echo "=== Summary: $FAILED native-push check(s) failed ==="
           exit $FAILED
 
-
-      # ── Verify Sign in with Apple is present in the entitlements file (NEW)
+      # ── Verify Sign in with Apple is declared in the entitlements file
       - name: Verify Sign in with Apple in App.entitlements
         script: |
           set -e
@@ -113,7 +159,7 @@ workflows:
             ios/App/App/App.entitlements | grep -q 'Default'
           echo "Sign in with Apple entitlement declared (Default)"
 
-      # ── CocoaPods install — only if you actually use a Podfile (cap-spm/cap-pods safe) (NEW)
+      # ── CocoaPods install (Podfile may not exist on Capacitor SPM projects)
       - name: Install CocoaPods (only if Podfile exists)
         script: |
           if [ -f ios/App/Podfile ]; then
@@ -122,22 +168,19 @@ workflows:
             echo "No Podfile — skipping pod install (Capacitor SPM)"
           fi
 
-      # ── Make signing work (NEW — verified in cli-tools signing-ios sample)
+      # ── Signing chain — keychain -> fetch -> apply certs -> apply profile
       - name: Initialize keychain
         script: |
           keychain initialize
 
-      # ── Pull a fresh profile (existing — kept)
       - name: Fetch signing files
         script: |
           app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
 
-      # ── Apply certs to default keychain (NEW — verified in cli-tools)
       - name: Apply certificates to keychain
         script: |
           keychain add-certificates
 
-      # ── Existing: apply profile to xcodeproj
       - name: Set up code signing
         script: |
           xcode-project use-profiles
@@ -167,7 +210,7 @@ workflows:
               print(f"Using push-capable profile: {name} ({aps_environment})")
           PY
 
-      # ── Verify Sign in with Apple is in the *freshly fetched* profile (NEW)
+      # ── Verify Sign in with Apple is in the freshly fetched profile
       - name: Verify provisioning profile grants Sign in with Apple
         script: |
           python3 - <<'PY'
@@ -201,12 +244,12 @@ workflows:
           echo "Using latest TestFlight build $LATEST_BUILD; setting build number to $NEW_BUILD"
           agvtool new-version -all "$NEW_BUILD"
 
-      # ── Existing: archive + .ipa (xcode-project build-ipa) ─────────────
+      # ── Existing: archive + IPA
       - name: Build IPA
         script: |
           cd ios/App && xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
 
-      # ── NEW: file-safe self-report of the actual xcodebuild error ─────
+      # ── NEW: surface the actual xcodebuild error so a future failed build tells us in one line
       - name: On Build failure, dump the xcodebuild error context
         script: |
           if [ -d /tmp/xcodebuild_logs ]; then
@@ -214,7 +257,7 @@ workflows:
             echo "----- xcodebuild log tail (last 200 lines) -----"
             ls -1 /tmp/xcodebuild_logs/*.log 2>/dev/null | tail -n 1 | xargs tail -n 200 2>/dev/null || true
             echo "----- error: lines -----"
-            grep -nE 'error:|BUILD FAILED|No profile |signing identity|certificate|entitlement' \
+            grep -nE 'error:|BUILD FAILED|No profile|signing identity|certificate|entitlement' \
                  /tmp/xcodebuild_logs/*.log 2>/dev/null | head -n 40 || true
           else
             echo "No /tmp/xcodebuild_logs/ dir — re-run with verbose Codemagic logs enabled."
@@ -232,7 +275,7 @@ workflows:
           codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app > /tmp/doxazo_entitlements.plist 2>/tmp/doxazo_codesign.log
           /usr/libexec/PlistBuddy -c "Print :aps-environment" /tmp/doxazo_entitlements.plist | grep -q 'production'
 
-      # ── Existing: post-build privacy + microphone checks
+      # ── Post-build privacy + microphone + Sign in with Apple checks
       - name: Re-assert PrivacyInfo present and tracking disabled in signed IPA
         script: |
           set -e
