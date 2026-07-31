@@ -54,7 +54,11 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = () => supabase.auth.signOut();
+  const signOut = () => {
+    const method = authMethod(user);
+    track("auth_signout", { method });
+    return supabase.auth.signOut();
+  };
 
   return { session, user, isAdmin, loading, signOut };
 }
