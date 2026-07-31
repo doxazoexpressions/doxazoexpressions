@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { track } from "@/lib/analytics";
 import {
   JournalEntry,
   createJournalEntry,
@@ -56,6 +57,11 @@ const JournalPanel = ({ devotionalId, devotionalTitle }: Props) => {
         devotional_title: devotionalTitle,
       });
       setEntries([created, ...entries]);
+      track("journal_create", {
+        entry_id: created.id,
+        mood: created.mood ?? "none",
+        character_count: created.content.length,
+      });
       setContent("");
       setMood(null);
       toast({ title: "Journal entry saved", description: "Your reflection is stored in your private journal." });
@@ -69,7 +75,10 @@ const JournalPanel = ({ devotionalId, devotionalTitle }: Props) => {
   const onDelete = async (id: string) => {
     const prev = entries;
     setEntries(entries.filter((e) => e.id !== id));
-    try { await deleteJournalEntry(id); }
+    try {
+      await deleteJournalEntry(id);
+      track("journal_delete", { entry_id: id, non_interaction: true });
+    }
     catch { setEntries(prev); toast({ title: "Delete failed", variant: "destructive" }); }
   };
 
