@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { NotebookPen, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { track } from "@/lib/analytics";
 import { JournalEntry, deleteJournalEntry, listJournalEntries } from "@/lib/journal";
 
 const Journal = () => {
@@ -28,7 +29,10 @@ const Journal = () => {
   const onDelete = async (id: string) => {
     const prev = entries;
     setEntries(entries.filter((e) => e.id !== id));
-    try { await deleteJournalEntry(id); }
+    try {
+      await deleteJournalEntry(id);
+      track("journal_delete", { entry_id: id, non_interaction: true });
+    }
     catch { setEntries(prev); toast({ title: "Delete failed", variant: "destructive" }); }
   };
 

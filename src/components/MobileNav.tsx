@@ -24,6 +24,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { isNative } from "@/lib/native";
+import { track } from "@/lib/analytics";
 
 
 export const MOBILE_MENU_EVENT = "doxazo:open-mobile-menu";
@@ -109,6 +110,11 @@ const MobileNav = () => {
 
   const isMoreActive = ![...primaryTabs].some((t) => t.match(pathname));
   const groups = native ? moreGroups : webGroups;
+  const currentTab = primaryTabs.find((t) => t.match(pathname))?.name ?? "More";
+  const trackTab = (to: string) => {
+    if (to === currentTab) return;
+    track("tab_navigate", { from_tab: currentTab, to_tab: to });
+  };
 
 
   return (
@@ -127,6 +133,7 @@ const MobileNav = () => {
                 <li key={tab.name}>
                   <Link
                     to={tab.to}
+                    onClick={() => trackTab(tab.name)}
                     className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
                       active ? "text-accent" : "text-muted-foreground hover:text-foreground"
                     }`}
@@ -140,7 +147,7 @@ const MobileNav = () => {
             })}
             <li>
               <button
-                onClick={() => setOpen(true)}
+                onClick={() => { trackTab("More"); setOpen(true); }}
                 className={`w-full flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
                   isMoreActive && open ? "text-accent" : "text-muted-foreground hover:text-foreground"
                 }`}

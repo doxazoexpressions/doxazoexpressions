@@ -56,6 +56,12 @@ export type AnalyticsEvent =
   | "notification_enabled"
   | "widget_opened"
   | "shortcut_used"
+  // Journal / navigation / auth (GA4 connector event set)
+  | "journal_create"
+  | "journal_delete"
+  | "tab_navigate"
+  | "auth_signin"
+  | "auth_signout"
   // Legacy — kept for existing call sites
   | "devotional_open"
   | "contact_submit";
@@ -70,7 +76,12 @@ declare global {
   }
 }
 
-const GA4_ID = (import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined)?.trim();
+// Measurement ID comes from the Lovable Google Analytics connector.
+// Legacy VITE_GA4_MEASUREMENT_ID kept as a fallback for older environments.
+const GA4_ID = (
+  (import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_ANALYTICS_API_KEY as string | undefined) ??
+  (import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined)
+)?.trim();
 let ga4Loaded = false;
 
 const loadGA4 = () => {
