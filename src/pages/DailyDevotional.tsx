@@ -383,6 +383,8 @@ const DailyDevotional = () => {
               </motion.article>
             )}
 
+            <FaithEssentials />
+
             {recent.length > 0 && (
               <div className="mt-16">
                 <h2 className="text-2xl font-serif font-bold mb-8 text-center">Recent Devotionals</h2>
