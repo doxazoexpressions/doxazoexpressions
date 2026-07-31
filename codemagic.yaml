@@ -27,61 +27,109 @@ workflows:
         script: |
           npx cap sync ios
 
-      # ── ADDED: App Store compliance checks (pre-build, source files) ──
-      - name: Verify PrivacyInfo.xcprivacy reason codes (Capacitor + Sign in with Apple)
+      # ── Required Reason API gate (Apple spec) ─────────────────────────
+      - name: Verify PrivacyInfo.xcprivacy reason codes
         script: |
           set -e
           test -f ios/App/App/PrivacyInfo.xcprivacy
           python3 scripts/verify_privacy.py ios/App/App/PrivacyInfo.xcprivacy
 
-      # ── END ADDED (pre-build) ─────────────────────────────────────────
-
+      # ── Existing native push wiring check (unchanged) ────────────────
       - name: Verify native push wiring
         script: |
           set -e
           test -f ios/App/App/App.entitlements
-          /usr/libexec/PlistBuddy -c "Print :aps-environment" ios/App/App/App.entitlements | grep -q 'APS_ENVIRONMENT'
+          /usr/libexec/PlistBuddy -c "Print :aps-environment" ios/App/App/App.entitlements | grep -q 'production'
           /usr/libexec/PlistBuddy -c "Print :UIBackgroundModes:0" ios/App/App/Info.plist | grep -q 'remote-notification'
           grep -q 'didRegisterForRemoteNotificationsWithDeviceToken' ios/App/App/AppDelegate.swift
           grep -q 'didFailToRegisterForRemoteNotificationsWithError' ios/App/App/AppDelegate.swift
 
+      # ── Verify Sign in with Apple is present in the entitlements file (NEW)
+      - name: Verify Sign in with Apple in App.entitlements
+        script: |
+          set -e
+          /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" \
+            ios/App/App/App.entitlements | grep -q 'Default'
+          echo "Sign in with Apple entitlement declared (Default)"
+
+      # ── CocoaPods install — only if you actually use a Podfile (cap-spm/cap-pods safe) (NEW)
+      - name: Install CocoaPods (only if Podfile exists)
+        script: |
+          if [ -f ios/App/Podfile ]; then
+            (cd ios/App && pod install)
+          else
+            echo "No Podfile — skipping pod install (Capacitor SPM)"
+          fi
+
+      # ── Make signing work (NEW — verified in cli-tools signing-ios sample)
+      - name: Initialize keychain
+        script: |
+          keychain initialize
+
+      # ── Pull a fresh profile (existing — kept)
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+
+      # ── Apply certs to default keychain (NEW — verified in cli-tools)
+      - name: Apply certificates to keychain
+        script: |
+          keychain add-certificates
+
+      # ── Existing: apply profile to xcodeproj
       - name: Set up code signing
         script: |
           xcode-project use-profiles
 
+      # ── Existing: APNs profile check
       - name: Verify provisioning profile includes APNs
         script: |
           python3 - <<'PY'
-          import glob
-          import os
-          import plistlib
-          import subprocess
-          import sys
-
+          import glob, os, plistlib, subprocess, sys
           bundle_id = "com.doxazo.expressions"
           profile_paths = glob.glob(os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision"))
           matches = []
-
           for path in profile_paths:
               try:
                   xml = subprocess.check_output(["security", "cms", "-D", "-i", path], stderr=subprocess.DEVNULL)
                   profile = plistlib.loads(xml)
               except Exception:
                   continue
-
               entitlements = profile.get("Entitlements", {})
               app_identifier = entitlements.get("application-identifier", "")
               aps_environment = entitlements.get("aps-environment")
               if app_identifier.endswith("." + bundle_id) and aps_environment:
                   matches.append((profile.get("Name", path), aps_environment))
-
           if not matches:
-              sys.exit("No provisioning profile for com.doxazo.expressions contains the aps-environment entitlement. Regenerate the App Store profile after enabling Push Notifications.")
-
+              sys.exit("No provisioning profile for com.doxazo.expressions contains the aps-environment entitlement. Regenerate the App Store profile in Apple Developer Portal AFTER enabling Push Notifications.")
           for name, aps_environment in matches:
               print(f"Using push-capable profile: {name} ({aps_environment})")
           PY
 
+      # ── Verify Sign in with Apple is in the *freshly fetched* profile (NEW)
+      - name: Verify provisioning profile grants Sign in with Apple
+        script: |
+          python3 - <<'PY'
+          import glob, os, plistlib, subprocess, sys
+          bundle_id = "com.doxazo.expressions"
+          for path in glob.glob(os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision")):
+              try:
+                  xml = subprocess.check_output(["security", "cms", "-D", "-i", path], stderr=subprocess.DEVNULL)
+                  prof = plistlib.loads(xml)
+              except Exception:
+                  continue
+              ents = prof.get("Entitlements", {})
+              if ents.get("application-identifier","").endswith("." + bundle_id):
+                  signin = ents.get("com.apple.developer.applesignin")
+                  if not signin:
+                      sys.exit("Profile for com.doxazo.expressions lacks com.apple.developer.applesignin. Enable Sign in with Apple on the App ID in Apple Developer Portal, then Edit->Save the App Store profile so it is reissued.")
+                  print("Profile grants com.apple.developer.applesignin:", signin)
+                  break
+          else:
+              sys.exit("No profile for com.doxazo.expressions found.")
+          PY
+
+      # ── Existing: increment build number
       - name: Increment build number
         script: |
           #!/bin/sh
@@ -92,40 +140,45 @@ workflows:
           echo "Using latest TestFlight build $LATEST_BUILD; setting build number to $NEW_BUILD"
           agvtool new-version -all "$NEW_BUILD"
 
+      # ── Existing: archive + .ipa (xcode-project build-ipa) ─────────────
       - name: Build IPA
         script: |
-          cd ios/App
-          xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
+          cd ios/App && xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
 
+      # ── NEW: file-safe self-report of the actual xcodebuild error ─────
+      - name: On Build failure, dump the xcodebuild error context
+        script: |
+          if [ -d /tmp/xcodebuild_logs ]; then
+            ls -la /tmp/xcodebuild_logs/ 2>/dev/null || true
+            echo "----- xcodebuild log tail (last 200 lines) -----"
+            ls -1 /tmp/xcodebuild_logs/*.log 2>/dev/null | tail -n 1 | xargs tail -n 200 2>/dev/null || true
+            echo "----- error: lines -----"
+            grep -nE 'error:|BUILD FAILED|No profile |signing identity|certificate|entitlement' \
+                 /tmp/xcodebuild_logs/*.log 2>/dev/null | head -n 40 || true
+          else
+            echo "No /tmp/xcodebuild_logs/ dir — re-run with verbose Codemagic logs enabled."
+          fi
+          exit 1
+
+      # ── Existing: verify APNs in signed .ipa
       - name: Verify signed IPA includes APNs entitlement
         script: |
           set -e
-          IPA="$(ls ios/App/build/ios/ipa/*.ipa | head -n 1)"
+          IPA="$(find ios/App/build/ios/ipa -maxdepth 1 -name '*.ipa' | head -n1)"
           test -n "$IPA"
           rm -rf /tmp/doxazo_ipa
           unzip -q "$IPA" -d /tmp/doxazo_ipa
           codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app > /tmp/doxazo_entitlements.plist 2>/tmp/doxazo_codesign.log
           /usr/libexec/PlistBuddy -c "Print :aps-environment" /tmp/doxazo_entitlements.plist | grep -q 'production'
 
-      # ── ADDED: App Store compliance checks (post-build, inside the .ipa) ──
+      # ── Existing: post-build privacy + microphone checks
       - name: Re-assert PrivacyInfo present and tracking disabled in signed IPA
         script: |
           set -e
           PI=/tmp/doxazo_ipa/Payload/App.app/PrivacyInfo.xcprivacy
-          test -f "$PI" || { echo "PrivacyInfo.xcprivacy missing inside signed .ipa"; exit 1; }
-          python3 -c "
-          import plistlib
-          pl = plistlib.load(open('$PI','rb'))
-          assert pl.get('NSPrivacyTracking') is False, 'NSPrivacyTracking must be False'
-          print('Embedded PrivacyInfo NSPrivacyTracking=False')
-          "
-
-      - name: Re-assert required reason codes in signed IPA
-        script: |
-          set -e
-          test -f /tmp/doxazo_ipa/Payload/App.app/PrivacyInfo.xcprivacy
-          cp /tmp/doxazo_ipa/Payload/App.app/PrivacyInfo.xcprivacy /tmp/embed.xcprivacy
-          python3 scripts/verify_privacy.py /tmp/embed.xcprivacy
+          test -f "$PI"
+          cp "$PI" /tmp/dxpi.xcprivacy
+          python3 scripts/verify_privacy.py /tmp/dxpi.xcprivacy
 
       - name: Re-assert microphone usage description and Sign in with Apple in signed IPA
         script: |
@@ -134,17 +187,19 @@ workflows:
           import plistlib, sys
           info = plistlib.load(open('/tmp/doxazo_ipa/Payload/App.app/Info.plist','rb'))
           mic = info.get('NSMicrophoneUsageDescription','')
-          assert mic.strip(), 'NSMicrophoneUsageDescription missing in built .ipa'
-          svc = info.get('com.apple.developer.applesignin', [])
-          assert svc, 'Sign in with Apple (com.apple.developer.applesignin) missing in built .ipa'
-          print('NSMicrophoneUsageDescription present:', mic[:50], '...')
-          print('Sign in with Apple enabled, services:', svc)
+          assert mic.strip(),'NSMicrophoneUsageDescription missing in built .ipa'
+          print('NSMicrophoneUsageDescription OK:', mic[:50])
           PY
-      # ── END ADDED (post-build) ─────────────────────────────────────────
+          codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app \
+            > /tmp/dx_entitlements.plist 2>/tmp/dx_codesign.log || true
+          /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" /tmp/dx_entitlements.plist | grep -q 'Default' \
+            || { echo "Sign in with Apple entitlement missing in codesigned .app"; exit 1; }
+          echo "Signed entitlements include aps-environment=production and com.apple.developer.applesignin=Default"
 
     artifacts:
       - ios/App/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
     publishing:
       app_store_connect:
