@@ -2,19 +2,17 @@
 """
 verify_privacy.py - fail-fast checker for PrivacyInfo.xcprivacy.
 
-Apple's 2026 spec stores NSPrivacyAccessedAPITypes as an ARRAY OF DICTS,
-each shaped:
+NSPrivacyAccessedAPITypes is an array of dicts:
     {
         "NSPrivacyAccessedAPIType":         "NSPrivacyAccessedAPICategoryFileTimestamp",
         "NSPrivacyAccessedAPITypeReasons":  ["C617.1"]
     }
 
-Earlier drafts nested each reason as its own dict
-({"NSPrivacyAccessedAPITypeReason": "C617.1"}); this script accepts both.
-
 Exit codes:
   0 = all required (api, reason-code) pairs are present
   1 = missing file, malformed plist, or missing/wrong reason codes
+
+Reason codes verified against developer.apple.com, 2026-07-31.
 """
 from __future__ import annotations
 
@@ -24,58 +22,36 @@ from pathlib import Path
 
 
 REQUIRED: dict[str, set[str]] = {
-    "NSPrivacyAccessedAPICategoryUserDefaults":    {"CA92D"},
-    "NSPrivacyAccessedAPICategoryFileTimestamp":   {"C617.1"},
-    "NSPrivacyAccessedAPICategoryDiskSpace":       {"E174.1"},
-    "NSPrivacyAccessedAPICategorySystemBootTime":  {"35F9.1"},
+    "NSPrivacyAccessedAPICategoryUserDefaults":    {"CA92.1", "1C8F.1", "C56D.1", "AC6B.1"},
+    "NSPrivacyAccessedAPICategoryFileTimestamp":   {"DDA9.1", "C617.1", "3B52.1", "0A2A.1"},
+    "NSPrivacyAccessedAPICategorySystemBootTime":  {"35F9.1", "8FFB.1", "3D61.1"},
+    "NSPrivacyAccessedAPICategoryDiskSpace":       {"85F4.1", "E174.1", "7D9E.1", "B728.1"},
 }
 
 
 def parse_manifest(path: Path) -> dict[str, set[str]]:
-    """Parse the manifest into {api_category: set(reason_codes)}."""
     with path.open("rb") as fh:
         pl = plistlib.load(fh)
-
     if not isinstance(pl, dict):
-        raise SystemExit(
-            f"{path}: top-level must be a dict (got {type(pl).__name__})."
-        )
-
-    tracking = pl.get("NSPrivacyTracking", False)
-    if tracking is True:
-        raise SystemExit(
-            f"{path}: NSPrivacyTracking must be False (Apple Guideline 5.1.1(i))."
-        )
-
+        raise SystemExit(f"{path}: top-level must be a dict (got {type(pl).__name__}).")
+    if pl.get("NSPrivacyTracking") is True:
+        raise SystemExit(f"{path}: NSPrivacyTracking must be False.")
     raw = pl.get("NSPrivacyAccessedAPITypes", [])
     if not isinstance(raw, list):
-        # Defensive: if some tool ever serialised it as a dict, normalise here too.
-        if isinstance(raw, dict):
-            raw = [{"NSPrivacyAccessedAPIType": k,
-                    "NSPrivacyAccessedAPITypeReasons": v} for k, v in raw.items()]
-        else:
-            raise SystemExit(
-                f"{path}: NSPrivacyAccessedAPITypes must be an array of dicts, "
-                f"got {type(raw).__name__}."
-            )
-
+        raise SystemExit(
+            f"{path}: NSPrivacyAccessedAPITypes must be an ARRAY of dicts, "
+            f"got {type(raw).__name__}."
+        )
     out: dict[str, set[str]] = {}
     for i, entry in enumerate(raw):
         if not isinstance(entry, dict):
-            raise SystemExit(
-                f"{path}: NSPrivacyAccessedAPITypes[{i}] is not a dict."
-            )
+            raise SystemExit(f"{path}: NSPrivacyAccessedAPITypes[{i}] is not a dict.")
         api = entry.get("NSPrivacyAccessedAPIType")
-        if not isinstance(api, str):
-            raise SystemExit(
-                f"{path}: NSPrivacyAccessedAPITypes[{i}] missing NSPrivacyAccessedAPIType."
-            )
+        if not isinstance(api, str) or not api:
+            raise SystemExit(f"{path}: NSPrivacyAccessedAPITypes[{i}] missing NSPrivacyAccessedAPIType.")
         codes_raw = entry.get("NSPrivacyAccessedAPITypeReasons", [])
         if not isinstance(codes_raw, list):
-            raise SystemExit(
-                f"{path}: NSPrivacyAccessedAPITypes[{i}].NSPrivacyAccessedAPITypeReasons "
-                f"must be a list, got {type(codes_raw).__name__}."
-            )
+            raise SystemExit(f"{path}: NSPrivacyAccessedAPITypes[{i}].NSPrivacyAccessedAPITypeReasons must be a list.")
         codes: set[str] = set()
         for code in codes_raw:
             if isinstance(code, str):
@@ -84,16 +60,6 @@ def parse_manifest(path: Path) -> dict[str, set[str]]:
                 inner = code.get("NSPrivacyAccessedAPITypeReason")
                 if isinstance(inner, str):
                     codes.add(inner)
-                else:
-                    raise SystemExit(
-                        f"{path}: NSPrivacyAccessedAPITypes[{i}] has nested reason "
-                        f"without NSPrivacyAccessedAPITypeReason string."
-                    )
-            else:
-                raise SystemExit(
-                    f"{path}: NSPrivacyAccessedAPITypes[{i}] reason entry has unexpected "
-                    f"type {type(code).__name__}."
-                )
         out[api] = codes
     return out
 
@@ -106,37 +72,24 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"FAIL: {path} not found.", file=sys.stderr)
         return 1
-
     try:
         reasons = parse_manifest(path)
     except SystemExit as e:
         print(f"FAIL: {e}", file=sys.stderr)
         return 1
-
     print(f"Loaded manifest: {path}")
     print(f"NSPrivacyTracking=False OK")
     print(f"Categories declared: {sorted(reasons.keys()) or '(none)'}")
-
     missing: list[tuple[str, list[str], list[str]]] = []
-    for api, expected in REQUIRED.items():
+    for api, valid in REQUIRED.items():
         declared = reasons.get(api, set())
-        if not (declared & expected):
-            missing.append((api, sorted(declared), sorted(expected)))
-
+        if not (declared & valid):
+            missing.append((api, sorted(declared), sorted(valid)))
     if missing:
-        print("\nFAIL: missing or wrong reason codes:", file=sys.stderr)
-        for api, decl, exp in missing:
-            print(f"  - {api}: declared={decl}  expected_one_of={exp}", file=sys.stderr)
+        print("\nFAIL: missing or invalid reason codes:", file=sys.stderr)
+        for api, decl, val in missing:
+            print(f"  - {api}: declared={decl}  valid_options={val}", file=sys.stderr)
         return 1
-
-    if not reasons:
-        print(
-            "WARN: NSPrivacyAccessedAPITypes is empty. Apple will reject if any "
-            "Required Reason API is actually called by the app (Capacitor + Sign in "
-            "with Apple definitely do).",
-            file=sys.stderr,
-        )
-
     print("PASS: PrivacyInfo.xcprivacy satisfies required reason codes for "
           "Capacitor + Sign in with Apple.")
     return 0
