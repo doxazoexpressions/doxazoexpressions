@@ -4,5 +4,11 @@
 <dict>
 	<key>aps-environment</key>
 	<string>$(APS_ENVIRONMENT)</string>
+
+	<!-- NEW: required if your app uses Sign in with Apple (avoids Guideline 4.8 rejection) -->
+    <key>com.apple.developer.applesignin</key>
+    <array>
+        <string>Default</string>
+    </array>
 </dict>
 </plist>
