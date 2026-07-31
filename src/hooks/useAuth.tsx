@@ -20,7 +20,6 @@ export function useAuth() {
       setSession(s);
       setUser(s?.user ?? null);
       if (_event === "SIGNED_IN") track("auth_signin", { method: authMethod(s?.user ?? null) });
-      if (_event === "SIGNED_OUT") track("auth_signout", { method: "email" });
       if (s?.user) {
         setTimeout(async () => {
           const { data } = await supabase
