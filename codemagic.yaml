@@ -27,6 +27,53 @@ workflows:
         script: |
           npx cap sync ios
 
+      # ── ADDED: App Store compliance checks (pre-build, source files) ──
+      - name: Verify PrivacyInfo.xcprivacy plist and tracking flag
+        script: |
+          set -e
+          test -f ios/App/App/PrivacyInfo.xcprivacy
+          python3 - <<'PY'
+          import plistlib, sys
+          pl = plistlib.load(open('ios/App/App/PrivacyInfo.xcprivacy','rb'))
+          assert pl.get('NSPrivacyTracking') is False, 'NSPrivacyTracking must be False (Apple Guideline 5.1.1(i))'
+          print('PrivacyInfo.xcprivacy present, NSPrivacyTracking=False')
+          PY
+
+      - name: Verify Required Reason API codes (Capacitor + Sign in with Apple)
+        script: |
+          set -e
+          python3 - <<'PY'
+          import plistlib, sys
+          pl = plistlib.load(open('ios/App/App/PrivacyInfo.xcprivacy','rb'))
+          reasons = {api: [r['NSPrivacyAccessedAPITypeReason'] for r in rs]
+                     for api, rs in pl.get('NSPrivacyAccessedAPITypes', []).items()}
+          required = {
+              'NSPrivacyAccessedAPICategoryUserDefaults':    ['CA92D'],
+              'NSPrivacyAccessedAPICategoryFileTimestamp':  ['C617.1'],
+              'NSPrivacyAccessedAPICategoryDiskSpace':      ['E174.1'],
+              'NSPrivacyAccessedAPICategorySystemBootTime': ['35F9.1'],
+          }
+          bad = {}
+          for api, codes in required.items():
+              if not any(c in reasons.get(api, []) for c in codes):
+                  bad[api] = codes
+          if bad:
+              sys.exit('Missing or invalid reason codes for: ' + ', '.join(bad.keys()))
+          print('All required reason codes present in source PrivacyInfo')
+          PY
+
+      - name: Verify NSMicrophoneUsageDescription in Info.plist
+        script: |
+          set -e
+          python3 - <<'PY'
+          import plistlib, sys
+          info = plistlib.load(open('ios/App/App/Info.plist','rb'))
+          mic = info.get('NSMicrophoneUsageDescription','')
+          assert mic.strip(), 'NSMicrophoneUsageDescription is empty (required for Audio Journaling prompt)'
+          print('NSMicrophoneUsageDescription present:', mic[:60], '...')
+          PY
+      # ── END ADDED (pre-build) ─────────────────────────────────────────
+
       - name: Verify native push wiring
         script: |
           set -e
@@ -98,6 +145,56 @@ workflows:
           codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app > /tmp/doxazo_entitlements.plist 2>/tmp/doxazo_codesign.log
           /usr/libexec/PlistBuddy -c "Print :aps-environment" /tmp/doxazo_entitlements.plist | grep -q 'production'
 
+      # ── ADDED: App Store compliance checks (post-build, inside the .ipa) ──
+      - name: Re-assert PrivacyInfo present and tracking disabled in signed IPA
+        script: |
+          set -e
+          PI=/tmp/doxazo_ipa/Payload/App.app/PrivacyInfo.xcprivacy
+          test -f "$PI" || { echo "PrivacyInfo.xcprivacy missing inside signed .ipa"; exit 1; }
+          python3 -c "
+          import plistlib
+          pl = plistlib.load(open('$PI','rb'))
+          assert pl.get('NSPrivacyTracking') is False, 'NSPrivacyTracking must be False'
+          print('Embedded PrivacyInfo NSPrivacyTracking=False')
+          "
+
+      - name: Re-assert required reason codes in signed IPA
+        script: |
+          set -e
+          python3 - <<'PY'
+          import plistlib, sys
+          pl = plistlib.load(open('/tmp/doxazo_ipa/Payload/App.app/PrivacyInfo.xcprivacy','rb'))
+          reasons = {api: [r['NSPrivacyAccessedAPITypeReason'] for r in rs]
+                     for api, rs in pl.get('NSPrivacyAccessedAPITypes', []).items()}
+          required = {
+              'NSPrivacyAccessedAPICategoryUserDefaults':    ['CA92D'],
+              'NSPrivacyAccessedAPICategoryFileTimestamp':  ['C617.1'],
+              'NSPrivacyAccessedAPICategoryDiskSpace':      ['E174.1'],
+              'NSPrivacyAccessedAPICategorySystemBootTime': ['35F9.1'],
+          }
+          bad = {}
+          for api, codes in required.items():
+              if not any(c in reasons.get(api, []) for c in codes):
+                  bad[api] = codes
+          if bad:
+              sys.exit('Missing reason codes in embedded privacy manifest: ' + str(bad))
+          print('All required reason codes present in embedded privacy manifest')
+          PY
+
+      - name: Re-assert microphone usage description and Sign in with Apple in signed IPA
+        script: |
+          set -e
+          python3 - <<'PY'
+          import plistlib, sys
+          info = plistlib.load(open('/tmp/doxazo_ipa/Payload/App.app/Info.plist','rb'))
+          mic = info.get('NSMicrophoneUsageDescription','')
+          assert mic.strip(), 'NSMicrophoneUsageDescription missing in built .ipa'
+          svc = info.get('com.apple.developer.applesignin', [])
+          assert svc, 'Sign in with Apple (com.apple.developer.applesignin) missing in built .ipa'
+          print('NSMicrophoneUsageDescription present:', mic[:50], '...')
+          print('Sign in with Apple enabled, services:', svc)
+          PY
+      # ── END ADDED (post-build) ─────────────────────────────────────────
 
     artifacts:
       - ios/App/build/ios/ipa/*.ipa
