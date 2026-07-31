@@ -24,6 +24,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { isNative } from "@/lib/native";
+import { track } from "@/lib/analytics";
 
 
 export const MOBILE_MENU_EVENT = "doxazo:open-mobile-menu";
@@ -109,6 +110,11 @@ const MobileNav = () => {
 
   const isMoreActive = ![...primaryTabs].some((t) => t.match(pathname));
   const groups = native ? moreGroups : webGroups;
+  const currentTab = primaryTabs.find((t) => t.match(pathname))?.name ?? "More";
+  const trackTab = (to: string) => {
+    if (to === currentTab) return;
+    track("tab_navigate", { from_tab: currentTab, to_tab: to });
+  };
 
 
   return (
