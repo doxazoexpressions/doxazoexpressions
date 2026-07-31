@@ -35,14 +35,75 @@ workflows:
           python3 scripts/verify_privacy.py ios/App/App/PrivacyInfo.xcprivacy
 
       # ── Existing native push wiring check (unchanged) ────────────────
-      - name: Verify native push wiring
+            - name: Verify native push wiring (resolved Release build settings)
         script: |
-          set -e
-          test -f ios/App/App/App.entitlements
-          /usr/libexec/PlistBuddy -c "Print :aps-environment" ios/App/App/App.entitlements | grep -q 'production'
-          /usr/libexec/PlistBuddy -c "Print :UIBackgroundModes:0" ios/App/App/Info.plist | grep -q 'remote-notification'
-          grep -q 'didRegisterForRemoteNotificationsWithDeviceToken' ios/App/App/AppDelegate.swift
-          grep -q 'didFailToRegisterForRemoteNotificationsWithError' ios/App/App/AppDelegate.swift
+          set +e
+          FAILED=0
+          echo '=== Native push wiring check for com.doxazo.expressions (Release) ==='
+
+          # (1)(2)(3) AppDelegate location discovered, not asserted
+          DELEGATE=$(find ios -name 'AppDelegate*.swift' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*' -print -quit 2>/dev/null)
+
+          if [ -z "$DELEGATE" ]; then
+            echo '(1) FAIL : AppDelegate.swift not found anywhere under ios/'
+            echo '----- every Swift file under ios/ that mentions APNs -----'
+            grep -rln -E 'didRegisterForRemoteNotificationsWithDeviceToken|didFailToRegisterForRemoteNotificationsWithError' ios 2>/dev/null | grep -v Pods | grep -v build | grep -v .build
+            find ios/App -name '*.swift' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*'
+            FAILED=$((FAILED+1))
+          else
+            echo "(1) OK   : AppDelegate at $DELEGATE"
+            if grep -qF 'didRegisterForRemoteNotificationsWithDeviceToken' "$DELEGATE"; then
+              echo '(2) OK   : didRegisterForRemoteNotificationsWithDeviceToken present'
+            else
+              echo '(2) FAIL : didRegisterForRemoteNotificationsWithDeviceToken missing in '"$DELEGATE"
+              head -n 60 "$DELEGATE"
+              FAILED=$((FAILED+1))
+            fi
+            if grep -qF 'didFailToRegisterForRemoteNotificationsWithError' "$DELEGATE"; then
+              echo '(3) OK   : didFailToRegisterForRemoteNotificationsWithError present'
+            else
+              echo '(3) FAIL : didFailToRegisterForRemoteNotificationsWithError missing in '"$DELEGATE"
+              FAILED=$((FAILED+1))
+            fi
+          fi
+
+          # (4) UIBackgroundModes contains remote-notification (index-agnostic)
+          INFO=ios/App/App/Info.plist
+          if [ -f "$INFO" ]; then
+            MODES=$(/usr/libexec/PlistBuddy -c 'Print :UIBackgroundModes' "$INFO" 2>/dev/null)
+            if echo "$MODES" | grep -qF 'remote-notification'; then
+              echo '(4) OK   : UIBackgroundModes contains remote-notification'
+            else
+              echo "(4) FAIL : UIBackgroundModes lacks remote-notification"
+              echo "$MODES"
+              FAILED=$((FAILED+1))
+            fi
+          else
+            echo "(4) FAIL : $INFO missing"
+            FAILED=$((FAILED+1))
+          fi
+
+          # (5) RESOLVED APS_ENVIRONMENT for Release archive — evaluates $(APS_ENVIRONMENT)
+          #     This is the value xcodebuild will actually inject into the entitlements.
+          RESOLVED=$(xcodebuild -project ios/App/App.xcodeproj -target App -configuration Release -showBuildSettings 2>/dev/null | awk -F' = ' '/^[[:space:]]*APS_ENVIRONMENT[[:space:]]*=/{print $2}' | head -n1)
+          if [ "$RESOLVED" = "production" ]; then
+            echo "(5) OK   : APS_ENVIRONMENT resolves to 'production' for Release"
+          else
+            echo "(5) FAIL : APS_ENVIRONMENT resolved to '$RESOLVED' (expected 'production')"
+            echo '----- APS-related resolved Release output -----'
+            xcodebuild -project ios/App/App.xcodeproj -target App -configuration Release -showBuildSettings 2>/dev/null | grep -iE '^[[:space:]]*APS_|CODE_SIGN_ENTITLEMENTS'
+            echo '----- candidate xcconfig files -----'
+            ls -la ios/App/*.xcconfig 2>/dev/null
+            for f in $(find ios -name '*.xcconfig' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*' 2>/dev/null); do
+              echo "==> $f"
+              grep -nE 'APS_ENVIRONMENT|CODE_SIGN_ENTITLEMENTS' "$f" 2>/dev/null
+            done
+            FAILED=$((FAILED+1))
+          fi
+
+          echo "=== Summary: $FAILED native-push check(s) failed ==="
+          exit $FAILED
+
 
       # ── Verify Sign in with Apple is present in the entitlements file (NEW)
       - name: Verify Sign in with Apple in App.entitlements
