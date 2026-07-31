@@ -164,8 +164,13 @@ workflows:
           python3 - <<'PY'
           import plistlib, sys
           pl = plistlib.load(open('/tmp/doxazo_ipa/Payload/App.app/PrivacyInfo.xcprivacy','rb'))
-          reasons = {api: [r['NSPrivacyAccessedAPITypeReason'] for r in rs]
-                     for api, rs in pl.get('NSPrivacyAccessedAPITypes', []).items()}
+          reasons = {}
+          for entry in pl.get('NSPrivacyAccessedAPITypes', []):
+              api = entry.get('NSPrivacyAccessedAPIType')
+              codes = [r.get('NSPrivacyAccessedAPITypeReason') for r in 
+              entry.get('NSPrivacyAccessedAPITypeReasons', [])]
+                  reasons[api] = codes
+
           required = {
               'NSPrivacyAccessedAPICategoryUserDefaults':    ['CA92D'],
               'NSPrivacyAccessedAPICategoryFileTimestamp':  ['C617.1'],
