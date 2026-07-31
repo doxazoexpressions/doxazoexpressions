@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { MailCheck, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import { z } from "zod";
+import { lovable } from "@/integrations/lovable/index";
 
 const emailSchema = z.string().trim().email("Please enter a valid email").max(255);
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
@@ -39,6 +40,33 @@ const Auth = () => {
     const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [resendCooldown]);
+
+  // Guideline 4.8 — Sign in with Apple offered as an equivalent option and
+  // placed first per Apple HIG. auth_signin is fired once, by useAuth, with the
+  // provider the session actually reports, so we never double-fire here.
+  const oauth = async (provider: "apple" | "google") => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      if ((result as { error?: Error }).error) {
+        setBusy(false);
+        return toast({
+          title: "Sign in failed",
+          description: (result as { error: Error }).error.message,
+          variant: "destructive",
+        });
+      }
+      if ((result as { redirected?: boolean }).redirected) return;
+      navigate("/");
+    } catch (e) {
+      toast({ title: "Sign in failed", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -277,6 +305,23 @@ const Auth = () => {
                 <p className="text-sm text-muted-foreground mb-6">
                   {mode === "signin" ? "Sign in to access your devotional journey." : "Join the community of daily seekers."}
                 </p>
+                <div className="space-y-2 mb-4">
+                  <Button
+                    type="button"
+                    onClick={() => oauth("apple")}
+                    disabled={busy}
+                    className="w-full bg-foreground text-background hover:bg-foreground/90"
+                  >
+                    Sign in with Apple
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => oauth("google")} disabled={busy} className="w-full">
+                    Continue with Google
+                  </Button>
+                </div>
+                <div className="relative my-4 text-center">
+                  <span className="bg-card px-2 relative z-10 text-xs uppercase tracking-widest text-muted-foreground">or</span>
+                  <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
+                </div>
                 <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp} className="space-y-4">
                   <div>
                     <Label htmlFor="email">Email</Label>

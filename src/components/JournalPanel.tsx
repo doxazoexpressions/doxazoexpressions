@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { track } from "@/lib/analytics";
+import AudioJournalRecorder from "@/components/AudioJournalRecorder";
 import {
   JournalEntry,
   createJournalEntry,
@@ -137,7 +138,8 @@ const JournalPanel = ({ devotionalId, devotionalTitle }: Props) => {
               </button>
             ))}
           </div>
-          <div className="flex justify-end mb-6">
+          <div className="flex flex-wrap items-center justify-end gap-2 mb-6">
+            <AudioJournalRecorder entryId={entries[0]?.id ?? null} />
             <Button onClick={onSave} disabled={!content.trim() || saving} className="gap-2">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save entry

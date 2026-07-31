@@ -32,6 +32,7 @@ import { liveDevotionalOr } from "@/lib/liveDevotional";
 import AudioNarration from "@/components/AudioNarration";
 import ShareVerseCard from "@/components/ShareVerseCard";
 import JournalPanel from "@/components/JournalPanel";
+import FaithEssentials from "@/components/FaithEssentials";
 import HighlightVerseButton from "@/components/HighlightVerseButton";
 
 type Devotional = {
@@ -381,6 +382,8 @@ const DailyDevotional = () => {
                 </Card>
               </motion.article>
             )}
+
+            <FaithEssentials />
 
             {recent.length > 0 && (
               <div className="mt-16">

@@ -59,6 +59,7 @@ export type AnalyticsEvent =
   // Journal / navigation / auth (GA4 connector event set)
   | "journal_create"
   | "journal_delete"
+  | "journal_audio_recorded"
   | "tab_navigate"
   | "auth_signin"
   | "auth_signout"
