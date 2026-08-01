@@ -137,7 +137,35 @@ workflows:
             echo "No Podfile — skipping pod install (Capacitor SPM)"
           fi
 
-      # ── Signing chain (manual fetch removed — done automatically by `app_store_connect: DoxazoASC`) ──
+      # ── STEP 2 ADDITIONS — purge stale profile shadows + forced re-fetch ──
+      # Apple Developer Portal Sign in with Apple enablement only takes effect
+      # on a profile generated AFTER the toggle. If a stale App Store profile
+      # is sitting on the runner from a previous build, the integration will
+      # happily reuse it -- so we sweep before the fetch.
+      - name: Delete stale App-Store profiles for com.doxazo.expressions
+        script: |
+          set +e
+          DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          if [ -d "$DIR" ]; then
+            BEFORE=$(ls "$DIR"/*.mobileprovision 2>/dev/null | wc -l | tr -d ' ')
+            rm -f "$DIR"/*.mobileprovision
+            echo "Removed $BEFORE stale profile(s) from $DIR; the next fetch-signing-files call will pull the freshly reissued one."
+          else
+            echo "Profile dir not present yet (cold runner); nothing to purge."
+          fi
+
+      - name: Fetch signing files (forced reissue + strict-match + drop-stale)
+        script: |
+          set -e
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create \
+            --delete-stale-profiles \
+            --strict-match-identifier
+          echo "Successfully fetched App Store profiles for $BUNDLE_ID"
+      # ── END STEP 2 ADDITIONS ─────────────────────────────────────────────
+
+      # ── Apply distribution cert + apply profile -> Xcode project
       - name: Initialize keychain
         script: |
           keychain initialize
@@ -148,9 +176,7 @@ workflows:
 
       - name: Set up code signing
         script: |
-          # xcode-project use-profiles reads the App-Store-eligible profile the
-          # DoxazoASC integration already fetched and pins it into the project.
-          BUNDLE_ID_FOR_PROJECT="$BUNDLE_ID" xcode-project use-profiles
+          xcode-project use-profiles
 
       # ── Profile-level checks
       - name: Verify provisioning profile includes APNs
