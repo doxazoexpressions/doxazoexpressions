@@ -16,6 +16,8 @@ workflows:
         BUNDLE_ID: com.doxazo.expressions
         PRIVACY_URL: https://www.doxazoexpressions.com/privacy
         SUPPORT_URL:  https://www.doxazoexpressions.com/support
+      groups:
+        - ios_signing
 
     scripts:
       - name: Install npm dependencies
