@@ -30,14 +30,14 @@ workflows:
         script: |
           npx cap sync ios
 
-      # ── Required Reason API gate (Apple spec) ─────────────────────────
+      # Reason-code gate (Apple-spec valid). Uses scripts/verify_privacy.py.
       - name: Verify PrivacyInfo.xcprivacy reason codes
         script: |
           set -e
           test -f ios/App/App/PrivacyInfo.xcprivacy
           python3 scripts/verify_privacy.py ios/App/App/PrivacyInfo.xcprivacy
 
-      # ── Native push wiring (self-reporting, release-resolved) ─────────
+      # Self-reporting, release-resolved native push wiring (proven green once already).
       - name: Verify native push wiring
         script: |
           set +e
@@ -47,17 +47,12 @@ workflows:
 
           echo '=== Native push wiring check for com.doxazo.expressions (Release) ==='
 
-          DELEGATE=$(find ios -name 'AppDelegate*.swift' \
-              -not -path '*/Pods/*' -not -path '*/build/*' \
-              -not -path '*/.build/*' -print -quit 2>/dev/null)
+          DELEGATE=$(find ios -name 'AppDelegate*.swift' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*' -print -quit 2>/dev/null)
 
           if [ -z "$DELEGATE" ]; then
             echo '(1) FAIL : AppDelegate.swift not found anywhere under ios/'
-            find ios/App -name '*.swift' -not -path '*/Pods/*' \
-                -not -path '*/build/*' -not -path '*/.build/*' 2>/dev/null
-            grep -rln -E \
-                'didRegisterForRemoteNotificationsWithDeviceToken|didFailToRegisterForRemoteNotificationsWithError' \
-                ios 2>/dev/null | grep -v 'Pods' | grep -v '\.build' | grep -v 'build/'
+            find ios/App -name '*.swift' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*' 2>/dev/null
+            grep -rln -E 'didRegisterForRemoteNotificationsWithDeviceToken|didFailToRegisterForRemoteNotificationsWithError' ios 2>/dev/null | grep -v 'Pods' | grep -v '\.build' | grep -v 'build/'
             FAILED=$((FAILED+1))
             DEL=""
           else
@@ -86,17 +81,14 @@ workflows:
             FAILED=$((FAILED+1))
           fi
 
-          SETTINGS=$(xcodebuild -project ios/App/App.xcodeproj \
-              -target App -configuration Release -showBuildSettings 2>/dev/null)
-          RESOLVED=$(echo "$SETTINGS" | awk -F' = ' \
-              '/^[[:space:]]*APS_ENVIRONMENT[[:space:]]*=/{print $2}' | head -n1)
+          SETTINGS=$(xcodebuild -project ios/App/App.xcodeproj -target App -configuration Release -showBuildSettings 2>/dev/null)
+          RESOLVED=$(echo "$SETTINGS" | awk -F' = ' '/^[[:space:]]*APS_ENVIRONMENT[[:space:]]*=/{print $2}' | head -n1)
           if [ "$RESOLVED" = "production" ]; then
             echo '(5) OK   : APS_ENVIRONMENT resolves to production for Release'
           else
             echo "(5) FAIL : APS_ENVIRONMENT resolved to '$RESOLVED' (expected 'production')"
             echo "$SETTINGS" | grep -iE '^[[:space:]]*(APS_|CODE_SIGN_ENTITLEMENTS|PRODUCT_BUNDLE_IDENTIFIER)'
-            for f in $(find ios -name '*.xcconfig' -not -path '*/Pods/*' \
-                -not -path '*/build/*' -not -path '*/.build/*' 2>/dev/null); do
+            for f in $(find ios -name '*.xcconfig' -not -path '*/Pods/*' -not -path '*/build/*' -not -path '*/.build/*' 2>/dev/null); do
               echo "==> $f"
               grep -nE 'APS_ENVIRONMENT|CODE_SIGN_ENTITLEMENTS' "$f" 2>/dev/null || true
             done
@@ -106,14 +98,14 @@ workflows:
           if [ -f "$ENT" ]; then
             HAS_APS=$(/usr/libexec/PlistBuddy -c 'Print :aps-environment' "$ENT" 2>/dev/null)
             [ -n "$HAS_APS" ] && echo "(6a) OK  : aps-environment key present (definition: $HAS_APS)" \
-                                || { echo "(6a) FAIL: aps-environment key missing in $ENT"; FAILED=$((FAILED+1)); }
+              || { echo "(6a) FAIL: aps-environment key missing in $ENT"; FAILED=$((FAILED+1)); }
             HAS_SIA=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.developer.applesignin:0' "$ENT" 2>/dev/null)
             [ "$HAS_SIA" = "Default" ] && echo "(6b) OK  : com.apple.developer.applesignin = Default" \
               || {
-                   echo "(6b) FAIL: com.apple.developer.applesignin missing or != Default"
-                   /usr/libexec/PlistBuddy -c 'Print' "$ENT" 2>&1 || true
-                   FAILED=$((FAILED+1))
-                 }
+                echo "(6b) FAIL: com.apple.developer.applesignin missing or != Default"
+                /usr/libexec/PlistBuddy -c 'Print' "$ENT" 2>&1 || true
+                FAILED=$((FAILED+1))
+              }
           else
             echo "(6) FAIL : $ENT not found"
             FAILED=$((FAILED+1))
@@ -122,8 +114,7 @@ workflows:
           echo "=== Summary: $FAILED native-push check(s) failed ==="
           exit $FAILED
 
-
-      # ── Sign in with Apple in App.entitlements (read-only assertion) ──
+      # Sign in with Apple in App.entitlements sanity.
       - name: Verify Sign in with Apple in App.entitlements
         script: |
           set -e
@@ -131,7 +122,7 @@ workflows:
             ios/App/App/App.entitlements | grep -q 'Default'
           echo "Sign in with Apple entitlement declared (Default)"
 
-      # ── CocoaPods only if Podfile exists (Capacitor SPM projects often don't)
+      # CocoaPods only if Cap-Ios falls back to Pods. Your SPM project doesn't have one.
       - name: Install CocoaPods (only if Podfile exists)
         script: |
           if [ -f ios/App/Podfile ]; then
@@ -140,44 +131,16 @@ workflows:
             echo "No Podfile — skipping pod install (Capacitor SPM)"
           fi
 
-      # ── Drop stale profile shadows before re-fetching (Portal-side only) ─────
-      - name: Delete stale App-Store profiles for com.doxazo.expressions
-        script: |
-          set +e
-          DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
-          if [ -d "$DIR" ]; then
-            BEFORE=$(ls "$DIR"/*.mobileprovision 2>/dev/null | wc -l | tr -d ' ')
-            rm -f "$DIR"/*.mobileprovision
-            echo "Removed $BEFORE stale profile(s) from $DIR; next fetch will pull the freshly reissued one."
-          else
-            echo "Profile dir not present yet (cold runner); nothing to purge."
-          fi
+      # REMOVED for Branch A:
+      #   - Delete stale App-Store profiles for com.doxazo.expressions   (now done by integration)
+      #   - Fetch signing files (force re-pull, NO cert creation)       (now done by integration)
+      # The app_store_connect: DoxazoASC integration handles cert + profile fetching
+      # using the uploaded doxazo_ios_distribution .p12 in the Code signing identities panel
+      # and the App Store Connect API key linked to it. No CERTIFICATE_PRIVATE_KEY env var
+      # is required because the .p12 carries both cert and matching private key.
 
-      # ── FIXED: re-fetch profile, NOT create a new certificate ─────────
-      # The previous version passed --create. With --create in effect,
-      # app-store-connect fetch-signing-files attempts to issue a new
-      # iOS Distribution certificate. Per the Codemagic CLI Tools docs:
-      #   "--certificate-key=PRIVATE_KEY ... Used together with --save
-      #    or --create options. ... If not given, the value will be
-      #    checked from the environment variable CERTIFICATE_PRIVATE_KEY."
-      # The workflow does NOT provide CERTIFICATE_PRIVATE_KEY, so the CLI
-      # exited with "Cannot save Signing Certificates without certificate
-      # private key". Removing --create ends the cert-creation attempt;
-      # the integration `app_store_connect: DoxazoASC` (which already has
-      # the App Store Connect API key + the existing cert's private usage)
-      # will keep using the existing Apple Distribution certificate while
-      # this step pulls the freshly reissued App Store profile carrying
-      # the new com.apple.developer.applesignin entitlement.
-      - name: Fetch signing files (force re-pull, NO cert creation)
-        script: |
-          set -e
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --delete-stale-profiles \
-            --strict-match-identifier
-          echo "Successfully fetched App Store profiles for $BUNDLE_ID"
-
-      # ── Apply distribution cert to keychain (uses DoxazoASC integration) ─────
+      # Cert already in .p12 form via UI upload — keychain add-certificates locates it
+      # in the default keychain search paths and applies it for codesign.
       - name: Initialize keychain
         script: |
           keychain initialize
@@ -186,11 +149,14 @@ workflows:
         script: |
           keychain add-certificates
 
+      # Apply the freshly-reissued App Store profile (which now carries
+      # com.apple.developer.applesignin since the Portal toggle) to the Xcode project.
       - name: Set up code signing
         script: |
           xcode-project use-profiles
 
-      # ── Profile-level checks
+      # Profile-level diagnostic gate. Reports the exact profile the package will
+      # use at archive time, plus whether it grants APNs and Sign in with Apple.
       - name: Verify provisioning profile includes APNs
         script: |
           python3 - <<'PY'
@@ -237,7 +203,7 @@ workflows:
               sys.exit("No profile for com.doxazo.expressions found.")
           PY
 
-      # ── Increment build number for TestFlight
+      # Standard TestFlight build-number bump (still works on the integration path).
       - name: Increment build number
         script: |
           #!/bin/sh
@@ -248,12 +214,13 @@ workflows:
           echo "Using latest TestFlight build $LATEST_BUILD; setting build number to $NEW_BUILD"
           agvtool new-version -all "$NEW_BUILD"
 
-      # ── Archive + .ipa
+      # Archive + .ipa. The DoxazoASC integration has already wired the
+      # distribution cert into the default keychain; build-ipa just runs.
       - name: Build IPA
         script: |
           cd ios/App && xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
 
-      # ── Self-report xcodebuild error context for diagnosis
+      # File-safe error reporter so the next xcodebuild failure prints context.
       - name: On Build failure, dump the xcodebuild error context
         script: |
           if [ -d /tmp/xcodebuild_logs ]; then
@@ -261,14 +228,13 @@ workflows:
             echo "----- xcodebuild log tail (last 200 lines) -----"
             ls -1 /tmp/xcodebuild_logs/*.log 2>/dev/null | tail -n 1 | xargs tail -n 200 2>/dev/null || true
             echo "----- error: lines -----"
-            grep -nE 'error:|BUILD FAILED|No profile|signing identity|certificate|entitlement' \
-                 /tmp/xcodebuild_logs/*.log 2>/dev/null | head -n 40 || true
+            grep -nE 'error:|BUILD FAILED|No profile|signing identity|certificate|entitlement' /tmp/xcodebuild_logs/*.log 2>/dev/null | head -n 40 || true
           else
             echo "No /tmp/xcodebuild_logs/ dir — re-run with verbose Codemagic logs enabled."
           fi
           exit 1
 
-      # ── Post-build APNs in signed .ipa
+      # Post-build: APNs in signed .ipa
       - name: Verify signed IPA includes APNs entitlement
         script: |
           set -e
@@ -279,7 +245,7 @@ workflows:
           codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app > /tmp/doxazo_entitlements.plist 2>/tmp/doxazo_codesign.log
           /usr/libexec/PlistBuddy -c "Print :aps-environment" /tmp/doxazo_entitlements.plist | grep -q 'production'
 
-      # ── Post-build privacy manifest re-check
+      # Post-build: privacy manifest re-check
       - name: Re-assert PrivacyInfo present and tracking disabled in signed IPA
         script: |
           set -e
@@ -288,7 +254,7 @@ workflows:
           cp "$PI" /tmp/dxpi.xcprivacy
           python3 scripts/verify_privacy.py /tmp/dxpi.xcprivacy
 
-      # ── Post-build microphone + Sign in with Apple re-check
+      # Post-build: microphone + Sign in with Apple re-check
       - name: Re-assert microphone usage description and Sign in with Apple in signed IPA
         script: |
           set -e
@@ -299,8 +265,7 @@ workflows:
           assert mic.strip(),'NSMicrophoneUsageDescription missing in built .ipa'
           print('NSMicrophoneUsageDescription OK:', mic[:50])
           PY
-          codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app \
-            > /tmp/dx_entitlements.plist 2>/tmp/dx_codesign.log || true
+          codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app > /tmp/dx_entitlements.plist 2>/tmp/dx_codesign.log || true
           /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" /tmp/dx_entitlements.plist | grep -q 'Default' \
             || { echo "Sign in with Apple entitlement missing in codesigned .app"; exit 1; }
           echo "Signed entitlements include aps-environment=production and com.apple.developer.applesignin=Default"
