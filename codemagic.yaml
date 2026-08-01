@@ -131,13 +131,20 @@ workflows:
             echo "No Podfile — skipping pod install (Capacitor SPM)"
           fi
 
-      # REMOVED for Branch A:
-      #   - Delete stale App-Store profiles for com.doxazo.expressions   (now done by integration)
-      #   - Fetch signing files (force re-pull, NO cert creation)       (now done by integration)
-      # The app_store_connect: DoxazoASC integration handles cert + profile fetching
-      # using the uploaded doxazo_ios_distribution .p12 in the Code signing identities panel
-      # and the App Store Connect API key linked to it. No CERTIFICATE_PRIVATE_KEY env var
-      # is required because the .p12 carries both cert and matching private key.
+      # Re-pull App Store profile after portal capability change.
+      # Uses DoxazoASC integration credentials (no CERTIFICATE_PRIVATE_KEY needed;
+      # .p12 already in Code signing identities panel; cert valid until 2027-06-29).
+      - name: Fetch signing files (auto-regenerate if needed)
+        script: |
+          #!/usr/bin/env bash
+          set -e
+          app-store-connect fetch-signing-files \
+            --type IOS_APP_STORE \
+            --bundle-id com.doxazo.expressions \
+            --strict-match-identifier \
+            --delete-stale-profiles
+          echo "PASS — App Store profile for com.doxazo.expressions fetched"
+
 
       # Cert already in .p12 form via UI upload — keychain add-certificates locates it
       # in the default keychain search paths and applies it for codesign.
