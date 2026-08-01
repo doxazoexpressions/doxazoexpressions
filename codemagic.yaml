@@ -109,9 +109,11 @@ workflows:
                                 || { echo "(6a) FAIL: aps-environment key missing in $ENT"; FAILED=$((FAILED+1)); }
             HAS_SIA=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.developer.applesignin:0' "$ENT" 2>/dev/null)
             [ "$HAS_SIA" = "Default" ] && echo "(6b) OK  : com.apple.developer.applesignin = Default" \
-              || { echo "(6b) FAIL: com.apple.developer.applesignin missing or != Default"; \
-                  /usr/libexec/PlistBuddy -c 'Print' "$ENT' 2>&1 || true; \
-                  FAILED=$((FAILED+1)); }
+              || {
+                   echo "(6b) FAIL: com.apple.developer.applesignin missing or != Default"
+                   /usr/libexec/PlistBuddy -c 'Print' "$ENT" 2>&1 || true
+                   FAILED=$((FAILED+1))
+                 }
           else
             echo "(6) FAIL : $ENT not found"
             FAILED=$((FAILED+1))
@@ -119,6 +121,7 @@ workflows:
 
           echo "=== Summary: $FAILED native-push check(s) failed ==="
           exit $FAILED
+
 
       # ── Sign in with Apple in App.entitlements (read-only assertion) ──
       - name: Verify Sign in with Apple in App.entitlements
