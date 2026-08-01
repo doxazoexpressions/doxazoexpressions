@@ -13,7 +13,7 @@ workflows:
         APP_STORE_APPLE_ID: "6785318591"
         XCODE_PROJECT: "App.xcodeproj"
         XCODE_SCHEME: "App"
-        BUNDLE_ID: com.doxazo.expressions     # explicit, exported to all scripts
+        BUNDLE_ID: com.doxazo.expressions
         PRIVACY_URL: https://www.doxazoexpressions.com/privacy
         SUPPORT_URL:  https://www.doxazoexpressions.com/support
 
@@ -110,7 +110,7 @@ workflows:
             HAS_SIA=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.developer.applesignin:0' "$ENT" 2>/dev/null)
             [ "$HAS_SIA" = "Default" ] && echo "(6b) OK  : com.apple.developer.applesignin = Default" \
               || { echo "(6b) FAIL: com.apple.developer.applesignin missing or != Default"; \
-                  /usr/libexec/PlistBuddy -c 'Print' "$ENT" 2>&1 || true; \
+                  /usr/libexec/PlistBuddy -c 'Print' "$ENT' 2>&1 || true; \
                   FAILED=$((FAILED+1)); }
           else
             echo "(6) FAIL : $ENT not found"
@@ -120,7 +120,7 @@ workflows:
           echo "=== Summary: $FAILED native-push check(s) failed ==="
           exit $FAILED
 
-      # ── Sign in with Apple in the entitlements file
+      # ── Sign in with Apple in App.entitlements (read-only assertion) ──
       - name: Verify Sign in with Apple in App.entitlements
         script: |
           set -e
@@ -137,11 +137,7 @@ workflows:
             echo "No Podfile — skipping pod install (Capacitor SPM)"
           fi
 
-      # ── STEP 2 ADDITIONS — purge stale profile shadows + forced re-fetch ──
-      # Apple Developer Portal Sign in with Apple enablement only takes effect
-      # on a profile generated AFTER the toggle. If a stale App Store profile
-      # is sitting on the runner from a previous build, the integration will
-      # happily reuse it -- so we sweep before the fetch.
+      # ── Drop stale profile shadows before re-fetching (Portal-side only) ─────
       - name: Delete stale App-Store profiles for com.doxazo.expressions
         script: |
           set +e
@@ -149,23 +145,36 @@ workflows:
           if [ -d "$DIR" ]; then
             BEFORE=$(ls "$DIR"/*.mobileprovision 2>/dev/null | wc -l | tr -d ' ')
             rm -f "$DIR"/*.mobileprovision
-            echo "Removed $BEFORE stale profile(s) from $DIR; the next fetch-signing-files call will pull the freshly reissued one."
+            echo "Removed $BEFORE stale profile(s) from $DIR; next fetch will pull the freshly reissued one."
           else
             echo "Profile dir not present yet (cold runner); nothing to purge."
           fi
 
-      - name: Fetch signing files (forced reissue + strict-match + drop-stale)
+      # ── FIXED: re-fetch profile, NOT create a new certificate ─────────
+      # The previous version passed --create. With --create in effect,
+      # app-store-connect fetch-signing-files attempts to issue a new
+      # iOS Distribution certificate. Per the Codemagic CLI Tools docs:
+      #   "--certificate-key=PRIVATE_KEY ... Used together with --save
+      #    or --create options. ... If not given, the value will be
+      #    checked from the environment variable CERTIFICATE_PRIVATE_KEY."
+      # The workflow does NOT provide CERTIFICATE_PRIVATE_KEY, so the CLI
+      # exited with "Cannot save Signing Certificates without certificate
+      # private key". Removing --create ends the cert-creation attempt;
+      # the integration `app_store_connect: DoxazoASC` (which already has
+      # the App Store Connect API key + the existing cert's private usage)
+      # will keep using the existing Apple Distribution certificate while
+      # this step pulls the freshly reissued App Store profile carrying
+      # the new com.apple.developer.applesignin entitlement.
+      - name: Fetch signing files (force re-pull, NO cert creation)
         script: |
           set -e
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --create \
             --delete-stale-profiles \
             --strict-match-identifier
           echo "Successfully fetched App Store profiles for $BUNDLE_ID"
-      # ── END STEP 2 ADDITIONS ─────────────────────────────────────────────
 
-      # ── Apply distribution cert + apply profile -> Xcode project
+      # ── Apply distribution cert to keychain (uses DoxazoASC integration) ─────
       - name: Initialize keychain
         script: |
           keychain initialize
@@ -256,7 +265,7 @@ workflows:
           fi
           exit 1
 
-      # ── Post-build: APNs in signed .ipa
+      # ── Post-build APNs in signed .ipa
       - name: Verify signed IPA includes APNs entitlement
         script: |
           set -e
@@ -267,7 +276,7 @@ workflows:
           codesign -d --entitlements :- /tmp/doxazo_ipa/Payload/App.app > /tmp/doxazo_entitlements.plist 2>/tmp/doxazo_codesign.log
           /usr/libexec/PlistBuddy -c "Print :aps-environment" /tmp/doxazo_entitlements.plist | grep -q 'production'
 
-      # ── Post-build: privacy manifest re-check
+      # ── Post-build privacy manifest re-check
       - name: Re-assert PrivacyInfo present and tracking disabled in signed IPA
         script: |
           set -e
@@ -276,7 +285,7 @@ workflows:
           cp "$PI" /tmp/dxpi.xcprivacy
           python3 scripts/verify_privacy.py /tmp/dxpi.xcprivacy
 
-      # ── Post-build: microphone + Sign in with Apple re-check
+      # ── Post-build microphone + Sign in with Apple re-check
       - name: Re-assert microphone usage description and Sign in with Apple in signed IPA
         script: |
           set -e
