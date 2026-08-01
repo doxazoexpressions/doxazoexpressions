@@ -140,10 +140,10 @@ workflows:
           set -e
           app-store-connect fetch-signing-files \
             --type IOS_APP_STORE \
-            --bundle-id com.doxazo.expressions \
             --strict-match-identifier \
-            --delete-stale-profiles
-          echo "PASS — App Store profile for com.doxazo.expressions fetched"
+            --delete-stale-profiles \
+            com.doxazo.expressions
+
 
 
       # Cert already in .p12 form via UI upload — keychain add-certificates locates it
