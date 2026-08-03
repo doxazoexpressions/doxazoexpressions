@@ -102,20 +102,19 @@ const Settings = () => {
 
   // Guideline 5.1.1(v) — in-app account deletion, no second factor required.
   const deleteAccount = async () => {
+    if (deleting || !isDeleteConfirmed(deleteConfirm)) return;
     setDeleting(true);
     setDeleteError(null);
     try {
-      const { error } = await supabase.functions.invoke("delete-account");
-      if (error) throw error;
-      track("auth_signout", { method: "account_deleted" });
-      await supabase.auth.signOut();
-      navigate("/auth");
+      await deleteOwnAccount();
+      navigate("/auth?just-deleted=1");
     } catch (e) {
       setDeleteError(
         (e as Error).message || "We couldn't delete your account. Please try again.",
       );
     } finally {
       setDeleting(false);
+      setDeleteConfirm("");
     }
   };
 
