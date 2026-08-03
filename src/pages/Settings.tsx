@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,11 @@ import {
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  deleteOwnAccount,
+  isDeleteConfirmed,
+  DELETE_CONFIRM_PHRASE,
+} from "@/lib/accountDeletion";
 import { track } from "@/lib/analytics";
 import { getPrefs, setPrefs } from "@/lib/prefs";
 import {
@@ -77,6 +83,7 @@ const Settings = () => {
   const [narrator, setNarrator] = useState<"female" | "male">("female");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   useEffect(() => {
     const refresh = () => {
@@ -102,20 +109,19 @@ const Settings = () => {
 
   // Guideline 5.1.1(v) — in-app account deletion, no second factor required.
   const deleteAccount = async () => {
+    if (deleting || !isDeleteConfirmed(deleteConfirm)) return;
     setDeleting(true);
     setDeleteError(null);
     try {
-      const { error } = await supabase.functions.invoke("delete-account");
-      if (error) throw error;
-      track("auth_signout", { method: "account_deleted" });
-      await supabase.auth.signOut();
-      navigate("/auth");
+      await deleteOwnAccount();
+      navigate("/auth?just-deleted=1");
     } catch (e) {
       setDeleteError(
         (e as Error).message || "We couldn't delete your account. Please try again.",
       );
     } finally {
       setDeleting(false);
+      setDeleteConfirm("");
     }
   };
 
@@ -174,10 +180,30 @@ const Settings = () => {
                             plans, and synced data. This cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
+                        <div className="space-y-2">
+                          <Label htmlFor="delete-confirm" className="text-xs">
+                            Type{" "}
+                            <span className="font-mono font-semibold">
+                              {DELETE_CONFIRM_PHRASE}
+                            </span>{" "}
+                            to confirm
+                          </Label>
+                          <Input
+                            id="delete-confirm"
+                            value={deleteConfirm}
+                            onChange={(e) => setDeleteConfirm(e.target.value)}
+                            placeholder={DELETE_CONFIRM_PHRASE}
+                            autoComplete="off"
+                            autoCapitalize="characters"
+                          />
+                        </div>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel onClick={() => setDeleteConfirm("")}>
+                            Cancel
+                          </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={deleteAccount}
+                            disabled={!isDeleteConfirmed(deleteConfirm) || deleting}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Delete account
