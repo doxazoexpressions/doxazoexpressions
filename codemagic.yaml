@@ -192,11 +192,37 @@ workflows:
           echo "Using latest TestFlight build $LATEST_BUILD; setting build number to $NEW_BUILD"
           agvtool new-version -all "$NEW_BUILD"
 
-      # Archive + .ipa. The DoxazoASC integration has already wired the
-      # distribution cert into the default keychain; build-ipa just runs.
+      # Writes $HOME/export_options.plist (which Build IPA below needs by
+      # default) and applies the matched App Store profile to App.xcodeproj.
+      # --warn-only surfaces "no profile matched" instead of silently
+      # ingesting the wrong one, so a future Apple/Portal change does not
+      # green-screen the build again. archive-method app-store scopes the
+      # profile match to Distribution/Archive-eligible profiles only.
+      - name: Set up code signing settings on Xcode project
+        script: |
+          set -e
+          cd ios/App
+          xcode-project use-profiles \
+            --project "$XCODE_PROJECT" \
+            --archive-method app-store \
+            --warn-only
+
+      # Archive + .ipa. DoxazoASC integration + the use-profiles step above
+      # have wired cert + profile into App.xcodeproj; build-ipa just runs.
       - name: Build IPA
         script: |
-          cd ios/App && xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
+          set -e
+          cd ios/App
+          # Diagnostic canary: this file MUST exist after use-profiles ran
+          # one step above. If it doesn't, fail here with a clear message
+          # instead of xcodebuild's cryptic export-options-plist error.
+          ls -lh "$HOME/export_options.plist"
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --archive-method app-store \
+            --export-options-plist "$HOME/export_options.plist"
+
 
       # File-safe error reporter so the next xcodebuild failure prints context.
       - name: On Build failure, dump the xcodebuild error context
