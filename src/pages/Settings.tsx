@@ -179,10 +179,30 @@ const Settings = () => {
                             plans, and synced data. This cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
+                        <div className="space-y-2">
+                          <Label htmlFor="delete-confirm" className="text-xs">
+                            Type{" "}
+                            <span className="font-mono font-semibold">
+                              {DELETE_CONFIRM_PHRASE}
+                            </span>{" "}
+                            to confirm
+                          </Label>
+                          <Input
+                            id="delete-confirm"
+                            value={deleteConfirm}
+                            onChange={(e) => setDeleteConfirm(e.target.value)}
+                            placeholder={DELETE_CONFIRM_PHRASE}
+                            autoComplete="off"
+                            autoCapitalize="characters"
+                          />
+                        </div>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel onClick={() => setDeleteConfirm("")}>
+                            Cancel
+                          </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={deleteAccount}
+                            disabled={!isDeleteConfirmed(deleteConfirm) || deleting}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Delete account
