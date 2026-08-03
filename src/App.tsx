@@ -13,6 +13,18 @@ const NativeBootstrap = () => {
   }, [navigate]);
   return null;
 };
+
+// OAuth landing route. The Supabase client parses the URL fragment before this
+// mounts (detectSessionInUrl defaults to true), so the session is already in
+// storage — we just return the user to the home screen instead of falling
+// through to the 404 wildcard.
+const OAuthCallback = () => {
+  useEffect(() => {
+    window.location.replace("/");
+  }, []);
+  return null;
+};
+
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import About from "./pages/About";
