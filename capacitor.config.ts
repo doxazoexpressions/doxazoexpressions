@@ -8,6 +8,20 @@ const config: CapacitorConfig = {
   appId: 'com.doxazo.expressions',
   appName: 'Doxazo Expressions',
   webDir: 'dist',
+  // No `server.url` — production/TestFlight serves the bundled `dist/` assets.
+  // allowNavigation only whitelists the OAuth round-trip hosts.
+  server: {
+    allowNavigation: [
+      'doxazoexpressions.com',
+      'www.doxazoexpressions.com',
+      '*.lovable.app',
+      'appleid.apple.com',
+      'accounts.google.com',
+      'supabase.co',
+      '*.supabase.co',
+    ],
+  },
+
   plugins: {
     SplashScreen: {
       launchShowDuration: 1200,
