@@ -97,7 +97,11 @@ const App = () => (
             <Route path="/goals" element={<Goals />} />
             <Route path="/scripture" element={<Scripture />} />
             <Route path="/groups" element={<Groups />} />
+            <Route path="/~/oauth/callback" element={<OAuthCallback />} />
+            <Route path="/~oauth/callback" element={<OAuthCallback />} />
+            <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="*" element={<NotFound />} />
+
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
