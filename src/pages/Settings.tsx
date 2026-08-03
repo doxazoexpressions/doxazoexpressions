@@ -77,6 +77,7 @@ const Settings = () => {
   const [narrator, setNarrator] = useState<"female" | "male">("female");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   useEffect(() => {
     const refresh = () => {
