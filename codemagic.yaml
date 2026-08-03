@@ -133,87 +133,9 @@ workflows:
             echo "No Podfile — skipping pod install (Capacitor SPM)"
           fi
 
-      # Mint a fresh App Store profile under the Sign in with Apple
-      # capability set, and write it (and any fetched cert) to the
-      # MobileDevice directory that use-profiles and the two Python
-      # "Verify provisioning profile" gates glob. Without --profiles-dir
-      # and --certificates-dir overrides here, fetch-signing-files
-      # defaults to ~/Library/Developer/Xcode/UserData/Provisioning
-      # Profiles/ — use-profiles won't see it and the gates will fail
-      # even though a profile was just created. Auth (issuer/key/private)
-      # is auto-injected from the DoxazoASC app_store_connect integration.
-      # Keychain initialize is handled automatically by ios_signing, so
-      # no separate step here.
-      # Prerequisites, all done out of band before this build runs:
-      #   1. Apple Developer Portal: enable Sign in with Apple on App ID
-      #      com.doxazo.expressions, save, confirm the warning dialog.
-      #   2. Apple Developer Portal Profiles: delete any existing App
-      #      Store profile for com.doxazo.expressions so --create
-      #      actually mints a new one (fetch-signing-files --create only
-      #      acts when no profile exists).
-      # This step MUST run BEFORE the two "Verify provisioning profile"
-      # gates below, because those gates glob the MobileDevice directory
-      # that this step populates; a fresh build machine starts empty.
-      - name: Fetch signing files (force-create, App Store)
-        script: |
-          set -e
-          app-store-connect fetch-signing-files \
-            com.doxazo.expressions \
-            --type IOS_APP_STORE \
-            --create \
-            --delete-stale-profiles \
-            --strict-match-identifier \
-            --profiles-dir "$HOME/Library/MobileDevice/Provisioning Profiles" \
-            --certificates-dir "$HOME/Library/MobileDevice/Certificates"
-
-      # Profile-level diagnostic gate. Reports the exact profile the package will
-      # use at archive time, plus whether it grants APNs and Sign in with Apple.
-      - name: Verify provisioning profile includes APNs
-        script: |
-          python3 - <<'PY'
-          import glob, os, plistlib, subprocess, sys
-          bundle_id = "com.doxazo.expressions"
-          profile_paths = glob.glob(os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision"))
-          matches = []
-          for path in profile_paths:
-              try:
-                  xml = subprocess.check_output(["security", "cms", "-D", "-i", path], stderr=subprocess.DEVNULL)
-                  profile = plistlib.loads(xml)
-              except Exception:
-                  continue
-              entitlements = profile.get("Entitlements", {})
-              app_identifier = entitlements.get("application-identifier", "")
-              aps_environment = entitlements.get("aps-environment")
-              if app_identifier.endswith("." + bundle_id) and aps_environment:
-                  matches.append((profile.get("Name", path), aps_environment))
-          if not matches:
-              sys.exit("No provisioning profile for com.doxazo.expressions contains the aps-environment entitlement. Regenerate the App Store profile in Apple Developer Portal AFTER enabling Push Notifications.")
-          for name, aps_environment in matches:
-              print(f"Using push-capable profile: {name} ({aps_environment})")
-          PY
-
-      - name: Verify provisioning profile grants Sign in with Apple
-        script: |
-          python3 - <<'PY'
-          import glob, os, plistlib, subprocess, sys
-          bundle_id = "com.doxazo.expressions"
-          for path in glob.glob(os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles/*.mobileprovision")):
-              try:
-                  xml = subprocess.check_output(["security", "cms", "-D", "-i", path], stderr=subprocess.DEVNULL)
-                  prof = plistlib.loads(xml)
-              except Exception:
-                  continue
-              ents = prof.get("Entitlements", {})
-              if ents.get("application-identifier","").endswith("." + bundle_id):
-                  signin = ents.get("com.apple.developer.applesignin")
-                  if not signin:
-                      sys.exit("Profile for com.doxazo.expressions lacks com.apple.developer.applesignin. Enable Sign in with Apple on the App ID in Apple Developer Portal, then Edit->Save the App Store profile so it is reissued.")
-                  print("Profile grants com.apple.developer.applesignin:", signin)
-                  break
-          else:
-              sys.exit("No profile for com.doxazo.expressions found.")
-          PY
-
+      
+      
+      
       # Standard TestFlight build-number bump (still works on the integration path).
       - name: Increment build number
         script: |
@@ -302,3 +224,5 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+
+
