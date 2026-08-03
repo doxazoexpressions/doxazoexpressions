@@ -19,28 +19,31 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  deleteOwnAccount,
+  isDeleteConfirmed,
+  DELETE_CONFIRM_PHRASE,
+} from "@/lib/accountDeletion";
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
 
-const CONFIRM_PHRASE = "DELETE";
+const CONFIRM_PHRASE = DELETE_CONFIRM_PHRASE;
 
 const DeleteAccount = () => {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const canDelete = confirm.trim().toUpperCase() === CONFIRM_PHRASE;
+  const canDelete = isDeleteConfirmed(confirm);
 
   const handleDelete = async () => {
+    if (busy || !canDelete) return;
     setBusy(true);
     try {
-      const { error } = await supabase.functions.invoke("delete-account");
-      if (error) throw error;
-      await signOut();
+      await deleteOwnAccount();
       toast.success("Your account and data have been deleted.");
-      navigate("/");
+      navigate("/auth?just-deleted=1");
     } catch (e) {
       toast.error((e as Error).message || "Could not delete account. Please try again.");
     } finally {
