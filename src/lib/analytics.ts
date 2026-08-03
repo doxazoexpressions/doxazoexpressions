@@ -89,9 +89,11 @@ const loadGA4 = () => {
   if (ga4Loaded || !GA4_ID || typeof document === "undefined") return;
   ga4Loaded = true;
   window.dataLayer = window.dataLayer || [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  window.gtag = function gtag(...args: any[]) {
-    window.dataLayer!.push(args);
+  // IMPORTANT: gtag.js only processes the native `arguments` object.
+  // Pushing a real Array (e.g. rest params) is silently ignored by GA4.
+  window.gtag = function gtag() {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer!.push(arguments);
   };
   window.gtag("js", new Date());
   // Disable auto page_view; SPA routing fires it manually.
