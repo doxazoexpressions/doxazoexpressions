@@ -175,8 +175,8 @@ workflows:
           xcode-project build-ipa \
             --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
-            --archive-method app-store \
             --export-options-plist "$HOME/export_options.plist"
+
 
 
       # Post-build: APNs in signed .ipa
