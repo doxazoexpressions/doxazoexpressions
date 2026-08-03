@@ -133,37 +133,6 @@ workflows:
             echo "No Podfile — skipping pod install (Capacitor SPM)"
           fi
 
-      # Re-pull App Store profile after portal capability change.
-      # Uses DoxazoASC integration credentials (no CERTIFICATE_PRIVATE_KEY needed;
-      # .p12 already in Code signing identities panel; cert valid until 2027-06-29).
-      - name: Fetch signing files (auto-regenerate if needed)
-        script: |
-          #!/usr/bin/env bash
-          set -e
-          app-store-connect fetch-signing-files \
-            --type IOS_APP_STORE \
-            --strict-match-identifier \
-            --delete-stale-profiles \
-            com.doxazo.expressions
-
-
-
-      # Cert already in .p12 form via UI upload — keychain add-certificates locates it
-      # in the default keychain search paths and applies it for codesign.
-      - name: Initialize keychain
-        script: |
-          keychain initialize
-
-      - name: Apply certificates to keychain
-        script: |
-          keychain add-certificates
-
-      # Apply the freshly-reissued App Store profile (which now carries
-      # com.apple.developer.applesignin since the Portal toggle) to the Xcode project.
-      - name: Set up code signing
-        script: |
-          xcode-project use-profiles
-
       # Profile-level diagnostic gate. Reports the exact profile the package will
       # use at archive time, plus whether it grants APNs and Sign in with Apple.
       - name: Verify provisioning profile includes APNs
