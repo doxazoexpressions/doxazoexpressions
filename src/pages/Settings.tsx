@@ -38,6 +38,11 @@ import {
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  deleteOwnAccount,
+  isDeleteConfirmed,
+  DELETE_CONFIRM_PHRASE,
+} from "@/lib/accountDeletion";
 import { track } from "@/lib/analytics";
 import { getPrefs, setPrefs } from "@/lib/prefs";
 import {
