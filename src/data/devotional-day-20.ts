@@ -1,3 +1,6 @@
+// kat_provenance: 'oshority-doxazo'
+// kat_license: 'CC BY-NC 4.0'
+// kat_authored_at: 2026-08-03
 // kat_4_2_minimum: true — original devotional content authored for Doxazo Expressions (not collated from any third-party devotional app).
 import type { DevotionalDay } from "./types";
 
