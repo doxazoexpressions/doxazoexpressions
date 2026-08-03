@@ -22,6 +22,37 @@ export class AccountDeletionError extends Error {
  * No service-role key or admin SDK is ever used on the client.
  */
 export async function deleteOwnAccount(): Promise<void> {
+  // 1. NEW STEP — revoke the Sign in with Apple token FIRST, before any data delete.
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user.id;
+  if (!userId) {
+    throw new AccountDeletionError("You need to be signed in to delete your account.");
+  }
+
+  const { data: revokeResult, error: revokeError } = await supabase.functions.invoke(
+    "apple-revoke-on-delete",
+    { body: { user_id: userId } },
+  );
+
+  if (revokeError) {
+    throw new AccountDeletionError(
+      "Apple revocation request failed: " + revokeError.message,
+      revokeError,
+    );
+  }
+
+  // Edge function returns one of:
+  //  - { skipped: true }                            → no Apple identity, proceed
+  //  - { ok: true }                                 → Apple accepted, proceed
+  //  - { ok: false, reason: "apple-invalid-grant" } → token already gone, proceed
+  //  - any other { ok: false, reason: ... }         → ABORT
+  if (revokeResult && revokeResult.ok === false && revokeResult.reason !== "apple-invalid-grant") {
+    throw new AccountDeletionError(
+      `Apple revocation failed before account deletion could proceed (reason: ${revokeResult.reason ?? "unknown"}). Please try again.`,
+    );
+  }
+
+  // 2. EXISTING step — cascade-delete the auth user (unchanged).
   const { error } = await supabase.functions.invoke("delete-account");
   if (error) {
     throw new AccountDeletionError(
