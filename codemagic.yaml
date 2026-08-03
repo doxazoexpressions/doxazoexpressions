@@ -133,6 +133,39 @@ workflows:
             echo "No Podfile — skipping pod install (Capacitor SPM)"
           fi
 
+      # Mint a fresh App Store profile under the Sign in with Apple
+      # capability set, and write it (and any fetched cert) to the
+      # MobileDevice directory that use-profiles and the two Python
+      # "Verify provisioning profile" gates glob. Without --profiles-dir
+      # and --certificates-dir overrides here, fetch-signing-files
+      # defaults to ~/Library/Developer/Xcode/UserData/Provisioning
+      # Profiles/ — use-profiles won't see it and the gates will fail
+      # even though a profile was just created. Auth (issuer/key/private)
+      # is auto-injected from the DoxazoASC app_store_connect integration.
+      # Keychain initialize is handled automatically by ios_signing, so
+      # no separate step here.
+      # Prerequisites, all done out of band before this build runs:
+      #   1. Apple Developer Portal: enable Sign in with Apple on App ID
+      #      com.doxazo.expressions, save, confirm the warning dialog.
+      #   2. Apple Developer Portal Profiles: delete any existing App
+      #      Store profile for com.doxazo.expressions so --create
+      #      actually mints a new one (fetch-signing-files --create only
+      #      acts when no profile exists).
+      # This step MUST run BEFORE the two "Verify provisioning profile"
+      # gates below, because those gates glob the MobileDevice directory
+      # that this step populates; a fresh build machine starts empty.
+      - name: Fetch signing files (force-create, App Store)
+        script: |
+          set -e
+          app-store-connect fetch-signing-files \
+            com.doxazo.expressions \
+            --type IOS_APP_STORE \
+            --create \
+            --delete-stale-profiles \
+            --strict-match-identifier \
+            --profiles-dir "$HOME/Library/MobileDevice/Provisioning Profiles" \
+            --certificates-dir "$HOME/Library/MobileDevice/Certificates"
+
       # Profile-level diagnostic gate. Reports the exact profile the package will
       # use at archive time, plus whether it grants APNs and Sign in with Apple.
       - name: Verify provisioning profile includes APNs
@@ -223,20 +256,6 @@ workflows:
             --archive-method app-store \
             --export-options-plist "$HOME/export_options.plist"
 
-
-      # File-safe error reporter so the next xcodebuild failure prints context.
-      - name: On Build failure, dump the xcodebuild error context
-        script: |
-          if [ -d /tmp/xcodebuild_logs ]; then
-            ls -la /tmp/xcodebuild_logs/ 2>/dev/null || true
-            echo "----- xcodebuild log tail (last 200 lines) -----"
-            ls -1 /tmp/xcodebuild_logs/*.log 2>/dev/null | tail -n 1 | xargs tail -n 200 2>/dev/null || true
-            echo "----- error: lines -----"
-            grep -nE 'error:|BUILD FAILED|No profile|signing identity|certificate|entitlement' /tmp/xcodebuild_logs/*.log 2>/dev/null | head -n 40 || true
-          else
-            echo "No /tmp/xcodebuild_logs/ dir — re-run with verbose Codemagic logs enabled."
-          fi
-          exit 1
 
       # Post-build: APNs in signed .ipa
       - name: Verify signed IPA includes APNs entitlement
