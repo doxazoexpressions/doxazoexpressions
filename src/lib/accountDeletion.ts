@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { track } from "@/lib/analytics";
+import { deleteAllAudioObjectsForUser } from "@/lib/audioJournal";
+
 
 export class AccountDeletionError extends Error {
   cause: unknown;
@@ -52,8 +54,13 @@ export async function deleteOwnAccount(): Promise<void> {
     );
   }
 
+  // 1b. Delete all of this user's audio-journal storage objects before the auth.users delete cascades.
+  const audioObjectsRemoved = await deleteAllAudioObjectsForUser(userId);
+  console.info(`[account-deletion] journal-audio-cleanup: removed ${audioObjectsRemoved} audio object(s)`);
+
   // 2. EXISTING step — cascade-delete the auth user (unchanged).
   const { error } = await supabase.functions.invoke("delete-account");
+
   if (error) {
     throw new AccountDeletionError(
       "We couldn't delete your account. Please try again, or email support@doxazoexpressions.com to request manual deletion.",
