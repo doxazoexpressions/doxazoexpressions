@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 
-> # Only categories Doxazo can actually justify are required. SystemBootTime and
+# Only categories Doxazo can actually justify are required. SystemBootTime and
 # DiskSpace are intentionally NOT declared: no native or JS code reads
 # ProcessInfo.systemUptime / kern.boottime or NSFileSystemFreeSize.
 REQUIRED: dict[str, set[str]] = {
