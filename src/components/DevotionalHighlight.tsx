@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import CategoryBadge from "./CategoryBadge";
+import { preview } from "@/lib/textPreview";
 import { track } from "@/lib/analytics";
 
 type Devotional = {
@@ -53,7 +54,7 @@ const DevotionalHighlight = () => {
 
   const previewText =
     today?.excerpt?.trim() ||
-    (today?.body ? (today.body.length > 280 ? today.body.slice(0, 280).trim() + "…" : today.body) : "");
+    preview(today?.body, 280);
 
   const isToday = today
     ? new Date(today.publish_date).toDateString() === new Date().toDateString()
@@ -173,8 +174,8 @@ const DevotionalHighlight = () => {
                   <p className="text-accent font-medium mb-6">{today.scripture_reference}</p>
                 )}
                 {today.scripture_text && (
-                  <blockquote className="border-l-2 border-accent pl-5 italic font-serif text-foreground/80 mb-6 leading-relaxed">
-                    "{today.scripture_text}"
+                  <blockquote className="border-l-2 border-accent pl-5 italic font-serif text-foreground/80 mb-6 leading-relaxed break-words whitespace-pre-line overflow-visible max-h-none">
+                    &ldquo;{today.scripture_text.trim().replace(/^["“]+|["”]+$/g, "")}&rdquo;
                   </blockquote>
                 )}
                 <p className="text-muted-foreground leading-relaxed mb-8">{previewText}</p>

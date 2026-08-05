@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import CategoryBadge from "./CategoryBadge";
+import { preview } from "@/lib/textPreview";
 import FavoriteButton from "./FavoriteButton";
 
 export type DevotionalCardData = {
@@ -17,7 +18,7 @@ export type DevotionalCardData = {
 const buildExcerpt = (d: DevotionalCardData) => {
   if (d.excerpt && d.excerpt.trim()) return d.excerpt;
   const src = d.body ?? "";
-  return src.length > 180 ? src.slice(0, 180).trim() + "…" : src;
+  return preview(src, 180);
 };
 
 const DevotionalCard = ({ d }: { d: DevotionalCardData }) => {
