@@ -34,6 +34,7 @@ import ShareVerseCard from "@/components/ShareVerseCard";
 import JournalPanel from "@/components/JournalPanel";
 import FaithEssentials from "@/components/FaithEssentials";
 import HighlightVerseButton from "@/components/HighlightVerseButton";
+import { normalizeReadableText } from "@/lib/textPreview";
 
 type Devotional = {
   id: string;
@@ -186,6 +187,7 @@ const DailyDevotional = () => {
     (current?.body ? current.body.replace(/\s+/g, " ").slice(0, 155) : null) ??
     "Today's Christian devotional from Doxazo Expressions — Scripture, reflection, and a faith declaration to shape your day.";
   const seoPath = requestedId ? `/devotional/${requestedId}` : "/devotional";
+  const scriptureText = normalizeReadableText(current?.scripture_text).trim();
   const articleLd = current
     ? {
         "@context": "https://schema.org",
@@ -271,14 +273,14 @@ const DailyDevotional = () => {
                       <div className="border-l-4 border-accent pl-5 py-3 mb-8 bg-accent/5 rounded-r-md">
                         <p className="text-sm font-semibold text-accent mb-1">{current.scripture_reference}</p>
                         {current.scripture_text && (
-                          <p className="italic text-foreground/90 font-serif leading-relaxed">"{current.scripture_text}"</p>
+                          <p className="max-w-full whitespace-normal break-words [overflow-wrap:anywhere] italic text-foreground/90 font-serif leading-relaxed">&ldquo;{scriptureText}&rdquo;</p>
                         )}
                         {current.scripture_text && (
                           <HighlightVerseButton
                             devotionalId={current.id}
                             devotionalTitle={current.title}
                             reference={current.scripture_reference}
-                            verseText={current.scripture_text}
+                            verseText={scriptureText}
                           />
                         )}
                       </div>
@@ -286,7 +288,7 @@ const DailyDevotional = () => {
 
                     <AudioNarration
                       title={current.title}
-                      scripture={current.scripture_text || current.scripture_reference}
+                      scripture={scriptureText || current.scripture_reference}
                       body={current.body}
                       declaration={current.decree_and_declare || current.declaration}
                       audioUrl={current.audio_url}
