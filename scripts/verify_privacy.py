@@ -21,12 +21,14 @@ import sys
 from pathlib import Path
 
 
+> # Only categories Doxazo can actually justify are required. SystemBootTime and
+# DiskSpace are intentionally NOT declared: no native or JS code reads
+# ProcessInfo.systemUptime / kern.boottime or NSFileSystemFreeSize.
 REQUIRED: dict[str, set[str]] = {
     "NSPrivacyAccessedAPICategoryUserDefaults":    {"CA92.1", "1C8F.1", "C56D.1", "AC6B.1"},
     "NSPrivacyAccessedAPICategoryFileTimestamp":   {"DDA9.1", "C617.1", "3B52.1", "0A2A.1"},
-    "NSPrivacyAccessedAPICategorySystemBootTime":  {"35F9.1", "8FFB.1", "3D61.1"},
-    "NSPrivacyAccessedAPICategoryDiskSpace":       {"85F4.1", "E174.1", "7D9E.1", "B728.1"},
 }
+
 
 
 def parse_manifest(path: Path) -> dict[str, set[str]]:
