@@ -43,6 +43,7 @@ import SettingsStub from "./pages/SettingsStub";
 import DeleteAccount from "./pages/DeleteAccount";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 import Plans from "./pages/Plans";
 import PlanDetail from "./pages/PlanDetail";
@@ -100,6 +101,7 @@ const App = () => (
             <Route path="/~/oauth/callback" element={<OAuthCallback />} />
             <Route path="/~oauth/callback" element={<OAuthCallback />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
+            <Route path="/support" element={<Support />} />
             <Route path="*" element={<NotFound />} />
 
           </Routes>
