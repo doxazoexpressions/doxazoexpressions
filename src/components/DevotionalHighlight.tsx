@@ -175,7 +175,7 @@ const DevotionalHighlight = () => {
                 )}
                 {today.scripture_text && (
                   <blockquote className="border-l-2 border-accent pl-5 italic font-serif text-foreground/80 mb-6 leading-relaxed break-words whitespace-pre-line overflow-visible max-h-none">
-                    "{today.scripture_text}"
+                    &ldquo;{today.scripture_text.trim().replace(/^["“]+|["”]+$/g, "")}&rdquo;
                   </blockquote>
                 )}
                 <p className="text-muted-foreground leading-relaxed mb-8">{previewText}</p>
