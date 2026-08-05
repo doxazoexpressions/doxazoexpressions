@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { normalizeReadableText } from "@/lib/textPreview";
 
 /**
  * Doxazo devotional body formatter.
@@ -27,7 +28,7 @@ function stripInlineMarkup(s: string): string {
 }
 
 function normalize(body: string): string {
-  return stripInlineMarkup(body)
+  return stripInlineMarkup(normalizeReadableText(body))
     .replace(/\r\n?/g, "\n")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
@@ -102,7 +103,7 @@ const DevotionalBody = ({ body, variant = "full", className = "" }: DevotionalBo
   if (paragraphs.length === 0) return null;
 
   return (
-    <div className={`font-serif text-foreground/90 text-left ${size} ${leading} ${spacing} ${className}`}>
+    <div className={`min-w-0 max-w-full font-serif text-foreground/90 text-left [overflow-wrap:anywhere] ${size} ${leading} ${spacing} ${className}`}>
       {paragraphs.map((p, i) => {
         if (i === closingIdx) {
           // Keep the closing highlighted quote centered
