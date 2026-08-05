@@ -357,6 +357,47 @@ export type Database = {
         }
         Relationships: []
       }
+      journal_audio_entries: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          id: string
+          journal_entry_id: string
+          mime_type: string
+          size_bytes: number
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds: number
+          id?: string
+          journal_entry_id: string
+          mime_type: string
+          size_bytes: number
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          journal_entry_id?: string
+          mime_type?: string
+          size_bytes?: number
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_audio_entries_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journal_entries: {
         Row: {
           content: string
