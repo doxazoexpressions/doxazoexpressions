@@ -28,4 +28,4 @@ Disallow: /delete-account
 Disallow: /settings
 Disallow: /admin
 
-Sitemap: https://doxazoexpressions.com/sitemap.xml
+Sitemap: https://www.doxazoexpressions.com/sitemap.xml

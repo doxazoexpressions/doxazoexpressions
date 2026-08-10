@@ -208,7 +208,7 @@ const DailyDevotional = () => {
         datePublished: current.publish_date,
         author: { "@type": "Organization", name: "Doxazo Expressions" },
         publisher: { "@type": "Organization", name: "Doxazo Expressions" },
-        mainEntityOfPage: `https://doxazoexpressions.com${seoPath}`,
+        mainEntityOfPage: `https://www.doxazoexpressions.com${seoPath}`,
       }
     : undefined;
 
