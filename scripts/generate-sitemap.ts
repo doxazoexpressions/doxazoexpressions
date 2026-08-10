@@ -11,27 +11,19 @@ interface SitemapEntry {
   priority?: string;
 }
 
-const CATEGORY_SLUGS = [
-  "series",
-  "divine_relationship",
-  "destiny_purpose",
-  "blessings",
-  "prayers",
-  "life_relationships",
-];
-
+// Category slug routes (/categories/:slug) rewrite to /archive?category=... at runtime and
+// canonicalise to /archive, so they are intentionally excluded from the sitemap to avoid
+// "Alternate page with proper canonical tag" duplicates in Search Console.
 const entries: SitemapEntry[] = [
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/devotional", changefreq: "daily", priority: "0.9" },
   { path: "/archive", changefreq: "daily", priority: "0.8" },
   { path: "/categories", changefreq: "weekly", priority: "0.7" },
-  ...CATEGORY_SLUGS.map((slug) => ({
-    path: `/categories/${slug}`,
-    changefreq: "weekly" as const,
-    priority: "0.6",
-  })),
   { path: "/about", changefreq: "monthly", priority: "0.5" },
   { path: "/contact", changefreq: "monthly", priority: "0.5" },
+  { path: "/support", changefreq: "monthly", priority: "0.4" },
+  { path: "/privacy", changefreq: "yearly", priority: "0.3" },
+  { path: "/terms", changefreq: "yearly", priority: "0.3" },
 ];
 
 function generateSitemap(entries: SitemapEntry[]) {
