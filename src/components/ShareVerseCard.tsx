@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { shareNative, isNative } from "@/lib/native";
 import { track } from "@/lib/analytics";
+import { canonicalUrl } from "@/lib/canonicalUrl";
+import { saveImage } from "@/lib/saveImage";
 
 type Props = {
   title: string;
@@ -98,7 +100,8 @@ const ShareVerseCard = ({ title, scripture, quote }: Props) => {
         } catch {}
         try {
           if (isNative()) {
-            await shareNative({ title, text: material, url: window.location.href });
+            // Canonical URL only — capacitor://localhost links are dead.
+            await shareNative({ title, text: material, url: canonicalUrl() });
             return;
           }
         } catch {}
@@ -111,12 +114,26 @@ const ShareVerseCard = ({ title, scripture, quote }: Props) => {
     }
   };
 
-  const download = () => {
-    if (!preview) return;
-    const a = document.createElement("a");
-    a.href = preview;
-    a.download = "doxazo-verse.png";
-    a.click();
+  const [downloading, setDownloading] = useState(false);
+
+  // A bare <a download href="data:..."> is a no-op on iOS and in the Capacitor
+  // shell. saveImage() routes to Filesystem + share sheet on native and a real
+  // blob download on web.
+  const download = async () => {
+    if (!preview || downloading) return;
+    setDownloading(true);
+    try {
+      const outcome = await saveImage(preview, "doxazo-verse.png", material);
+      if (outcome === "downloaded") {
+        toast({ title: "Image saved", description: "Check your downloads folder." });
+      } else if (outcome === "shown") {
+        toast({ title: "Card ready", description: "Long-press the image to save it." });
+      }
+    } catch {
+      toast({ title: "Could not save image", description: "Long-press the image to save it.", variant: "destructive" });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -133,8 +150,9 @@ const ShareVerseCard = ({ title, scripture, quote }: Props) => {
             className="rounded-lg border border-border max-w-xs w-full mx-auto"
           />
           <div className="flex justify-center">
-            <Button onClick={download} size="sm" variant="ghost" className="gap-2">
-              <ImageDown className="w-4 h-4" /> Download image
+            <Button onClick={download} disabled={downloading} size="sm" variant="ghost" className="gap-2 min-h-11">
+              <ImageDown className="w-4 h-4" />
+              {downloading ? "Saving…" : isNative() ? "Save image" : "Download image"}
             </Button>
           </div>
         </div>
