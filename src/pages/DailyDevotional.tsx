@@ -35,6 +35,8 @@ import JournalPanel from "@/components/JournalPanel";
 import FaithEssentials from "@/components/FaithEssentials";
 import HighlightVerseButton from "@/components/HighlightVerseButton";
 import { normalizeReadableText } from "@/lib/textPreview";
+import ReflectionPrompt from "@/components/ReflectionPrompt";
+import { trackDevotionalOpened, trackDevotionalCompleted } from "@/lib/lifecycleAnalytics";
 
 type Devotional = {
   id: string;
@@ -150,6 +152,13 @@ const DailyDevotional = () => {
   useEffect(() => {
     if (current) {
       track("devotional_open", { id: current.id, from: "devotional_page" });
+      // Canonical open event + first-ever-open milestone.
+      trackDevotionalOpened(current.id, {
+        slug: current.slug,
+        category: current.category,
+        series: current.series,
+        from: "devotional_page",
+      });
       recordRead({
         id: current.id,
         slug: current.slug,
@@ -175,6 +184,8 @@ const DailyDevotional = () => {
       const total = document.body.scrollHeight;
       if (total > 0 && scrolled >= total - 400) {
         markCompleted(current.id);
+        // Deduped in the ledger — fires once per devotional, not per scroll tick.
+        trackDevotionalCompleted(current.id, { category: current.category });
       }
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -358,6 +369,7 @@ const DailyDevotional = () => {
                       <FavoriteButton devotionalId={current.id} />
                       <ShareButton
                         title={current.title}
+                        path={`/devotional/${current.slug || current.id}`}
                         text={
                           current.excerpt ??
                           current.scripture_reference ??
@@ -378,6 +390,8 @@ const DailyDevotional = () => {
                         quote={current.decree_and_declare || current.declaration || current.excerpt || current.scripture_text}
                       />
                     </div>
+
+                    <ReflectionPrompt devotionalId={current.id} devotionalTitle={current.title} />
 
                     <JournalPanel devotionalId={current.id} devotionalTitle={current.title} />
                   </CardContent>

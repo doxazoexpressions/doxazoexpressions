@@ -5,8 +5,9 @@ import SEO from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Search as SearchIcon, WifiOff, Copy, Share2 } from "lucide-react";
+import { BookOpen, Search as SearchIcon, WifiOff, Copy, Share2, Lock } from "lucide-react";
 import { lookupPassage, recentLookups, type Passage } from "@/lib/scripture";
+import { TRANSLATIONS, DEFAULT_TRANSLATION, type TranslationId } from "@/lib/bibleVersions";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { toast } from "sonner";
 
@@ -17,7 +18,7 @@ const SUGGESTIONS = [
 
 const Scripture = () => {
   const [query, setQuery] = useState("");
-  const [translation, setTranslation] = useState<"kjv" | "web">("kjv");
+  const [translation, setTranslation] = useState<TranslationId>(DEFAULT_TRANSLATION);
   const [passage, setPassage] = useState<Passage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +27,11 @@ const Scripture = () => {
 
   useEffect(() => { setRecents(recentLookups()); }, [passage]);
 
-  const doLookup = async (ref: string) => {
+  const doLookup = async (ref: string, forced?: TranslationId) => {
     setLoading(true);
     setError(null);
     try {
-      const p = await lookupPassage(ref, translation);
+      const p = await lookupPassage(ref, forced ?? translation);
       setPassage(p);
       setQuery(p.reference);
     } catch (e: any) {
@@ -103,19 +104,48 @@ const Scripture = () => {
                 className="pl-9"
               />
             </div>
-            <select
-              value={translation}
-              onChange={(e) => setTranslation(e.target.value as "kjv" | "web")}
-              className="rounded-md border border-input bg-background px-3 text-sm"
-              aria-label="Translation"
-            >
-              <option value="kjv">KJV</option>
-              <option value="web">WEB</option>
-            </select>
             <Button type="submit" disabled={loading}>
               {loading ? "Looking up…" : "Read"}
             </Button>
           </form>
+
+          {/* Translation picker — licensed-but-unlicensed versions are shown,
+              disabled, with the reason, rather than hidden or substituted. */}
+          <div className="mb-4">
+            <p className="text-xs uppercase tracking-[0.18em] font-semibold text-muted-foreground mb-2">
+              Translation
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {TRANSLATIONS.map((t) => {
+                const active = t.id === translation;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    title={t.available ? t.full : `${t.full} — ${t.note}`}
+                    onClick={() => {
+                      if (!t.available) {
+                        toast.info(`${t.label} coming soon`, { description: t.note });
+                        return;
+                      }
+                      setTranslation(t.id);
+                      if (passage) doLookup(passage.reference, t.id);
+                    }}
+                    className={`text-xs rounded-full border px-3 py-1.5 min-h-9 transition-colors ${
+                      active
+                        ? "border-accent bg-accent/15 text-accent font-semibold"
+                        : t.available
+                          ? "border-border hover:bg-accent/10"
+                          : "border-dashed border-border/60 text-muted-foreground"
+                    }`}
+                  >
+                    {t.label}
+                    {!t.available && <Lock className="inline w-3 h-3 ml-1 -mt-0.5" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="flex flex-wrap gap-1.5 mb-6">
             {SUGGESTIONS.map((s) => (
@@ -128,6 +158,7 @@ const Scripture = () => {
               </button>
             ))}
           </div>
+
 
           {error && (
             <Card className="border-destructive/40 mb-6">
@@ -175,7 +206,7 @@ const Scripture = () => {
                 {recents.slice(0, 12).map((r, i) => (
                   <button
                     key={`${r.reference}-${i}`}
-                    onClick={() => { setTranslation(r.translation as any); setQuery(r.reference); doLookup(r.reference); }}
+                    onClick={() => { setTranslation(r.translation as TranslationId); setQuery(r.reference); doLookup(r.reference, r.translation as TranslationId); }}
                     className="text-xs rounded-full border border-border px-3 py-1 hover:bg-accent/10"
                   >
                     {r.reference}

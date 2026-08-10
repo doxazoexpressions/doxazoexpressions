@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { trackAccountCreated } from "@/lib/lifecycleAnalytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,6 +96,7 @@ const Auth = () => {
         : error.message;
       return toast({ title: "Sign up failed", description: msg, variant: "destructive" });
     }
+    trackAccountCreated("email");
     setSignupSentTo(eParse.data);
     setResendCooldown(30);
   };

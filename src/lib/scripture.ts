@@ -1,6 +1,8 @@
 // Scripture lookup via bible-api.com (free, CORS-enabled, KJV/WEB).
 // Caches responses in localStorage for offline re-reads.
 
+import { getTranslation } from "@/lib/bibleVersions";
+
 const CACHE_KEY = "doxazo.scripture.cache.v1";
 const MAX_CACHE = 60;
 
@@ -47,8 +49,16 @@ export function getCachedPassage(ref: string, translation = "kjv"): Passage | nu
 
 export async function lookupPassage(
   reference: string,
-  translation: "kjv" | "web" = "kjv"
+  translation: string = "kjv"
 ): Promise<Passage> {
+  const meta = getTranslation(translation);
+  if (!meta.available || !meta.apiSlug) {
+    // Never silently substitute another translation for a licensed one.
+    throw new Error(
+      `${meta.full} (${meta.label}) is not licensed for in-app text yet. ${meta.note}`
+    );
+  }
+  translation = meta.apiSlug;
   const trimmed = reference.trim();
   if (!trimmed) throw new Error("Enter a reference like John 3:16");
 

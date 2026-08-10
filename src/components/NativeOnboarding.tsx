@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { CATEGORIES, type CategorySlug } from "@/lib/categories";
 import { setPrefs, hasOnboarded, type ReadingTime } from "@/lib/prefs";
 import type { VoiceKind } from "@/lib/devotionalAudio";
+import { track } from "@/lib/analytics";
+import { trackOnboardingCompleted, trackReminderOptIn } from "@/lib/lifecycleAnalytics";
 
 const LEGACY_KEY = "doxazo.onboarding.completed.v1";
 
@@ -61,6 +63,7 @@ const NativeOnboarding = () => {
       const legacy = localStorage.getItem(LEGACY_KEY);
       if (legacy || hasOnboarded()) return;
       setVisible(true);
+      track("onboarding_started");
     } catch {}
   }, []);
 
@@ -76,6 +79,11 @@ const NativeOnboarding = () => {
       // Keep the standalone voice preference in sync so the audio player picks it up.
       localStorage.setItem("doxazo:voice-preference", voice);
     } catch {}
+    trackOnboardingCompleted({
+      themes: themes.length,
+      voice,
+      reading_time: readingTime,
+    });
     setVisible(false);
   };
 
@@ -85,6 +93,8 @@ const NativeOnboarding = () => {
     try {
       const result = await enableNativePush();
       if (result === "granted") {
+        trackReminderOptIn("push_native");
+        track("notification_enabled", { source: "onboarding" });
         toast.success("Daily nudge enabled");
       } else {
         toast("Notifications not enabled — you can turn them on later in Settings.");

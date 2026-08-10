@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 
 type Props = {
   devotionalId: string;
@@ -24,6 +25,7 @@ const FavoriteButton = ({
     e.preventDefault();
     e.stopPropagation();
     const nowFav = await toggle(devotionalId);
+    if (nowFav) track("devotional_saved", { id: devotionalId });
     toast({
       title: nowFav ? "Saved to favorites" : "Removed from favorites",
       description: nowFav ? "Find it any time on the Favorites page." : undefined,

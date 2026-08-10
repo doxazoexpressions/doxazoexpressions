@@ -51,11 +51,19 @@ export type AnalyticsEvent =
   | "group_joined"
   // App lifecycle (native)
   | "app_open"
+  | "app_install"
+  | "account_created"
+  | "first_devotional_opened"
+  | "day_2_return"
+  | "day_7_return"
+  | "reminder_opt_in"
+  | "devotional_saved"
   | "onboarding_started"
   | "onboarding_completed"
   | "notification_enabled"
   | "widget_opened"
   | "shortcut_used"
+
   // Journal / navigation / auth (GA4 connector event set)
   | "journal_create"
   | "journal_delete"

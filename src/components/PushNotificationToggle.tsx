@@ -19,6 +19,8 @@ import {
 } from "@/lib/nativePush";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { track } from "@/lib/analytics";
+import { trackReminderOptIn } from "@/lib/lifecycleAnalytics";
 
 const PushNotificationToggle = () => {
   const { user } = useAuth();
@@ -68,6 +70,10 @@ const PushNotificationToggle = () => {
       setBusy(true);
       try {
         const result = await enableNativePush();
+        if (result === "granted") {
+          trackReminderOptIn("push_native");
+          track("notification_enabled", { source: "settings", channel: "push_native" });
+        }
         const status = await getNativePushStatus();
         setNativePerm(status.permission === "unsupported" ? result : status.permission);
         setNativeRegistered(status.registered);
@@ -177,6 +183,8 @@ const PushNotificationToggle = () => {
           return;
         }
         await subscribeToPush(user?.id ?? null);
+        trackReminderOptIn("push_web");
+        track("notification_enabled", { source: "settings", channel: "push_web" });
         setSubscribed(true);
         toast({
           title: "Notifications enabled",

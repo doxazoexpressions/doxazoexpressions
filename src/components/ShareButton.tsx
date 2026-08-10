@@ -3,20 +3,35 @@ import { Share2, Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { track } from "@/lib/analytics";
+import { canonicalUrl } from "@/lib/canonicalUrl";
+import { isNative, shareNative } from "@/lib/native";
 
 type Props = {
   title: string;
   text?: string;
+  /** Explicit path to share (defaults to the current route). */
+  path?: string;
   variant?: "default" | "outline" | "ghost" | "secondary";
   size?: "sm" | "default" | "lg";
 };
 
-const ShareButton = ({ title, text, variant = "outline", size = "default" }: Props) => {
+const ShareButton = ({ title, text, path, variant = "outline", size = "default" }: Props) => {
   const [copied, setCopied] = useState(false);
 
   const onShare = async () => {
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    track("devotional_share", { title });
+    // NEVER window.location.href: inside the app shell that is
+    // capacitor://localhost/... which is a dead link for the recipient.
+    const url = canonicalUrl(path);
+    track("devotional_share", { title, url });
+
+    if (isNative()) {
+      try {
+        await shareNative({ title, text, url });
+        return;
+      } catch {
+        /* fall through to clipboard */
+      }
+    }
     try {
       if (navigator.share) {
         await navigator.share({ title, text, url });
@@ -34,6 +49,7 @@ const ShareButton = ({ title, text, variant = "outline", size = "default" }: Pro
       toast({ title: "Could not share", variant: "destructive" });
     }
   };
+
 
   return (
     <Button onClick={onShare} variant={variant} size={size} className="gap-2" aria-label="Share devotional">

@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { track, trackPageView } from "@/lib/analytics";
+import { trackLaunchLifecycle } from "@/lib/lifecycleAnalytics";
+import { isNative, nativePlatform } from "@/lib/native";
 
 /**
  * Fires a single GA4 / Firebase `page_view` on every SPA route change.
@@ -15,7 +17,10 @@ const RouteAnalytics = () => {
   useEffect(() => {
     if (!opened.current) {
       opened.current = true;
-      track("app_open", { source: "spa" });
+      const platform = isNative() ? nativePlatform() : "web";
+      track("app_open", { source: "spa", platform });
+      // install + retention checkpoints (each fires at most once, ever)
+      trackLaunchLifecycle(platform);
     }
   }, []);
 

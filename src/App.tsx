@@ -56,6 +56,7 @@ import Scripture from "./pages/Scripture";
 import Groups from "./pages/Groups";
 import MobileNav from "./components/MobileNav";
 import RouteAnalytics from "./components/RouteAnalytics";
+import BrandIntro from "./components/BrandIntro";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
         <BrowserRouter>
           <NativeBootstrap />
           <RouteAnalytics />
+          <BrandIntro />
           <MobileNav />
           <Routes>
             <Route path="/" element={<Index />} />
