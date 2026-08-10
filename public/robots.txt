@@ -5,6 +5,7 @@ Disallow: /reset-password
 Disallow: /delete-account
 Disallow: /settings
 Disallow: /admin
+Disallow: /search
 
 User-agent: Bingbot
 Allow: /
@@ -13,6 +14,7 @@ Disallow: /reset-password
 Disallow: /delete-account
 Disallow: /settings
 Disallow: /admin
+Disallow: /search
 
 User-agent: Twitterbot
 Allow: /
@@ -27,5 +29,6 @@ Disallow: /reset-password
 Disallow: /delete-account
 Disallow: /settings
 Disallow: /admin
+Disallow: /search
 
-Sitemap: https://doxazoexpressions.com/sitemap.xml
+Sitemap: https://www.doxazoexpressions.com/sitemap.xml
