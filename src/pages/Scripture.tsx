@@ -103,19 +103,48 @@ const Scripture = () => {
                 className="pl-9"
               />
             </div>
-            <select
-              value={translation}
-              onChange={(e) => setTranslation(e.target.value as "kjv" | "web")}
-              className="rounded-md border border-input bg-background px-3 text-sm"
-              aria-label="Translation"
-            >
-              <option value="kjv">KJV</option>
-              <option value="web">WEB</option>
-            </select>
             <Button type="submit" disabled={loading}>
               {loading ? "Looking up…" : "Read"}
             </Button>
           </form>
+
+          {/* Translation picker — licensed-but-unlicensed versions are shown,
+              disabled, with the reason, rather than hidden or substituted. */}
+          <div className="mb-4">
+            <p className="text-xs uppercase tracking-[0.18em] font-semibold text-muted-foreground mb-2">
+              Translation
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {TRANSLATIONS.map((t) => {
+                const active = t.id === translation;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    title={t.available ? t.full : `${t.full} — ${t.note}`}
+                    onClick={() => {
+                      if (!t.available) {
+                        toast.info(`${t.label} coming soon`, { description: t.note });
+                        return;
+                      }
+                      setTranslation(t.id);
+                      if (passage) doLookup(passage.reference, t.id);
+                    }}
+                    className={`text-xs rounded-full border px-3 py-1.5 min-h-9 transition-colors ${
+                      active
+                        ? "border-accent bg-accent/15 text-accent font-semibold"
+                        : t.available
+                          ? "border-border hover:bg-accent/10"
+                          : "border-dashed border-border/60 text-muted-foreground"
+                    }`}
+                  >
+                    {t.label}
+                    {!t.available && <Lock className="inline w-3 h-3 ml-1 -mt-0.5" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="flex flex-wrap gap-1.5 mb-6">
             {SUGGESTIONS.map((s) => (
@@ -128,6 +157,7 @@ const Scripture = () => {
               </button>
             ))}
           </div>
+
 
           {error && (
             <Card className="border-destructive/40 mb-6">
