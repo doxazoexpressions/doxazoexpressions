@@ -68,6 +68,7 @@ const App = () => (
         <BrowserRouter>
           <NativeBootstrap />
           <RouteAnalytics />
+        <BrandIntro />
           <MobileNav />
           <Routes>
             <Route path="/" element={<Index />} />
