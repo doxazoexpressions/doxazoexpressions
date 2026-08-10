@@ -88,7 +88,7 @@ const Archive = () => {
             ? `Browse every ${CATEGORIES.find((c) => c.slug === activeCategory)?.label} devotional published on Doxazo Expressions.`
             : "Every devotional we've published — searchable, filterable, and ready to revisit."
         }
-        path={activeCategory ? `/archive?category=${activeCategory}` : "/archive"}
+        path="/archive"
       />
       <Navbar />
       <main className="pt-16">
