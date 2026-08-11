@@ -18,12 +18,22 @@ const NativeBootstrap = () => {
 // mounts (detectSessionInUrl defaults to true), so the session is already in
 // storage — we just return the user to the home screen instead of falling
 // through to the 404 wildcard.
+//
+// When the flow was started from the native app (`?native=1`), this page runs in
+// the system browser instead: hand the tokens back to the app through the
+// doxazo:// deep link rather than signing in here.
 const OAuthCallback = () => {
   useEffect(() => {
+    const search = window.location.search;
+    if (new URLSearchParams(search).get("native") === "1") {
+      window.location.replace(`doxazo://oauth/callback${search}${window.location.hash}`);
+      return;
+    }
     window.location.replace("/");
   }, []);
   return null;
 };
+
 
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
