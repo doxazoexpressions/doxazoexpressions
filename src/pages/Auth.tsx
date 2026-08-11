@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { MailCheck, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import { z } from "zod";
-import { lovable } from "@/integrations/lovable/index";
+import { signInWithOAuth } from "@/lib/oauthSignIn";
 
 const emailSchema = z.string().trim().email("Please enter a valid email").max(255);
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
@@ -49,9 +49,7 @@ const Auth = () => {
     if (busy) return;
     setBusy(true);
     try {
-      const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
-      });
+      const result = await signInWithOAuth(provider);
       if ((result as { error?: Error }).error) {
         setBusy(false);
         return toast({
