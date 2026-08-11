@@ -29,7 +29,14 @@ export async function initNative(navigate: (path: string) => void) {
   // Deep links: doxazo://devotional/<id> or https://doxazoexpressions.com/devotional/<id>
   try {
     const { App } = await import('@capacitor/app');
-    App.addListener('appUrlOpen', ({ url }) => {
+    App.addListener('appUrlOpen', async ({ url }) => {
+      // OAuth hand-back: doxazo://oauth/callback?access_token=...&refresh_token=...
+      if (/^doxazo:\/\/oauth\/callback/i.test(url)) {
+        const { completeNativeOAuth } = await import('@/lib/oauthSignIn');
+        const { error } = await completeNativeOAuth(url);
+        navigate(error ? '/auth?error=' + encodeURIComponent(error.message) : '/');
+        return;
+      }
       try {
         const u = new URL(url);
         const path = u.pathname || '/';
