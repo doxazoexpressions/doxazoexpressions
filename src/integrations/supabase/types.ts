@@ -926,6 +926,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_stale_devotionals: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
