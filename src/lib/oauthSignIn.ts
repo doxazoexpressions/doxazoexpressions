@@ -93,7 +93,9 @@ const signInNative = async (
   const params = new URLSearchParams({
     ...extraParams,
     provider,
-    redirect_uri: `${PUBLISHED_ORIGIN}/auth/callback?native=1`,
+    // No query string here: Apple's Services ID Return URLs must match exactly
+    // and reject any `?...` suffix (that is why Google worked but Apple failed).
+    redirect_uri: `${PUBLISHED_ORIGIN}/auth/callback`,
     state,
   });
 
