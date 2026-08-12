@@ -29,6 +29,7 @@ export const canServeOAuthBroker = () =>
   HOSTED_HOST.test(window.location.hostname);
 
 const randomState = () =>
+  "dxnat-" +
   [...crypto.getRandomValues(new Uint8Array(16))]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -92,7 +93,9 @@ const signInNative = async (
   const params = new URLSearchParams({
     ...extraParams,
     provider,
-    redirect_uri: `${PUBLISHED_ORIGIN}/auth/callback?native=1`,
+    // No query string here: Apple's Services ID Return URLs must match exactly
+    // and reject any `?...` suffix (that is why Google worked but Apple failed).
+    redirect_uri: `${PUBLISHED_ORIGIN}/auth/callback`,
     state,
   });
 
