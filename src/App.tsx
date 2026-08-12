@@ -25,8 +25,17 @@ const NativeBootstrap = () => {
 const OAuthCallback = () => {
   useEffect(() => {
     const search = window.location.search;
-    if (new URLSearchParams(search).get("native") === "1") {
-      window.location.replace(`doxazo://oauth/callback${search}${window.location.hash}`);
+    const hash = window.location.hash;
+    const params = new URLSearchParams(search);
+    new URLSearchParams(hash.replace(/^#/, "")).forEach((v, k) => {
+      if (!params.has(k)) params.set(k, v);
+    });
+    // Apple rejects Return URLs that carry a query string, so the native flow is
+    // flagged through the `state` value (dxnat-) instead of `?native=1`.
+    const isNative =
+      params.get("native") === "1" || (params.get("state") ?? "").startsWith("dxnat-");
+    if (isNative) {
+      window.location.replace(`doxazo://oauth/callback${search}${hash}`);
       return;
     }
     window.location.replace("/");
