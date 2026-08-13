@@ -3,8 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { initNative } from "./lib/native";
+import { supabase } from "@/integrations/supabase/client";
 
 const NativeBootstrap = () => {
   const navigate = useNavigate();
@@ -23,24 +24,49 @@ const NativeBootstrap = () => {
 // the system browser instead: hand the tokens back to the app through the
 // doxazo:// deep link rather than signing in here.
 const OAuthCallback = () => {
+  const [message, setMessage] = useState("Completing sign in…");
+
   useEffect(() => {
-    const search = window.location.search;
-    const hash = window.location.hash;
-    const params = new URLSearchParams(search);
-    new URLSearchParams(hash.replace(/^#/, "")).forEach((v, k) => {
-      if (!params.has(k)) params.set(k, v);
-    });
-    // Apple rejects Return URLs that carry a query string, so the native flow is
-    // flagged through the `state` value (dxnat-) instead of `?native=1`.
-    const isNative =
-      params.get("native") === "1" || (params.get("state") ?? "").startsWith("dxnat-");
-    if (isNative) {
-      window.location.replace(`doxazo://oauth/callback${search}${hash}`);
-      return;
-    }
-    window.location.replace("/");
+    const complete = async () => {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      const params = new URLSearchParams(search);
+      new URLSearchParams(hash.replace(/^#/, "")).forEach((v, k) => {
+        if (!params.has(k)) params.set(k, v);
+      });
+      const authError = params.get("error_description") || params.get("error");
+      if (authError) {
+        console.warn("[oauth] Web callback failed", { reason: authError });
+        window.location.replace(`/auth?error=${encodeURIComponent(authError)}`);
+        return;
+      }
+
+      // Apple rejects Return URLs that carry a query string, so the native flow
+      // is flagged through the state value instead of `?native=1`.
+      const isNative = (params.get("state") ?? "").startsWith("dxnat-");
+      if (isNative) {
+        window.location.replace(`doxazo://oauth/callback${search}${hash}`);
+        return;
+      }
+
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) {
+        console.warn("[oauth] Web callback completed without a session", {
+          reason: error?.message ?? "missing_session",
+        });
+        setMessage("We could not complete sign in. Please return and try again.");
+        window.setTimeout(() => window.location.replace("/auth?error=session"), 1200);
+        return;
+      }
+      window.location.replace("/");
+    };
+    void complete();
   }, []);
-  return null;
+  return (
+    <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
+      <p role="status" className="text-sm text-muted-foreground">{message}</p>
+    </main>
+  );
 };
 
 
