@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { trackAccountCreated } from "@/lib/lifecycleAnalytics";
@@ -29,6 +29,17 @@ const Auth = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [existingEmail, setExistingEmail] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    if (!authError) return;
+    const description = authError === "session"
+      ? "Your sign-in session could not be completed. Please try again."
+      : authError;
+    toast({ title: "Sign in was not completed", description, variant: "destructive" });
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

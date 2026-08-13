@@ -29,11 +29,14 @@ export async function initNative(navigate: (path: string) => void) {
   // Deep links: doxazo://devotional/<id> or https://doxazoexpressions.com/devotional/<id>
   try {
     const { App } = await import('@capacitor/app');
-    App.addListener('appUrlOpen', async ({ url }) => {
+    const handleAppUrl = async (url: string) => {
       // OAuth hand-back: doxazo://oauth/callback?access_token=...&refresh_token=...
       if (/^doxazo:\/\/oauth\/callback/i.test(url)) {
         const { completeNativeOAuth } = await import('@/lib/oauthSignIn');
         const { error } = await completeNativeOAuth(url);
+        if (error) {
+          console.warn('[oauth] Native sign-in could not be completed', { reason: error.message });
+        }
         navigate(error ? '/auth?error=' + encodeURIComponent(error.message) : '/');
         return;
       }
@@ -46,7 +49,16 @@ export async function initNative(navigate: (path: string) => void) {
         const m = url.match(/doxazo:\/\/(.+)$/);
         if (m) navigate('/' + m[1]);
       }
+    };
+
+    App.addListener('appUrlOpen', ({ url }) => {
+      void handleAppUrl(url);
     });
+
+    // appUrlOpen covers a warm app. getLaunchUrl covers the TestFlight cold
+    // launch where iOS starts Doxazo from the OAuth callback deep link.
+    const launch = await App.getLaunchUrl();
+    if (launch?.url) await handleAppUrl(launch.url);
   } catch {}
 
   // Native push: when permission is already granted, register with APNs/FCM and

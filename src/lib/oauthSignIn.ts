@@ -11,7 +11,7 @@
 //
 // Native (iOS/Android): the app has no server at all, so we drive the flow by
 // hand — open the published broker in the system browser, let it return to
-// `${PUBLISHED_ORIGIN}/auth/callback?native=1`, and that page bounces the tokens
+// `${PUBLISHED_ORIGIN}/auth/callback`, and that page bounces the tokens
 // back into the app via the `doxazo://oauth/callback` deep link.
 import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,14 +19,8 @@ import { isNative } from "@/lib/native";
 
 export const PUBLISHED_ORIGIN = "https://www.doxazoexpressions.com";
 export const NATIVE_OAUTH_REDIRECT = "doxazo://oauth/callback";
-
-const HOSTED_HOST = /(^|\.)(lovable\.app|lovableproject\.com|doxazoexpressions\.com)$/i;
-
-/** True when window.location can serve `/~oauth/initiate` itself. */
-export const canServeOAuthBroker = () =>
-  typeof window !== "undefined" &&
-  /^https?:$/.test(window.location.protocol) &&
-  HOSTED_HOST.test(window.location.hostname);
+const OAUTH_BROKER_URL = `${PUBLISHED_ORIGIN}/~oauth/initiate`;
+const OAUTH_RETURN_URL = `${PUBLISHED_ORIGIN}/auth/callback`;
 
 const randomState = () =>
   "dxnat-" +
@@ -73,9 +67,21 @@ export const completeNativeOAuth = async (url: string) => {
     await Browser.close();
   } catch {}
 
-  if (error) return { error: new Error(error) };
-  if (expected && state && state !== expected) return { error: new Error("State is invalid") };
-  if (!access_token || !refresh_token) return { error: new Error("No tokens received") };
+  if (error) {
+    console.warn("[oauth] Native callback failed", { provider: "apple-or-google", reason: error });
+    return { error: new Error(error) };
+  }
+  if (!expected || !state || state !== expected) {
+    console.warn("[oauth] Native callback state validation failed", {
+      expectedStatePresent: Boolean(expected),
+      returnedStatePresent: Boolean(state),
+    });
+    return { error: new Error("The sign-in response could not be verified. Please try again.") };
+  }
+  if (!access_token || !refresh_token) {
+    console.warn("[oauth] Native callback did not contain a complete session");
+    return { error: new Error("Apple did not return a complete sign-in session. Please try again.") };
+  }
 
   const { error: sessionError } = await supabase.auth.setSession({ access_token, refresh_token });
   if (sessionError) return { error: sessionError };
@@ -95,14 +101,14 @@ const signInNative = async (
     provider,
     // No query string here: Apple's Services ID Return URLs must match exactly
     // and reject any `?...` suffix (that is why Google worked but Apple failed).
-    redirect_uri: `${PUBLISHED_ORIGIN}/auth/callback`,
+    redirect_uri: OAUTH_RETURN_URL,
     state,
   });
 
   try {
     const { Browser } = await import("@capacitor/browser");
     await Browser.open({
-      url: `${PUBLISHED_ORIGIN}/~oauth/initiate?${params.toString()}`,
+      url: `${OAUTH_BROKER_URL}?${params.toString()}`,
       presentationStyle: "fullscreen",
     });
     // Tokens arrive later through the deep link -> completeNativeOAuth().
@@ -118,13 +124,13 @@ export const signInWithOAuth = async (
 ) => {
   if (isNative()) return signInNative(provider, extraParams);
 
-  const hosted = canServeOAuthBroker();
-  const auth = createLovableAuth(
-    hosted ? undefined : { oauthBrokerUrl: `${PUBLISHED_ORIGIN}/~oauth/initiate` },
-  );
+  // Always use the canonical production broker. This keeps Apple's actual
+  // callback fixed at https://www.doxazoexpressions.com/~oauth/callback instead
+  // of varying between www, apex, preview, localhost, and Capacitor origins.
+  const auth = createLovableAuth({ oauthBrokerUrl: OAUTH_BROKER_URL });
 
   const result = await auth.signInWithOAuth(provider, {
-    redirect_uri: hosted ? window.location.origin : `${PUBLISHED_ORIGIN}/auth/callback`,
+    redirect_uri: OAUTH_RETURN_URL,
     extraParams,
   });
 
