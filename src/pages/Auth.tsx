@@ -338,7 +338,7 @@ const Auth = () => {
                 </div>
                 <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp} className="space-y-4">
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="block mb-2">Email</Label>
                     <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
                   </div>
                   <div>
