@@ -122,7 +122,15 @@ export const signInWithOAuth = async (
   provider: "google" | "apple",
   extraParams?: Record<string, string>,
 ) => {
-  if (isNative()) return signInNative(provider, extraParams);
+  // Always show Google's account chooser. Without this, Google silently reuses
+  // the last account, so a user who mistyped another email never gets the
+  // picker back and appears "stuck".
+  const params =
+    provider === "google"
+      ? { prompt: "select_account", ...extraParams }
+      : extraParams;
+
+  if (isNative()) return signInNative(provider, params);
 
   // Always use the canonical production broker. This keeps Apple's actual
   // callback fixed at https://www.doxazoexpressions.com/~oauth/callback instead
@@ -131,8 +139,9 @@ export const signInWithOAuth = async (
 
   const result = await auth.signInWithOAuth(provider, {
     redirect_uri: OAUTH_RETURN_URL,
-    extraParams,
+    extraParams: params,
   });
+
 
   if (result.redirected || result.error) return result;
 
