@@ -213,7 +213,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-12">
       <Helmet>
         <title>Sign In | Doxazo Expressions</title>
         <meta name="description" content="Sign in or create a Doxazo Expressions account to save favorites and receive daily devotionals." />
@@ -314,7 +314,7 @@ const Auth = () => {
                   {mode === "signin" ? "Welcome Back" : "Create Account"}
                 </h1>
                 <p className="text-sm text-muted-foreground mb-6">
-                  {mode === "signin" ? "Sign in to access your devotional journey." : "Join the community of daily seekers."}
+                  {mode === "signin" ? "Sign in to save and sync your devotional journey." : "Join the community of daily seekers."}
                 </p>
                 <div className="space-y-2 mb-4">
                   <Button
@@ -370,8 +370,15 @@ const Auth = () => {
                     {busy ? "Please wait..." : mode === "signin" ? "Sign In" : "Sign Up"}
                   </Button>
                 </form>
-                <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="w-full text-sm text-muted-foreground mt-4 hover:text-accent rounded-md py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
+                <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="group w-full text-sm text-muted-foreground mt-4 hover:text-accent rounded-md py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  {mode === "signin" ? (
+                    <>
+                      <span className="text-muted-foreground">Need an account?</span>{" "}
+                      <span className="text-accent font-semibold group-hover:underline">Sign up</span>
+                    </>
+                  ) : (
+                    "Have an account? Sign in"
+                  )}
                 </button>
               </>
             )}
