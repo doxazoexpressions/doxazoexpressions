@@ -7,6 +7,7 @@ import {
   NotebookPen,
   Menu,
   Book,
+  Compass,
   HeartHandshake,
   Highlighter,
   Target,
