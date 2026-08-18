@@ -23,6 +23,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [signupSentTo, setSignupSentTo] = useState<string | null>(null);
   const [forgotSentTo, setForgotSentTo] = useState<string | null>(null);
@@ -90,6 +92,7 @@ const Auth = () => {
     const pParse = passwordSchema.safeParse(password);
     if (!eParse.success) return toast({ title: "Check your email", description: eParse.error.issues[0].message, variant: "destructive" });
     if (!pParse.success) return toast({ title: "Check your password", description: pParse.error.issues[0].message, variant: "destructive" });
+    if (password !== confirmPassword) return toast({ title: "Passwords do not match", description: "Please make sure both passwords match.", variant: "destructive" });
 
     setBusy(true);
     const { error } = await supabase.auth.signUp({
@@ -339,7 +342,7 @@ const Auth = () => {
                     <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-2">
                       <Label htmlFor="password">Password</Label>
                       {mode === "signin" && (
                         <button type="button" onClick={() => setMode("forgot")} className="text-xs text-accent hover:underline rounded px-1 -mx-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -363,9 +366,36 @@ const Auth = () => {
                       </button>
                     </div>
                     {mode === "signup" && (
-                      <p className="text-xs text-muted-foreground mt-1">At least 6 characters.</p>
+                      <p className="text-xs text-muted-foreground mt-2 mb-1">At least 6 characters.</p>
                     )}
                   </div>
+                  {mode === "signup" && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          minLength={6}
+                          autoComplete="new-password"
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((s) => !s)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground rounded-md p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <Button type="submit" className="w-full" disabled={busy}>
                     {busy ? "Please wait..." : mode === "signin" ? "Sign In" : "Sign Up"}
                   </Button>
@@ -377,7 +407,10 @@ const Auth = () => {
                       <span className="text-accent font-semibold group-hover:underline">Sign up</span>
                     </>
                   ) : (
-                    "Have an account? Sign in"
+                    <>
+                      <span className="text-muted-foreground">Have an account?</span>{" "}
+                      <span className="text-accent font-semibold group-hover:underline">Sign in</span>
+                    </>
                   )}
                 </button>
               </>
