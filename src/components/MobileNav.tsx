@@ -7,6 +7,7 @@ import {
   NotebookPen,
   Menu,
   Book,
+  Compass,
   HeartHandshake,
   Highlighter,
   Target,
@@ -79,6 +80,7 @@ const webGroups: { label: string; links: { name: string; to: string; icon: typeo
       { name: "Today's Devotional", to: "/devotional", icon: Sun },
       { name: "Plans", to: "/plans", icon: BookOpen },
       { name: "Archive", to: "/archive", icon: ArchiveIcon },
+      { name: "Themes", to: "/categories", icon: Compass },
     ],
   },
   {

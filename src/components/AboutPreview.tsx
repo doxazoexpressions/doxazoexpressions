@@ -6,7 +6,7 @@ import bibleImg from "@/assets/devotional-bible.jpg";
 
 const AboutPreview = () => {
   return (
-    <section className="section-padding bg-secondary/30">
+    <section className="section-padding bg-secondary/30 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           <motion.div

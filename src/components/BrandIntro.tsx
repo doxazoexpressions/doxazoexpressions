@@ -39,7 +39,7 @@ const BrandIntro = ({ duration = 1600 }: { duration?: number }) => {
           aria-hidden
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-background pointer-events-none"
+          className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-background pointer-events-none"
         >
           {/* gold bloom */}
           <motion.div

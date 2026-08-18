@@ -18,6 +18,7 @@ const Navbar = () => {
     { name: "Today", href: "/devotional" },
     { name: "Plans", href: "/plans" },
     { name: "Archive", href: "/archive" },
+    { name: "Themes", href: "/categories" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
@@ -38,9 +39,9 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-18 py-2 sm:py-4 gap-4">
-          <Link to="/" className="flex items-center gap-2.5 shrink-0">
+          <Link to="/" className="flex items-center gap-2.5 min-w-0">
             <BrandMark size={40} />
-            <span className="text-xl font-serif font-bold text-foreground">
+            <span className="text-lg sm:text-xl font-serif font-bold text-foreground truncate">
               Doxazo<span className="text-accent"> Expressions</span>
             </span>
           </Link>
