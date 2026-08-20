@@ -99,11 +99,12 @@ const JournalPanel = ({ devotionalId, devotionalTitle }: Props) => {
       aria-label="Your journal for this devotional"
       className="mt-10 rounded-xl border border-border bg-card p-5 sm:p-6"
     >
-      <div className="flex items-center gap-2 mb-4">
-        <NotebookPen className="w-5 h-5 text-accent" aria-hidden="true" />
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <NotebookPen className="w-5 h-5 text-accent shrink-0" aria-hidden="true" />
         <h3 className="font-serif font-semibold text-lg">Your reflection</h3>
-        <span className="ml-auto text-xs text-muted-foreground">Private to you</span>
+        <span className="sm:ml-auto text-xs text-muted-foreground whitespace-nowrap">Private to you</span>
       </div>
+
 
       {!user ? (
         <div className="rounded-lg border border-dashed border-border p-6 text-center">

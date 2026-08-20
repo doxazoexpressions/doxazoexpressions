@@ -118,7 +118,7 @@ const ReflectionPrompt = ({ devotionalId, devotionalTitle }: Props) => {
             rows={3}
             className="resize-none bg-background/70"
           />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={save} disabled={saving || !text.trim()} className="gap-2 min-h-11">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {entry ? "Update" : "Save privately"}
