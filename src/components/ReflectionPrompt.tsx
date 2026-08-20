@@ -84,7 +84,7 @@ const ReflectionPrompt = ({ devotionalId, devotionalTitle }: Props) => {
   };
 
   return (
-    <section className="mt-10 rounded-xl border border-accent/25 bg-accent/5 p-6 sm:p-7">
+    <section className="mt-10 rounded-xl border border-accent/25 bg-accent/5 p-5 sm:p-7 box-border max-w-full overflow-x-clip">
       <div className="flex items-center gap-2 mb-1">
         <Lock className="w-4 h-4 text-accent" />
         <p className="text-accent font-semibold text-[11px] uppercase tracking-[0.18em]">
@@ -118,7 +118,7 @@ const ReflectionPrompt = ({ devotionalId, devotionalTitle }: Props) => {
             rows={3}
             className="resize-none bg-background/70"
           />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={save} disabled={saving || !text.trim()} className="gap-2 min-h-11">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {entry ? "Update" : "Save privately"}
@@ -139,14 +139,15 @@ const ReflectionPrompt = ({ devotionalId, devotionalTitle }: Props) => {
           <p className="font-serif text-base leading-relaxed whitespace-pre-line text-foreground/90">
             {entry?.content}
           </p>
-          <div className="flex items-center gap-3">
-            <Button size="sm" variant="outline" onClick={() => setEditing(true)} className="gap-2 min-h-11">
-              <Pencil className="w-4 h-4" /> Edit reflection
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full max-w-full">
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)} className="gap-2 min-h-11 w-full sm:w-auto">
+              <Pencil className="w-4 h-4 shrink-0" /> Edit reflection
             </Button>
-            <Button asChild size="sm" variant="ghost">
+            <Button asChild size="sm" variant="ghost" className="min-h-11 w-full sm:w-auto">
               <Link to="/journal">See all reflections</Link>
             </Button>
           </div>
+
         </div>
       )}
     </section>
