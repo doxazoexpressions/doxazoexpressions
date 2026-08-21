@@ -106,7 +106,7 @@ const Archive = () => {
                 <Input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search title, scripture or word…"
+                  placeholder="Search devotionals…"
                   className="pl-10 pr-[4.75rem] h-11 rounded-full text-[15px]"
                   aria-label="Search devotionals"
                   enterKeyHint="search"
