@@ -92,38 +92,49 @@ const Archive = () => {
       />
       <Navbar />
       <main className="pt-16">
-        <section className="section-padding bg-secondary/30">
+        <section className="pt-9 pb-8 md:section-padding bg-secondary/30">
           <div className="container mx-auto px-4 max-w-4xl text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <BookOpen className="w-10 h-10 text-accent mx-auto mb-4" />
-              <p className="text-accent font-medium text-sm mb-2 uppercase tracking-wider">Archive</p>
-              <h1 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">{heading}</h1>
-              <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+              <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-accent mx-auto mb-3 md:mb-4" />
+              <p className="text-accent font-medium text-xs md:text-sm mb-1.5 md:mb-2 uppercase tracking-wider">Archive</p>
+              <h1 className="text-[28px] leading-tight md:text-5xl font-serif font-bold text-foreground mb-2.5 md:mb-6">{heading}</h1>
+              <p className="text-sm md:text-lg text-muted-foreground leading-relaxed mb-5 md:mb-8 max-w-md mx-auto">
                 Every devotional we've published — searchable, filterable, and ready to revisit.
               </p>
-              <form onSubmit={onSearch} className="flex gap-2 max-w-md mx-auto">
-                <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search devotionals…"
-                    className="pl-9"
-                    aria-label="Search devotionals"
-                  />
-                </div>
-                <Button type="submit">Search</Button>
+              <form onSubmit={onSearch} className="relative max-w-md mx-auto">
+                <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search devotionals…"
+                  className="pl-10 pr-[4.75rem] h-11 rounded-full text-[15px]"
+                  aria-label="Search devotionals"
+                  enterKeyHint="search"
+                  type="search"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="absolute right-1 top-1 h-9 rounded-full px-4"
+                >
+                  Search
+                </Button>
               </form>
             </motion.div>
           </div>
         </section>
 
-        <section className="py-12">
+        <section className="py-8 md:py-12">
           <div className="container mx-auto px-4">
-            <div className="flex flex-wrap gap-2 justify-center mb-10">
+            <div
+              className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 mb-7 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap md:justify-center md:mb-10"
+              role="group"
+              aria-label="Filter by category"
+            >
               <button
                 onClick={() => setCategory(null)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                aria-pressed={!activeCategory}
+                className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 rounded-full text-[13px] md:text-sm font-medium border transition ${
                   !activeCategory
                     ? "bg-primary text-primary-foreground border-primary"
                     : "border-border hover:border-accent/50 text-muted-foreground hover:text-foreground"
@@ -135,7 +146,8 @@ const Archive = () => {
                 <button
                   key={c.slug}
                   onClick={() => setCategory(c.slug)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                  aria-pressed={activeCategory === c.slug}
+                  className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 rounded-full text-[13px] md:text-sm font-medium border transition ${
                     activeCategory === c.slug
                       ? "bg-primary text-primary-foreground border-primary"
                       : "border-border hover:border-accent/50 text-muted-foreground hover:text-foreground"
@@ -146,9 +158,10 @@ const Archive = () => {
               ))}
             </div>
 
+
             {loading ? (
               showSkeleton ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto" aria-busy="true" aria-live="polite">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto" aria-busy="true" aria-live="polite">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="rounded-lg border border-border p-6 space-y-3">
                       <div className="h-3 w-24 bg-muted animate-pulse rounded" />
@@ -173,7 +186,7 @@ const Archive = () => {
               </div>
             ) : (
               <>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
                   {items.map((d) => (
                     <DevotionalCard key={d.id} d={d} />
                   ))}

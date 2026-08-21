@@ -149,6 +149,15 @@
     @apply py-16 md:py-24;
   }
 
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+
   .gold-underline {
     position: relative;
   }
