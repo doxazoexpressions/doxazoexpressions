@@ -18,6 +18,8 @@ const Search = () => {
   const [q, setQ] = useState(initialQ);
   const [results, setResults] = useState<DevotionalCardData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+
   const [ran, setRan] = useState(false);
 
   useEffect(() => {
