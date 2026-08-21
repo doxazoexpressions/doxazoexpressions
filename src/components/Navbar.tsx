@@ -97,17 +97,18 @@ const Navbar = () => {
             </Button>
           </div>
 
-          <div className="flex lg:hidden items-center gap-0.5 shrink-0">
+          <div className="flex lg:hidden items-center gap-1 shrink-0 -mr-2">
             <ThemeToggle />
             <button
-              className="text-foreground p-2 -mr-1.5 shrink-0"
+              type="button"
+              className="tap-target inline-flex items-center justify-center rounded-lg text-foreground hover:bg-secondary interactive shrink-0"
               onClick={openMobileMenu}
               aria-label="Open menu"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-[22px] h-[22px]" strokeWidth={1.75} aria-hidden="true" />
             </button>
-
           </div>
+
         </div>
 
       </div>
