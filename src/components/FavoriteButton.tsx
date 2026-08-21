@@ -37,12 +37,21 @@ const FavoriteButton = ({
       onClick={onClick}
       variant={variant}
       size={size}
-      className={cn("gap-2", fav && "border-accent text-accent")}
+      className={cn(
+        "gap-2 transition-transform duration-150 active:scale-90",
+        fav && "border-accent text-accent",
+      )}
       aria-pressed={fav}
       aria-label={fav ? "Remove from favorites" : "Save to favorites"}
     >
-      <Heart className={cn("w-4 h-4", fav && "fill-current")} />
+      <Heart
+        className={cn(
+          "w-4 h-4 transition-all duration-200",
+          fav && "fill-current scale-110",
+        )}
+      />
       {showLabel && (fav ? "Saved" : "Save")}
+
     </Button>
   );
 };
