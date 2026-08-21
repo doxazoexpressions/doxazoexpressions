@@ -110,8 +110,8 @@ const MobileNav = () => {
     setOpen(false);
   }, [pathname]);
 
-  const isMoreActive = ![...primaryTabs].some((t) => t.match(pathname));
   const groups = native ? moreGroups : webGroups;
+
   const currentTab = primaryTabs.find((t) => t.match(pathname))?.name ?? "More";
   const trackTab = (to: string) => {
     if (to === currentTab) return;
