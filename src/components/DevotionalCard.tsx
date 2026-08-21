@@ -32,9 +32,9 @@ const DevotionalCard = ({ d }: { d: DevotionalCardData }) => {
           <CardContent className="p-5 md:p-6 flex flex-col h-full">
             <div className="flex items-center gap-2 mb-2.5 pr-9 min-w-0">
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                {new Date(d.publish_date).toLocaleDateString("en-GB", {
-                  day: "numeric",
+                {new Date(d.publish_date).toLocaleDateString("en-US", {
                   month: "short",
+                  day: "numeric",
                   year: "numeric",
                 })}
               </p>
