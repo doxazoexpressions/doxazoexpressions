@@ -48,7 +48,9 @@ const Search = () => {
         .map((v) => v.replace(/[%_,()]/g, "").trim())
         .filter(Boolean);
 
-      const fields = ["title", "scripture_reference", "body", "excerpt", "category", "series"];
+      // `category` is a DB enum — cast to text so ilike works on it.
+      const fields = ["title", "scripture_reference", "body", "excerpt", "category::text", "series"];
+
       const orFilter = escaped
         .flatMap((v) => fields.map((f) => `${f}.ilike.%${v}%`))
         .join(",");
