@@ -39,7 +39,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-18 py-2 sm:py-4 gap-2 sm:gap-4">
-          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink-0">
             <BrandMark size={34} className="sm:hidden" />
             <BrandMark size={40} className="hidden sm:block" />
             <span className="text-[17px] sm:text-xl font-serif font-bold text-foreground whitespace-nowrap">
@@ -48,12 +48,12 @@ const Navbar = () => {
           </Link>
 
 
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6 min-w-0 overflow-hidden">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
-                className={`text-sm font-medium transition-colors duration-300 ${
+                className={`text-sm font-medium whitespace-nowrap transition-colors duration-300 ${
                   isActive(link.href)
                     ? "text-accent"
                     : "text-muted-foreground hover:text-foreground"
@@ -64,8 +64,10 @@ const Navbar = () => {
             ))}
           </div>
 
-          <div className="hidden lg:flex items-center gap-3">
-            <form onSubmit={onSearch} className="relative">
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
+
+            <form onSubmit={onSearch} className="relative hidden xl:block">
+
               <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={q}
