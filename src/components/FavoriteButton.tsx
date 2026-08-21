@@ -27,10 +27,12 @@ const FavoriteButton = ({
     const nowFav = await toggle(devotionalId);
     if (nowFav) track("devotional_saved", { id: devotionalId });
     toast({
-      title: nowFav ? "Saved to favorites" : "Removed from favorites",
-      description: nowFav ? "Find it any time on the Favorites page." : undefined,
+      title: nowFav ? "Saved to favourites" : "Removed from favourites",
+      description: nowFav ? "Find it any time on the Favourites page." : undefined,
     });
   };
+
+  const iconOnly = size === "icon";
 
   return (
     <Button
@@ -38,20 +40,22 @@ const FavoriteButton = ({
       variant={variant}
       size={size}
       className={cn(
-        "gap-2 transition-transform duration-150 active:scale-90",
-        fav && "border-accent text-accent",
+        "gap-2 interactive",
+        iconOnly && "tap-target rounded-full",
+        fav && "text-accent",
+        fav && variant === "outline" && "border-accent",
       )}
       aria-pressed={fav}
-      aria-label={fav ? "Remove from favorites" : "Save to favorites"}
+      aria-label={fav ? "Remove from favourites" : "Add to favourites"}
     >
       <Heart
         className={cn(
-          "w-4 h-4 transition-all duration-200",
-          fav && "fill-current scale-110",
+          "w-[18px] h-[18px] transition-[fill,color,opacity] duration-200 ease-out",
+          fav ? "fill-current" : "fill-transparent",
         )}
+        aria-hidden="true"
       />
       {showLabel && (fav ? "Saved" : "Save")}
-
     </Button>
   );
 };
