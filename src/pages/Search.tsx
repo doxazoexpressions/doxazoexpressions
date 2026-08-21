@@ -5,7 +5,7 @@ import SEO from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import DevotionalCard, { DevotionalCardData } from "@/components/DevotionalCard";
-import { Search as SearchIcon } from "lucide-react";
+import { Search as SearchIcon, X, AlertTriangle } from "lucide-react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
