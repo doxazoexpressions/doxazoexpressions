@@ -115,7 +115,7 @@ const Search = () => {
                     className={q ? "pl-9 pr-10" : "pl-9"}
                     aria-label="Search query"
                     enterKeyHint="search"
-                    type="search"
+
                     autoFocus
                   />
                   {q && (
