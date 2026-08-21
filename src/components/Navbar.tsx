@@ -66,7 +66,8 @@ const Navbar = () => {
 
           <div className="hidden lg:flex items-center gap-3 shrink-0">
 
-            <form onSubmit={onSearch} className="relative">
+            <form onSubmit={onSearch} className="relative hidden xl:block">
+
               <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={q}
