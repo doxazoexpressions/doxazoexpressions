@@ -27,7 +27,7 @@ const DevotionalCard = ({ d }: { d: DevotionalCardData }) => {
   const series = formatSeries(d.series);
 
   return (
-    <div className="relative h-full group">
+    <div className="relative h-full group min-w-0">
       {/* 44px tap target, visually a small heart */}
       <div className="absolute top-1 right-1 z-10">
         <FavoriteButton devotionalId={d.id} variant="ghost" size="icon" showLabel={false} />
