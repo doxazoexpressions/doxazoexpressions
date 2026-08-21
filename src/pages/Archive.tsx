@@ -124,20 +124,20 @@ const Archive = () => {
           </div>
         </section>
 
-        <section className="py-8 md:py-12">
+        <section className="py-8 md:py-12 overflow-x-clip">
           <div className="container mx-auto px-4">
             <div
-              className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 mb-7 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap md:justify-center md:mb-10"
+              className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 scroll-px-4 snap-x snap-mandatory pb-1 mb-7 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap md:justify-center md:mb-10 md:snap-none"
               role="group"
               aria-label="Filter by category"
             >
               <button
                 onClick={() => setCategory(null)}
                 aria-pressed={!activeCategory}
-                className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 rounded-full text-[13px] md:text-sm font-medium border transition ${
+                className={`shrink-0 snap-start whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 rounded-full text-[13px] md:text-sm font-medium border transition ${
                   !activeCategory
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-border hover:border-accent/50 text-muted-foreground hover:text-foreground"
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-transparent border-border hover:border-accent/50 text-muted-foreground hover:text-foreground"
                 }`}
               >
                 All
@@ -147,16 +147,17 @@ const Archive = () => {
                   key={c.slug}
                   onClick={() => setCategory(c.slug)}
                   aria-pressed={activeCategory === c.slug}
-                  className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 rounded-full text-[13px] md:text-sm font-medium border transition ${
+                  className={`shrink-0 snap-start whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 rounded-full text-[13px] md:text-sm font-medium border transition ${
                     activeCategory === c.slug
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-border hover:border-accent/50 text-muted-foreground hover:text-foreground"
+                      ? "bg-accent text-accent-foreground border-accent"
+                      : "bg-transparent border-border hover:border-accent/50 text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {c.label}
                 </button>
               ))}
             </div>
+
 
 
             {loading ? (
