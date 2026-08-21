@@ -1,37 +1,73 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import DevotionalCard, { DevotionalCardData } from "@/components/DevotionalCard";
+import CategoryRail from "@/components/CategoryRail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { BookOpen, Search as SearchIcon } from "lucide-react";
+import { BookOpen, Search as SearchIcon, WifiOff, AlertTriangle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { CATEGORIES, CategorySlug } from "@/lib/categories";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const PAGE_SIZE = 12;
+const STATE_KEY = "doxazo.archive.state";
+
+type Persisted = { q: string; page: number };
+
+const readPersisted = (): Persisted => {
+  try {
+    const raw = sessionStorage.getItem(STATE_KEY);
+    if (!raw) return { q: "", page: 0 };
+    const p = JSON.parse(raw);
+    return { q: typeof p?.q === "string" ? p.q : "", page: Number.isInteger(p?.page) ? p.page : 0 };
+  } catch {
+    return { q: "", page: 0 };
+  }
+};
 
 const Archive = () => {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const online = useOnlineStatus();
   const activeCategory = (params.get("category") as CategorySlug | null) ?? null;
+  const restored = useRef(readPersisted());
+
   const [items, setItems] = useState<DevotionalCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
-  const [page, setPage] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const [page, setPage] = useState(restored.current.page);
   const [total, setTotal] = useState(0);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(restored.current.q);
+  const [reloadKey, setReloadKey] = useState(0);
+  const firstRun = useRef(true);
+
+  // Preserve query + page across "open a devotional → back".
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STATE_KEY, JSON.stringify({ q, page }));
+    } catch {
+      /* ignore */
+    }
+  }, [q, page]);
 
   useEffect(() => {
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
     setPage(0);
   }, [activeCategory]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setFailed(false);
     setShowSkeleton(false);
     // Only show skeleton if request takes >300ms — avoids flash on fast responses.
     const skeletonTimer = setTimeout(() => {
@@ -39,26 +75,43 @@ const Archive = () => {
     }, 300);
 
     (async () => {
-      let query = supabase
-        .from("devotionals")
-        .select("id,title,scripture_reference,excerpt,body,category,series,publish_date", { count: "exact" })
-        .or(liveDevotionalOr())
-        .order("publish_date", { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
-      if (activeCategory) query = query.eq("category", activeCategory);
-      const { data, count } = await query;
-      if (cancelled) return;
-      setItems((data as DevotionalCardData[]) ?? []);
-      setTotal(count ?? 0);
-      setLoading(false);
-      setShowSkeleton(false);
+      try {
+        let query = supabase
+          .from("devotionals")
+          .select("id,title,scripture_reference,excerpt,body,category,series,publish_date", { count: "exact" })
+          .or(liveDevotionalOr())
+          .order("publish_date", { ascending: false })
+          .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        if (activeCategory) query = query.eq("category", activeCategory);
+        const { data, count, error } = await query;
+        if (cancelled) return;
+        if (error) {
+          setFailed(true);
+          setItems([]);
+          setTotal(0);
+        } else {
+          setItems((data as DevotionalCardData[]) ?? []);
+          setTotal(count ?? 0);
+        }
+      } catch {
+        if (!cancelled) {
+          setFailed(true);
+          setItems([]);
+          setTotal(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setShowSkeleton(false);
+        }
+      }
     })();
 
     return () => {
       cancelled = true;
       clearTimeout(skeletonTimer);
     };
-  }, [page, activeCategory]);
+  }, [page, activeCategory, reloadKey]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -80,7 +133,7 @@ const Archive = () => {
   }, [activeCategory]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <SEO
         title={activeCategory ? `${heading}` : "Devotional Archive"}
         description={
@@ -93,30 +146,41 @@ const Archive = () => {
       <Navbar />
       <main className="pt-16">
         <section className="pt-9 pb-8 md:section-padding bg-secondary/30">
-          <div className="container mx-auto px-4 max-w-4xl text-center">
+          <div className="container mx-auto page-x max-w-4xl text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-accent mx-auto mb-3 md:mb-4" />
-              <p className="text-accent font-medium text-xs md:text-sm mb-1.5 md:mb-2 uppercase tracking-wider">Archive</p>
-              <h1 className="text-[28px] leading-tight md:text-5xl font-serif font-bold text-foreground mb-2.5 md:mb-6">{heading}</h1>
-              <p className="text-sm md:text-lg text-muted-foreground leading-relaxed mb-5 md:mb-8 max-w-md mx-auto">
+              <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-accent mx-auto mb-3 md:mb-4" aria-hidden="true" />
+              <p className="type-meta text-accent mb-2">Archive</p>
+              <h1 className="type-display text-[28px] md:text-5xl text-foreground mb-3 md:mb-6 break-words">
+                {heading}
+              </h1>
+              <p className="type-body text-sm md:text-lg text-muted-foreground mb-6 md:mb-8 max-w-md mx-auto">
                 Every devotional we've published — searchable, filterable, and ready to revisit.
               </p>
-              <form onSubmit={onSearch} className="relative max-w-md mx-auto">
-                <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <form onSubmit={onSearch} className="relative max-w-md mx-auto" role="search">
+                <SearchIcon
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+                  aria-hidden="true"
+                />
                 <Input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Search devotionals…"
-                  className="pl-10 pr-[4.75rem] h-11 rounded-full text-[15px]"
+                  className={`pl-10 h-11 rounded-full text-[15px] ${q ? "pr-[7.25rem]" : "pr-[4.75rem]"}`}
                   aria-label="Search devotionals"
                   enterKeyHint="search"
                   type="search"
                 />
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="absolute right-1 top-1 h-9 rounded-full px-4"
-                >
+                {q && (
+                  <button
+                    type="button"
+                    onClick={() => setQ("")}
+                    aria-label="Clear search"
+                    className="absolute right-[4.75rem] top-1/2 -translate-y-1/2 w-9 h-9 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground interactive"
+                  >
+                    <X className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                )}
+                <Button type="submit" size="sm" className="absolute right-1 top-1 h-9 rounded-full px-4">
                   Search
                 </Button>
               </form>
@@ -125,44 +189,16 @@ const Archive = () => {
         </section>
 
         <section className="py-8 md:py-12 overflow-x-clip">
-          <div className="container mx-auto px-4">
-            <div
-              className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 scroll-px-4 snap-x snap-mandatory pb-1 mb-7 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap md:justify-center md:mb-10 md:snap-none"
-              role="group"
-              aria-label="Filter by category"
-            >
-              <button
-                onClick={() => setCategory(null)}
-                aria-pressed={!activeCategory}
-                className={`shrink-0 snap-start whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 rounded-full text-[13px] md:text-sm font-medium border transition ${
-                  !activeCategory
-                    ? "bg-accent text-accent-foreground border-accent"
-                    : "bg-transparent border-border hover:border-accent/50 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                All
-              </button>
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c.slug}
-                  onClick={() => setCategory(c.slug)}
-                  aria-pressed={activeCategory === c.slug}
-                  className={`shrink-0 snap-start whitespace-nowrap px-3.5 py-1.5 md:px-4 md:py-2 rounded-full text-[13px] md:text-sm font-medium border transition ${
-                    activeCategory === c.slug
-                      ? "bg-accent text-accent-foreground border-accent"
-                      : "bg-transparent border-border hover:border-accent/50 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-
-
+          <div className="container mx-auto page-x">
+            <CategoryRail active={activeCategory} onChange={setCategory} className="mb-7 md:mb-10" />
 
             {loading ? (
               showSkeleton ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto" aria-busy="true" aria-live="polite">
+                <div
+                  className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto"
+                  aria-busy="true"
+                  aria-live="polite"
+                >
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="rounded-lg border border-border p-6 space-y-3">
                       <div className="h-3 w-24 bg-muted animate-pulse rounded" />
@@ -175,15 +211,39 @@ const Archive = () => {
               ) : (
                 <div className="min-h-[200px]" aria-busy="true" />
               )
+            ) : failed ? (
+              <div className="text-center py-16 max-w-md mx-auto" role="alert">
+                {online ? (
+                  <AlertTriangle className="w-10 h-10 text-destructive/70 mx-auto mb-4" aria-hidden="true" />
+                ) : (
+                  <WifiOff className="w-10 h-10 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
+                )}
+                <h2 className="type-heading text-xl mb-2">
+                  {online ? "We couldn't load the archive" : "You're offline"}
+                </h2>
+                <p className="type-body text-sm text-muted-foreground mb-5">
+                  {online
+                    ? "Something went wrong on our side — your devotionals are safe. Please try again."
+                    : "Reconnect to load the archive. Downloaded devotionals are still available offline."}
+                </p>
+                <Button variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
+                  Try again
+                </Button>
+              </div>
             ) : items.length === 0 ? (
               <div className="text-center py-16 max-w-md mx-auto">
-                <BookOpen className="w-10 h-10 text-accent/40 mx-auto mb-4" />
-                <h2 className="text-xl font-serif font-semibold mb-2">No devotionals here yet</h2>
-                <p className="text-muted-foreground text-sm">
+                <BookOpen className="w-10 h-10 text-accent/40 mx-auto mb-4" aria-hidden="true" />
+                <h2 className="type-heading text-xl mb-2">No devotionals here yet</h2>
+                <p className="type-body text-sm text-muted-foreground mb-5">
                   {activeCategory
-                    ? "Nothing's been published in this category yet — check back soon or browse all devotionals."
+                    ? "Nothing's been published in this category yet — browse all devotionals instead."
                     : "Fresh devotionals are coming. Check back tomorrow morning."}
                 </p>
+                {activeCategory && (
+                  <Button variant="outline" onClick={() => setCategory(null)}>
+                    Browse all devotionals
+                  </Button>
+                )}
               </div>
             ) : (
               <>
