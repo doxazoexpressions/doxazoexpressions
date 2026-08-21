@@ -103,20 +103,33 @@ const Search = () => {
               <p className="text-lg text-muted-foreground leading-relaxed mb-8">
                 Search by title, scripture reference, or any word from the body.
               </p>
-              <form onSubmit={onSubmit} className="flex gap-2 max-w-xl mx-auto">
+              <form onSubmit={onSubmit} className="flex gap-2 max-w-xl mx-auto" role="search">
                 <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
                   <Input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="e.g. Psalm 23, faith, surrender…"
-                    className="pl-9"
+                    className={q ? "pl-9 pr-10" : "pl-9"}
                     aria-label="Search query"
+                    enterKeyHint="search"
+                    type="search"
                     autoFocus
                   />
+                  {q && (
+                    <button
+                      type="button"
+                      onClick={() => setQ("")}
+                      aria-label="Clear search"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground interactive"
+                    >
+                      <X className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  )}
                 </div>
                 <Button type="submit">Search</Button>
               </form>
+
             </motion.div>
           </div>
         </section>
