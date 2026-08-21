@@ -95,15 +95,16 @@ const Navbar = () => {
             </Button>
           </div>
 
-          <div className="flex lg:hidden items-center gap-1">
+          <div className="flex lg:hidden items-center gap-0.5 shrink-0">
             <ThemeToggle />
             <button
-              className="text-foreground p-2 -mr-2"
+              className="text-foreground p-2 -mr-1.5 shrink-0"
               onClick={openMobileMenu}
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" />
             </button>
+
           </div>
         </div>
 
