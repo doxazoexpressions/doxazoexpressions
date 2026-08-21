@@ -161,7 +161,7 @@ const Archive = () => {
 
             {loading ? (
               showSkeleton ? (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto" aria-busy="true" aria-live="polite">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto" aria-busy="true" aria-live="polite">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="rounded-lg border border-border p-6 space-y-3">
                       <div className="h-3 w-24 bg-muted animate-pulse rounded" />
@@ -186,7 +186,7 @@ const Archive = () => {
               </div>
             ) : (
               <>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
                   {items.map((d) => (
                     <DevotionalCard key={d.id} d={d} />
                   ))}
