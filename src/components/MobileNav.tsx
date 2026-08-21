@@ -136,12 +136,12 @@ const MobileNav = () => {
                   <Link
                     to={tab.to}
                     onClick={() => trackTab(tab.name)}
-                    className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
+                    className={`flex flex-col items-center justify-center gap-1 min-h-[52px] py-2 text-[10px] font-medium tracking-wide leading-none interactive ${
                       active ? "text-accent" : "text-muted-foreground hover:text-foreground"
                     }`}
                     aria-current={active ? "page" : undefined}
                   >
-                    <Icon className={`w-5 h-5 ${active ? "text-accent" : ""}`} />
+                    <Icon className="w-[22px] h-[22px]" strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
                     {tab.name}
                   </Link>
                 </li>
@@ -149,17 +149,20 @@ const MobileNav = () => {
             })}
             <li>
               <button
+                type="button"
                 onClick={() => { trackTab("More"); setOpen(true); }}
-                className={`w-full flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
-                  isMoreActive && open ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                className={`w-full flex flex-col items-center justify-center gap-1 min-h-[52px] py-2 text-[10px] font-medium tracking-wide leading-none interactive ${
+                  open ? "text-accent" : "text-muted-foreground hover:text-foreground"
                 }`}
                 aria-label="Open more menu"
+                aria-expanded={open}
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-[22px] h-[22px]" strokeWidth={open ? 2 : 1.75} aria-hidden="true" />
                 More
               </button>
             </li>
           </ul>
+
         </nav>
       )}
 
