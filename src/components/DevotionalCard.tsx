@@ -35,11 +35,14 @@ const DevotionalCard = ({ d }: { d: DevotionalCardData }) => {
       <Link to={`/devotional/${d.id}`} className="block h-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
         <Card className="h-full border-border press group-hover:shadow-lg group-hover:border-accent/30">
           <CardContent className="p-4 md:p-6 flex flex-col h-full">
-            <div className="flex items-center gap-2 mb-2 pr-11 min-w-0">
-              <span className="type-meta whitespace-nowrap">{formatDevotionalDate(d.publish_date)}</span>
+            <div className="flex items-center gap-2 mb-2 pr-11 min-w-0 overflow-hidden">
+              <span className="type-meta whitespace-nowrap shrink-0">{formatDevotionalDate(d.publish_date)}</span>
               <span className="text-muted-foreground/30 shrink-0" aria-hidden="true">·</span>
-              <CategoryBadge slug={d.category} asLink={false} />
+              <span className="min-w-0 truncate">
+                <CategoryBadge slug={d.category} asLink={false} />
+              </span>
             </div>
+
 
             <h3 className="type-heading text-[17px] md:text-lg text-foreground mb-1.5 break-words line-clamp-3">
               {d.title}
