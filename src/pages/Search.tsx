@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { track } from "@/lib/analytics";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
+import { CATEGORIES } from "@/lib/categories";
 
 const Search = () => {
   const [params, setParams] = useSearchParams();
