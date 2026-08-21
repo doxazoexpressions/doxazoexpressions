@@ -61,12 +61,19 @@ const Search = () => {
         .order("publish_date", { ascending: false })
         .limit(50);
 
-      if (error && import.meta.env.DEV) console.warn("[search] error", error.message);
-      setResults((data as DevotionalCardData[]) ?? []);
+      if (error) {
+        if (import.meta.env.DEV) console.warn("[search] error", error.message);
+        setFailed(true);
+        setResults([]);
+      } else {
+        setFailed(false);
+        setResults((data as DevotionalCardData[]) ?? []);
+      }
       setLoading(false);
       setRan(true);
     })();
   }, [params]);
+
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
