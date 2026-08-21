@@ -5,7 +5,7 @@ const CategoryBadge = ({ slug, asLink = true }: { slug?: string | null; asLink?:
   const meta = categoryBySlug(slug);
   if (!meta) return null;
   const content = (
-    <span className="type-meta inline-flex min-w-0 max-w-full items-center px-2 py-0.5 rounded-full bg-muted/60 truncate">
+    <span className="type-meta inline-flex max-w-full items-center whitespace-nowrap rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] tracking-[0.04em] sm:px-2 sm:text-[11px] sm:tracking-[0.08em]">
       {meta.label}
     </span>
   );
