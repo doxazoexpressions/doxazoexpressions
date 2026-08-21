@@ -39,13 +39,14 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-18 py-2 sm:py-4 gap-2 sm:gap-4">
-          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink-0">
-            <BrandMark size={34} className="sm:hidden" />
-            <BrandMark size={40} className="hidden sm:block" />
-            <span className="text-[17px] sm:text-xl font-serif font-bold text-foreground whitespace-nowrap">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink-0 rounded-md interactive">
+            <BrandMark size={32} className="sm:hidden shrink-0" />
+            <BrandMark size={40} className="hidden sm:block shrink-0" />
+            <span className="type-heading text-[17px] sm:text-xl font-bold text-foreground whitespace-nowrap leading-none pt-[1px]">
               Doxazo<span className="text-accent hidden min-[360px]:inline"> Expressions</span>
             </span>
           </Link>
+
 
 
           <div className="hidden lg:flex items-center gap-4 xl:gap-6 min-w-0 overflow-hidden">
