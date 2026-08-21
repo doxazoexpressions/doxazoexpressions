@@ -48,12 +48,19 @@ const Search = () => {
         .map((v) => v.replace(/[%_,()]/g, "").trim())
         .filter(Boolean);
 
-      // `category` is a DB enum — cast to text so ilike works on it.
-      const fields = ["title", "scripture_reference", "body", "excerpt", "category::text", "series"];
+      // `category` is a DB enum: ilike is invalid on it, so match it by exact
+      // slug/label instead of pattern matching.
+      const fields = ["title", "scripture_reference", "body", "excerpt", "series"];
 
-      const orFilter = escaped
-        .flatMap((v) => fields.map((f) => `${f}.ilike.%${v}%`))
-        .join(",");
+      const categoryMatches = CATEGORIES.filter((c) =>
+        escaped.some((v) => c.slug.includes(v) || c.label.toLowerCase().includes(v)),
+      ).map((c) => `category.eq.${c.slug}`);
+
+      const orFilter = [
+        ...escaped.flatMap((v) => fields.map((f) => `${f}.ilike.%${v}%`)),
+        ...categoryMatches,
+      ].join(",");
+
 
       if (import.meta.env.DEV) console.info("[search] execute", { term, variants: escaped });
 
