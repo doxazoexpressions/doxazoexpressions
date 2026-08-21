@@ -69,11 +69,15 @@ const Footer = () => {
                 Doxazo<span className="text-accent"> Expressions</span>
               </span>
             </Link>
+            <h2 className="lg:hidden text-[13px] font-serif font-semibold text-foreground uppercase tracking-[0.14em] mb-1.5">
+              More
+            </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6 lg:mb-0">
               Spirit-led devotionals each morning — build a consistent rhythm and walk boldly in
               God's plan.
             </p>
           </div>
+
 
           <div className="space-y-5 lg:space-y-0 lg:col-span-3 lg:grid lg:grid-cols-3 lg:gap-10">
             <div>
