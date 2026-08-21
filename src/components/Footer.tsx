@@ -97,7 +97,7 @@ const Footer = () => {
                     <li>
                       <Link
                         to="/settings"
-                        className="flex items-center gap-3 min-h-[48px] lg:min-h-0 py-2.5 lg:py-2 text-sm text-foreground lg:text-muted-foreground hover:text-accent transition-colors"
+                        className="flex items-center gap-3 min-h-[48px] lg:min-h-0 py-2.5 lg:py-2 text-sm text-foreground hover:text-accent transition-colors"
                       >
                         <User className="w-4 h-4 text-accent shrink-0" />
                         <span className="flex-1 min-w-0 truncate">{user.email ?? "Account"}</span>
@@ -108,7 +108,7 @@ const Footer = () => {
                       <button
                         type="button"
                         onClick={() => signOut()}
-                        className="w-full flex items-center gap-3 min-h-[48px] lg:min-h-0 py-2.5 lg:py-2 text-sm text-foreground lg:text-muted-foreground hover:text-accent text-left active:bg-muted/40 lg:active:bg-transparent transition-colors"
+                        className="w-full flex items-center gap-3 min-h-[48px] lg:min-h-0 py-2.5 lg:py-2 text-sm text-foreground hover:text-accent text-left active:bg-muted/40 lg:active:bg-transparent transition-colors"
                       >
                         <LogOut className="w-4 h-4 text-accent shrink-0" />
                         <span className="flex-1">Sign Out</span>
@@ -137,7 +137,7 @@ const Footer = () => {
 
         <div className="section-divider hidden lg:block my-8" />
 
-        <p className="mt-6 lg:mt-0 text-[11px] lg:text-sm text-muted-foreground/60 lg:text-muted-foreground text-center">
+        <p className="mt-6 lg:mt-0 text-[11px] lg:text-sm text-muted-foreground/80 lg:text-muted-foreground text-center">
           © {new Date().getFullYear()} Doxazo Expressions. All rights reserved.
         </p>
       </div>
