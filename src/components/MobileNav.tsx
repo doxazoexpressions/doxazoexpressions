@@ -110,8 +110,8 @@ const MobileNav = () => {
     setOpen(false);
   }, [pathname]);
 
-  const isMoreActive = ![...primaryTabs].some((t) => t.match(pathname));
   const groups = native ? moreGroups : webGroups;
+
   const currentTab = primaryTabs.find((t) => t.match(pathname))?.name ?? "More";
   const trackTab = (to: string) => {
     if (to === currentTab) return;
@@ -136,12 +136,12 @@ const MobileNav = () => {
                   <Link
                     to={tab.to}
                     onClick={() => trackTab(tab.name)}
-                    className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
+                    className={`flex flex-col items-center justify-center gap-1 min-h-[52px] py-2 text-[10px] font-medium tracking-wide leading-none interactive ${
                       active ? "text-accent" : "text-muted-foreground hover:text-foreground"
                     }`}
                     aria-current={active ? "page" : undefined}
                   >
-                    <Icon className={`w-5 h-5 ${active ? "text-accent" : ""}`} />
+                    <Icon className="w-[22px] h-[22px]" strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
                     {tab.name}
                   </Link>
                 </li>
@@ -149,17 +149,20 @@ const MobileNav = () => {
             })}
             <li>
               <button
+                type="button"
                 onClick={() => { trackTab("More"); setOpen(true); }}
-                className={`w-full flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
-                  isMoreActive && open ? "text-accent" : "text-muted-foreground hover:text-foreground"
+                className={`w-full flex flex-col items-center justify-center gap-1 min-h-[52px] py-2 text-[10px] font-medium tracking-wide leading-none interactive ${
+                  open ? "text-accent" : "text-muted-foreground hover:text-foreground"
                 }`}
                 aria-label="Open more menu"
+                aria-expanded={open}
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-[22px] h-[22px]" strokeWidth={open ? 2 : 1.75} aria-hidden="true" />
                 More
               </button>
             </li>
           </ul>
+
         </nav>
       )}
 
@@ -175,10 +178,10 @@ const MobileNav = () => {
           <div className="flex-1 overflow-y-auto py-2">
             {groups.map((group) => (
               <div key={group.label} className="mb-2">
-                <p className="px-5 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold">
+                <p className="type-group-label px-5 pt-3 pb-1.5">
                   {group.label}
                 </p>
-                <ul>
+                <ul className="divide-y divide-border/40">
                   {group.links.map((l) => {
                     const active = pathname.startsWith(l.to) && l.to !== "/";
                     const Icon = l.icon;
@@ -186,19 +189,21 @@ const MobileNav = () => {
                       <li key={l.to}>
                         <Link
                           to={l.to}
-                          className={`flex items-center gap-3 px-5 py-2.5 text-sm font-medium transition-colors ${
+                          className={`flex items-center gap-3 px-5 min-h-[48px] py-2.5 text-sm font-medium interactive active:bg-muted/60 ${
                             active
                               ? "text-accent bg-accent/5"
                               : "text-foreground hover:bg-muted/50"
                           }`}
+                          aria-current={active ? "page" : undefined}
                         >
-                          <Icon className="w-4 h-4" />
-                          {l.name}
+                          <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                          <span className="flex-1 min-w-0 truncate">{l.name}</span>
                         </Link>
                       </li>
                     );
                   })}
                 </ul>
+
               </div>
             ))}
           </div>

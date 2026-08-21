@@ -39,21 +39,20 @@ const NavRow = ({ name, to, icon: Icon }: Row) => (
   <li>
     <Link
       to={to}
-      className="group flex items-center gap-3 min-h-[48px] lg:min-h-0 py-2.5 lg:py-2 text-sm text-foreground hover:text-accent active:bg-muted/40 lg:active:bg-transparent transition-colors"
+      className="group flex items-center gap-3 min-h-[48px] lg:min-h-0 py-2.5 lg:py-2 text-sm text-foreground hover:text-accent active:bg-muted/40 lg:active:bg-transparent interactive"
     >
-      <Icon className="w-4 h-4 text-accent shrink-0" />
+      <Icon className="w-4 h-4 text-accent shrink-0" strokeWidth={1.75} aria-hidden="true" />
       <span className="flex-1 min-w-0 truncate">{name}</span>
-      <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0 lg:opacity-0 lg:group-hover:opacity-100 lg:transition-opacity" />
+      <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0 lg:opacity-0 lg:group-hover:opacity-100 lg:transition-opacity" aria-hidden="true" />
     </Link>
   </li>
 );
 
 
 const GroupLabel = ({ children }: { children: string }) => (
-  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold mb-1 lg:mb-3">
-    {children}
-  </p>
+  <p className="type-group-label mb-1 lg:mb-3">{children}</p>
 );
+
 
 const Footer = () => {
   const { user, loading, signOut } = useAuth();

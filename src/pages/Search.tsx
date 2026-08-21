@@ -5,12 +5,13 @@ import SEO from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import DevotionalCard, { DevotionalCardData } from "@/components/DevotionalCard";
-import { Search as SearchIcon } from "lucide-react";
+import { Search as SearchIcon, X, AlertTriangle } from "lucide-react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { track } from "@/lib/analytics";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
+import { CATEGORIES } from "@/lib/categories";
 
 const Search = () => {
   const [params, setParams] = useSearchParams();
@@ -18,6 +19,8 @@ const Search = () => {
   const [q, setQ] = useState(initialQ);
   const [results, setResults] = useState<DevotionalCardData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+
   const [ran, setRan] = useState(false);
 
   useEffect(() => {
@@ -46,10 +49,19 @@ const Search = () => {
         .map((v) => v.replace(/[%_,()]/g, "").trim())
         .filter(Boolean);
 
-      const fields = ["title", "scripture_reference", "body", "excerpt", "category", "series"];
-      const orFilter = escaped
-        .flatMap((v) => fields.map((f) => `${f}.ilike.%${v}%`))
-        .join(",");
+      // `category` is a DB enum: ilike is invalid on it, so match it by exact
+      // slug/label instead of pattern matching.
+      const fields = ["title", "scripture_reference", "body", "excerpt", "series"];
+
+      const categoryMatches = CATEGORIES.filter((c) =>
+        escaped.some((v) => c.slug.includes(v) || c.label.toLowerCase().includes(v)),
+      ).map((c) => `category.eq.${c.slug}`);
+
+      const orFilter = [
+        ...escaped.flatMap((v) => fields.map((f) => `${f}.ilike.%${v}%`)),
+        ...categoryMatches,
+      ].join(",");
+
 
       if (import.meta.env.DEV) console.info("[search] execute", { term, variants: escaped });
 
@@ -61,12 +73,19 @@ const Search = () => {
         .order("publish_date", { ascending: false })
         .limit(50);
 
-      if (error && import.meta.env.DEV) console.warn("[search] error", error.message);
-      setResults((data as DevotionalCardData[]) ?? []);
+      if (error) {
+        if (import.meta.env.DEV) console.warn("[search] error", error.message);
+        setFailed(true);
+        setResults([]);
+      } else {
+        setFailed(false);
+        setResults((data as DevotionalCardData[]) ?? []);
+      }
       setLoading(false);
       setRan(true);
     })();
   }, [params]);
+
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,20 +113,33 @@ const Search = () => {
               <p className="text-lg text-muted-foreground leading-relaxed mb-8">
                 Search by title, scripture reference, or any word from the body.
               </p>
-              <form onSubmit={onSubmit} className="flex gap-2 max-w-xl mx-auto">
+              <form onSubmit={onSubmit} className="flex gap-2 max-w-xl mx-auto" role="search">
                 <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
                   <Input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="e.g. Psalm 23, faith, surrender…"
-                    className="pl-9"
+                    className={q ? "pl-9 pr-10" : "pl-9"}
                     aria-label="Search query"
+                    enterKeyHint="search"
+
                     autoFocus
                   />
+                  {q && (
+                    <button
+                      type="button"
+                      onClick={() => setQ("")}
+                      aria-label="Clear search"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground interactive"
+                    >
+                      <X className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  )}
                 </div>
                 <Button type="submit">Search</Button>
               </form>
+
             </motion.div>
           </div>
         </section>
@@ -127,8 +159,20 @@ const Search = () => {
               </div>
             ) : !ran ? (
               <p className="text-center text-muted-foreground py-12">Type a query above to begin.</p>
+            ) : failed ? (
+              <div className="text-center py-16 max-w-md mx-auto" role="alert">
+                <AlertTriangle className="w-10 h-10 text-destructive/70 mx-auto mb-4" aria-hidden="true" />
+                <h2 className="type-heading text-xl mb-2">Search couldn't run</h2>
+                <p className="type-body text-sm text-muted-foreground mb-6">
+                  This wasn't an empty result — the request failed. Check your connection and try again.
+                </p>
+                <Button variant="outline" onClick={() => setParams({ q: initialQ }, { replace: true })}>
+                  Try again
+                </Button>
+              </div>
             ) : results.length === 0 ? (
               <div className="text-center py-16 max-w-md mx-auto">
+
                 <h2 className="text-xl font-serif font-semibold mb-2">No matches found</h2>
                 <p className="text-muted-foreground text-sm mb-6">
                   Try a different word, a scripture reference, or browse by theme.
