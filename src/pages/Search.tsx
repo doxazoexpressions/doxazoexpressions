@@ -149,8 +149,20 @@ const Search = () => {
               </div>
             ) : !ran ? (
               <p className="text-center text-muted-foreground py-12">Type a query above to begin.</p>
+            ) : failed ? (
+              <div className="text-center py-16 max-w-md mx-auto" role="alert">
+                <AlertTriangle className="w-10 h-10 text-destructive/70 mx-auto mb-4" aria-hidden="true" />
+                <h2 className="type-heading text-xl mb-2">Search couldn't run</h2>
+                <p className="type-body text-sm text-muted-foreground mb-6">
+                  This wasn't an empty result — the request failed. Check your connection and try again.
+                </p>
+                <Button variant="outline" onClick={() => setParams({ q: initialQ }, { replace: true })}>
+                  Try again
+                </Button>
+              </div>
             ) : results.length === 0 ? (
               <div className="text-center py-16 max-w-md mx-auto">
+
                 <h2 className="text-xl font-serif font-semibold mb-2">No matches found</h2>
                 <p className="text-muted-foreground text-sm mb-6">
                   Try a different word, a scripture reference, or browse by theme.
