@@ -572,12 +572,15 @@ const DailyDevotional = () => {
                 {/* Declaration */}
                 {(current.declaration || current.decree_and_declare) && (
                   <div className="mt-10 rounded-xl bg-primary text-primary-foreground p-6 sm:p-8">
+                    {/* Accent-on-primary was near-invisible here; the label
+                        uses the card's own foreground token instead. */}
                     <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="w-4 h-4 text-accent shrink-0" aria-hidden="true" />
-                      <h3 className="text-accent font-semibold text-[11px] uppercase tracking-[0.2em]">
+                      <Sparkles className="w-4 h-4 text-primary-foreground/70 shrink-0" aria-hidden="true" />
+                      <h3 className="text-primary-foreground/70 font-semibold text-[11px] uppercase tracking-[0.2em]">
                         Declaration
                       </h3>
                     </div>
+
                     <p className="font-serif text-lg italic leading-relaxed whitespace-pre-line break-words">
                       {current.decree_and_declare || current.declaration}
                     </p>
