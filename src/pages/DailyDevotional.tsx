@@ -38,6 +38,8 @@ import { markReadToday, weekProgress } from "@/lib/streak";
 import { markPlanItemRead, planSlug } from "@/lib/planProgress";
 import { markStarted, markCompleted, setLastPlan, isCompleted } from "@/lib/devotionalProgress";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAuth } from "@/hooks/useAuth";
+
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import AudioNarration from "@/components/AudioNarration";
 import ShareVerseCard from "@/components/ShareVerseCard";
