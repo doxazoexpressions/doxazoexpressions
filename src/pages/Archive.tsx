@@ -260,17 +260,28 @@ const Archive = ({ lockedCategory }: ArchiveProps = {}) => {
             ) : items.length === 0 ? (
               <div className="text-center py-16 max-w-md mx-auto">
                 <BookOpen className="w-10 h-10 text-accent/40 mx-auto mb-4" aria-hidden="true" />
-                <h2 className="type-heading text-xl mb-2">No devotionals here yet</h2>
+                <h2 className="type-heading text-xl mb-2">
+                  {lockedCategory ? "More devotionals are coming" : "No devotionals here yet"}
+                </h2>
                 <p className="type-body text-sm text-muted-foreground mb-5">
-                  {activeCategory
-                    ? "Nothing's been published in this category yet — browse all devotionals instead."
-                    : "Fresh devotionals are coming. Check back tomorrow morning."}
+                  {lockedCategory
+                    ? "This theme is being prepared — new devotionals are published here as they're released."
+                    : activeCategory
+                      ? "Nothing's been published in this category yet — browse all devotionals instead."
+                      : "Fresh devotionals are coming. Check back tomorrow morning."}
                 </p>
-                {activeCategory && (
-                  <Button variant="outline" onClick={() => setCategory(null)}>
-                    Browse all devotionals
+                {lockedCategory ? (
+                  <Button asChild variant="outline">
+                    <Link to="/categories">Back to Themes</Link>
                   </Button>
+                ) : (
+                  activeCategory && (
+                    <Button variant="outline" onClick={() => setCategory(null)}>
+                      Browse all devotionals
+                    </Button>
+                  )
                 )}
+
               </div>
             ) : (
               <>
