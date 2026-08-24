@@ -30,12 +30,18 @@ const readPersisted = (): Persisted => {
   }
 };
 
-const Archive = () => {
+type ArchiveProps = {
+  /** When set, the page is locked to one theme (used by /categories/:slug). */
+  lockedCategory?: CategorySlug;
+};
+
+const Archive = ({ lockedCategory }: ArchiveProps = {}) => {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const online = useOnlineStatus();
-  const activeCategory = (params.get("category") as CategorySlug | null) ?? null;
+  const activeCategory = lockedCategory ?? ((params.get("category") as CategorySlug | null) ?? null);
   const restored = useRef(readPersisted());
+
 
   const [items, setItems] = useState<DevotionalCardData[]>([]);
   const [loading, setLoading] = useState(true);
