@@ -57,6 +57,7 @@ const Contact = () => {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<"idle" | "sent" | "failed">("idle");
   // A ref, not state: two clicks in the same tick would both read a stale `busy`.
+  const [cooldown, setCooldown] = useState(false);
   const inFlight = useRef(false);
 
   const set = (key: keyof typeof form) => (value: string) => {
@@ -93,9 +94,9 @@ const Contact = () => {
       type: parsed.data.type,
     });
     setBusy(false);
-    inFlight.current = false;
 
     if (error) {
+      inFlight.current = false;
       // Never surface raw backend errors to the reader.
       setStatus("failed");
       toast({
@@ -112,6 +113,12 @@ const Contact = () => {
     // Only clear on success; a failed send keeps everything the user typed.
     setForm({ name: "", email: "", subject: "", message: "", type: "general" });
     setErrors({});
+    // Short cooldown so an accidental double-tap can't resubmit the now-empty form.
+    setCooldown(true);
+    window.setTimeout(() => {
+      inFlight.current = false;
+      setCooldown(false);
+    }, 1500);
   };
 
   const fieldClass = (key: keyof FieldErrors) =>
@@ -248,7 +255,7 @@ const Contact = () => {
                   )}
                 </div>
 
-                <Button type="submit" size="lg" className="w-full gap-2 min-h-11" disabled={busy}>
+                <Button type="submit" size="lg" className="w-full gap-2 min-h-11" disabled={busy || cooldown}>
                   <Send className="w-4 h-4" aria-hidden="true" />
                   {busy ? "Sending…" : "Send Message"}
                 </Button>
