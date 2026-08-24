@@ -33,7 +33,7 @@ const About = () => {
               <h1 className="type-display text-[26px] md:text-4xl text-foreground mb-3 break-words">
                 A Daily Devotional for the Disciplined Believer
               </h1>
-              <p className="type-body text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+              <p className="type-body text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
                 One fresh devotional every morning — Scripture, reflection, and prayer — so your day begins anchored
                 in the Word of God.
               </p>
@@ -116,7 +116,7 @@ const About = () => {
                 <h2 className="type-display text-[22px] md:text-3xl text-foreground mb-3">
                   What Every Devotional Holds
                 </h2>
-                <p className="type-body text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+                <p className="type-body text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
                   A simple, repeatable rhythm — designed to be read in under five minutes.
                 </p>
               </div>

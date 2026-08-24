@@ -139,7 +139,7 @@ const Contact = () => {
               <MessageSquare className="w-7 h-7 md:w-8 md:h-8 text-accent mx-auto mb-3" aria-hidden="true" />
               <p className="type-meta text-accent mb-2">Contact</p>
               <h1 className="type-display text-[26px] md:text-4xl text-foreground mb-3 break-words">Let's Connect</h1>
-              <p className="type-body text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+              <p className="type-body text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
                 Reach out for prayer, partnership, to share a testimony, or for any general question. We read every
                 message.
               </p>
