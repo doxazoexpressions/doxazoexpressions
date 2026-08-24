@@ -613,7 +613,12 @@ const DailyDevotional = () => {
                 </div>
 
                 <ReflectionPrompt devotionalId={current.id} devotionalTitle={current.title} />
-                <JournalPanel devotionalId={current.id} devotionalTitle={current.title} />
+                {/* The journal panel duplicates the prompt's sign-in call to
+                    action when signed out, so it only shows for members. */}
+                {user && (
+                  <JournalPanel devotionalId={current.id} devotionalTitle={current.title} />
+                )}
+
 
                 {/* Previous / next */}
                 {(prev || next) && (
