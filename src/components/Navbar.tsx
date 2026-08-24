@@ -98,7 +98,10 @@ const Navbar = () => {
             </Button>
           </div>
 
-          <div className="flex lg:hidden items-center gap-1 shrink-0 -mr-2">
+          {/* No negative margin here: it pushed the tap target past the
+              container edge and produced a few px of horizontal overflow. */}
+          <div className="flex lg:hidden items-center gap-1 shrink-0">
+
             <ThemeToggle />
             <button
               type="button"

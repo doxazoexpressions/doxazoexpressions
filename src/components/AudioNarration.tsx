@@ -455,26 +455,31 @@ const AudioNarration = ({
         </p>
       )}
 
-      {!noAudioAvailable && (
+      {/* The transport only appears once real audio metadata exists, so an
+          un-seekable placeholder bar is never shown as if it were live. */}
+      {!noAudioAvailable && duration > 0 && (
         <div className="mb-3">
           <input
             type="range"
             min={0}
-            max={duration || 0}
+            max={duration}
             step={1}
-            value={Math.min(position, duration || 0)}
+            value={Math.min(position, duration)}
             onChange={(e) => onSeek(Number(e.target.value))}
-            disabled={!duration}
             aria-label="Narration progress"
-            aria-valuetext={`${fmtTime(position)} of ${duration ? fmtTime(duration) : "unknown duration"}`}
-            className="w-full h-1.5 appearance-none rounded-full bg-border accent-accent cursor-pointer disabled:cursor-default"
+            aria-valuetext={`${fmtTime(position)} of ${fmtTime(duration)}`}
+            className="audio-scrubber w-full cursor-pointer"
           />
-          <div className="flex items-center justify-between mt-1.5 text-[11px] tabular-nums text-muted-foreground">
+          <div className="flex items-center justify-between mt-1 text-[11px] tabular-nums text-muted-foreground">
             <span>{fmtTime(position)}</span>
-            <span>{duration ? fmtTime(duration) : state === "loading" ? "Loading…" : "--:--"}</span>
+            <span>{fmtTime(duration)}</span>
           </div>
         </div>
       )}
+      {!noAudioAvailable && duration === 0 && state === "loading" && (
+        <p className="text-[11px] text-muted-foreground mb-3">Preparing narration…</p>
+      )}
+
 
       {error && (
         <p role="status" className="text-xs text-destructive mb-2">

@@ -38,6 +38,8 @@ import { markReadToday, weekProgress } from "@/lib/streak";
 import { markPlanItemRead, planSlug } from "@/lib/planProgress";
 import { markStarted, markCompleted, setLastPlan, isCompleted } from "@/lib/devotionalProgress";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAuth } from "@/hooks/useAuth";
+
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import AudioNarration from "@/components/AudioNarration";
 import ShareVerseCard from "@/components/ShareVerseCard";
@@ -250,6 +252,8 @@ const DailyDevotional = () => {
   }, [requestedId, navigate, reloadKey]);
 
   const online = useOnlineStatus();
+  const { user } = useAuth();
+
 
   useEffect(() => {
     if (current) {
@@ -351,6 +355,18 @@ const DailyDevotional = () => {
         (hasMarker ? current.body.slice(match!.index! + match![0].length).trim() : null),
     };
   }, [current?.id, current?.body, current?.inspiration_caption]);
+
+  // Several stored rows repeat the declaration inside prayer_section; showing
+  // both would print the same paragraph twice, so the duplicate is dropped.
+  const prayer = useMemo(() => {
+    const p = current?.prayer_section?.trim();
+    if (!p) return null;
+    const decl = (current?.decree_and_declare || current?.declaration || "").trim();
+    const key = (s: string) => s.replace(/\s+/g, " ").toLowerCase();
+    return decl && key(p) === key(decl) ? null : p;
+  }, [current?.prayer_section, current?.decree_and_declare, current?.declaration]);
+
+
 
   return (
     <div className="min-h-screen bg-background overflow-x-clip">
@@ -480,35 +496,9 @@ const DailyDevotional = () => {
                   )}
                 </div>
 
-                {/* Scripture */}
-                {current.scripture_reference && (
-                  <div className="pt-8">
-                    <SectionLabel icon={BookOpen}>Scripture</SectionLabel>
-                    <p className="text-sm font-semibold text-accent mb-2 break-words">
-                      {current.scripture_reference}
-                    </p>
-                    {scriptureText && (
-                      <blockquote className="border-l-2 border-accent/50 pl-4 sm:pl-5">
-                        <p className="font-serif italic text-lg md:text-xl leading-relaxed text-foreground/90 break-words [overflow-wrap:anywhere]">
-                          &ldquo;{scriptureText}&rdquo;
-                        </p>
-                      </blockquote>
-                    )}
-                    {scriptureText && (
-                      <div className="mt-3">
-                        <HighlightVerseButton
-                          devotionalId={current.id}
-                          devotionalTitle={current.title}
-                          reference={current.scripture_reference}
-                          verseText={scriptureText}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Audio */}
-                <div className="pt-8">
+                {/* Audio sits before the text so the reading flow
+                    Scripture → Reflection → Prayer is never interrupted. */}
+                <div className="pt-6">
                   <AudioNarration
                     title={current.title}
                     scripture={scriptureText || current.scripture_reference}
@@ -523,8 +513,35 @@ const DailyDevotional = () => {
                   />
                 </div>
 
+                {/* Scripture */}
+                {current.scripture_reference && (
+                  <div className="pt-2">
+                    <SectionLabel icon={BookOpen}>Scripture</SectionLabel>
+                    <p className="text-sm font-semibold text-accent mb-3 break-words">
+                      {current.scripture_reference}
+                    </p>
+                    {scriptureText && (
+                      <blockquote className="border-l-2 border-accent/50 pl-4 sm:pl-5">
+                        <p className="font-serif italic text-lg md:text-xl leading-relaxed text-foreground/90 break-words [overflow-wrap:anywhere]">
+                          &ldquo;{scriptureText}&rdquo;
+                        </p>
+                      </blockquote>
+                    )}
+                    {scriptureText && (
+                      <div className="mt-4">
+                        <HighlightVerseButton
+                          devotionalId={current.id}
+                          devotionalTitle={current.title}
+                          reference={current.scripture_reference}
+                          verseText={scriptureText}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Reflection */}
-                <div className="pt-2">
+                <div className="mt-10 border-t border-border/60 pt-8">
                   <SectionLabel icon={Sparkles}>Reflection</SectionLabel>
                   <div className="max-w-[66ch] reader-friendly">
                     <DevotionalBody body={reflection} variant="full" />
@@ -540,24 +557,30 @@ const DailyDevotional = () => {
                   </div>
                 )}
 
-                {/* Prayer */}
-                <div className="mt-10 border-t border-border/60 pt-8">
-                  <SectionLabel icon={Heart}>Prayer</SectionLabel>
-                  <p className="font-serif italic text-base md:text-lg leading-relaxed text-foreground/85 whitespace-pre-line break-words">
-                    {current.prayer_section?.trim() ||
-                      "Father, let the truth of Your Word take root in my heart today. Strengthen my faith, order my steps, and let every word from this devotional become a living reality in my life, in Jesus' name. Amen."}
-                  </p>
-                </div>
+                {/* Prayer — omitted when the stored prayer is the same text as
+                    the declaration, so the reader never sees it twice. */}
+                {prayer && (
+                  <div className="mt-10 border-t border-border/60 pt-8">
+                    <SectionLabel icon={Heart}>Prayer</SectionLabel>
+                    <p className="font-serif italic text-base md:text-lg leading-relaxed text-foreground/85 whitespace-pre-line break-words">
+                      {prayer}
+                    </p>
+                  </div>
+                )}
+
 
                 {/* Declaration */}
                 {(current.declaration || current.decree_and_declare) && (
                   <div className="mt-10 rounded-xl bg-primary text-primary-foreground p-6 sm:p-8">
+                    {/* Accent-on-primary was near-invisible here; the label
+                        uses the card's own foreground token instead. */}
                     <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="w-4 h-4 text-accent shrink-0" aria-hidden="true" />
-                      <h3 className="text-accent font-semibold text-[11px] uppercase tracking-[0.2em]">
+                      <Sparkles className="w-4 h-4 text-primary-foreground/70 shrink-0" aria-hidden="true" />
+                      <h3 className="text-primary-foreground/70 font-semibold text-[11px] uppercase tracking-[0.2em]">
                         Declaration
                       </h3>
                     </div>
+
                     <p className="font-serif text-lg italic leading-relaxed whitespace-pre-line break-words">
                       {current.decree_and_declare || current.declaration}
                     </p>
@@ -597,7 +620,12 @@ const DailyDevotional = () => {
                 </div>
 
                 <ReflectionPrompt devotionalId={current.id} devotionalTitle={current.title} />
-                <JournalPanel devotionalId={current.id} devotionalTitle={current.title} />
+                {/* The journal panel duplicates the prompt's sign-in call to
+                    action when signed out, so it only shows for members. */}
+                {user && (
+                  <JournalPanel devotionalId={current.id} devotionalTitle={current.title} />
+                )}
+
 
                 {/* Previous / next */}
                 {(prev || next) && (
