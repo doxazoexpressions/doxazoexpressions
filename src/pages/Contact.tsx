@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Mail, MessageSquare, Send, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -56,6 +56,8 @@ const Contact = () => {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<"idle" | "sent" | "failed">("idle");
+  // A ref, not state: two clicks in the same tick would both read a stale `busy`.
+  const inFlight = useRef(false);
 
   const set = (key: keyof typeof form) => (value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -65,7 +67,7 @@ const Contact = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (busy) return; // guard against duplicate submissions
+    if (inFlight.current) return; // guard against duplicate submissions
 
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
@@ -80,6 +82,7 @@ const Contact = () => {
       return;
     }
 
+    inFlight.current = true;
     setBusy(true);
     setStatus("idle");
     const { error } = await supabase.from("contact_messages").insert({
@@ -90,6 +93,7 @@ const Contact = () => {
       type: parsed.data.type,
     });
     setBusy(false);
+    inFlight.current = false;
 
     if (error) {
       // Never surface raw backend errors to the reader.
