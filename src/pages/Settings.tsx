@@ -5,7 +5,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import PushNotificationToggle from "@/components/PushNotificationToggle";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -31,48 +30,119 @@ import {
   LogOut,
   Palette,
   Headphones,
-  Languages,
   Info,
   Trash2,
   ChevronRight,
+  BookOpen,
+  ShieldCheck,
+  FileText,
+  Mail,
+  Loader2,
 } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import {
   deleteOwnAccount,
   isDeleteConfirmed,
   DELETE_CONFIRM_PHRASE,
 } from "@/lib/accountDeletion";
-import { track } from "@/lib/analytics";
-import { getPrefs, setPrefs } from "@/lib/prefs";
+import { getVoicePreference, setVoicePreference } from "@/lib/devotionalAudio";
+import type { VoiceKind } from "@/lib/devotionalAudio";
+import { setPrefs } from "@/lib/prefs";
 import {
   getCachedCurrentDevotional,
   getCachedRecentDevotionals,
 } from "@/lib/offlineCache";
 
-const Row = ({
+/* ---------- Shared settings primitives ---------- */
+
+const Group = ({
+  title,
+  icon: Icon,
+  description,
+  children,
+  id,
+}: {
+  title: string;
+  icon: typeof Info;
+  description?: string;
+  children: React.ReactNode;
+  id?: string;
+}) => (
+  <section id={id} className="mb-8 last:mb-0">
+    <div className="flex items-center gap-2 px-1 mb-2">
+      <Icon className="w-3.5 h-3.5 text-accent shrink-0" strokeWidth={2} aria-hidden="true" />
+      <h2 className="type-group-label !text-foreground/70">{title}</h2>
+    </div>
+    <div className="rounded-xl border border-border/70 bg-card/40 overflow-hidden">
+      {children}
+    </div>
+    {description && (
+      <p className="type-body text-xs text-muted-foreground mt-2 px-1">{description}</p>
+    )}
+  </section>
+);
+
+const rowBase =
+  "w-full flex items-center gap-3 px-4 py-3.5 min-h-[56px] text-left border-b border-border/50 last:border-0 interactive press";
+
+const NavRow = ({
   to,
+  icon: Icon,
   label,
+  description,
   external,
-}: { to: string; label: string; external?: boolean }) =>
-  external ? (
-    <a
-      href={to}
-      className="flex items-center justify-between py-3 text-sm border-b border-border/60 last:border-0"
-    >
-      {label}
-      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+}: {
+  to: string;
+  icon: typeof Info;
+  label: string;
+  description?: string;
+  external?: boolean;
+}) => {
+  const inner = (
+    <>
+      <Icon className="w-4 h-4 text-accent shrink-0" strokeWidth={1.75} aria-hidden="true" />
+      <span className="flex-1 min-w-0">
+        <span className="block type-body text-sm font-medium">{label}</span>
+        {description && (
+          <span className="block type-body text-xs text-muted-foreground">{description}</span>
+        )}
+      </span>
+      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+    </>
+  );
+  return external ? (
+    <a href={to} className={`${rowBase} hover:bg-muted/40`}>
+      {inner}
     </a>
   ) : (
-    <Link
-      to={to}
-      className="flex items-center justify-between py-3 text-sm border-b border-border/60 last:border-0"
-    >
-      {label}
-      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+    <Link to={to} className={`${rowBase} hover:bg-muted/40`}>
+      {inner}
     </Link>
   );
+};
+
+const StaticRow = ({
+  icon: Icon,
+  label,
+  children,
+  iconClass = "text-accent",
+}: {
+  icon: typeof Info;
+  label: string;
+  children?: React.ReactNode;
+  iconClass?: string;
+}) => (
+  <div className={`${rowBase} cursor-default`}>
+    <Icon className={`w-4 h-4 shrink-0 ${iconClass}`} strokeWidth={1.75} aria-hidden="true" />
+    <div className="flex-1 min-w-0">
+      <p className="type-body text-sm font-medium">{label}</p>
+      {children}
+    </div>
+  </div>
+);
+
+/* ---------- Page ---------- */
 
 const Settings = () => {
   const online = useOnlineStatus();
@@ -80,7 +150,8 @@ const Settings = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [cachedInfo, setCachedInfo] = useState({ hasToday: false, recentCount: 0 });
-  const [narrator, setNarrator] = useState<"female" | "male">("female");
+  const [narrator, setNarrator] = useState<VoiceKind>("female");
+  const [signingOut, setSigningOut] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -97,14 +168,27 @@ const Settings = () => {
     return () => window.removeEventListener("focus", refresh);
   }, [online]);
 
+  // Read the same key the audio player uses, so the UI always reflects reality.
   useEffect(() => {
-    const p = getPrefs() as unknown as { narrator?: "female" | "male" };
-    if (p?.narrator === "male" || p?.narrator === "female") setNarrator(p.narrator);
+    setNarrator(getVoicePreference());
   }, []);
 
-  const chooseNarrator = (v: "female" | "male") => {
-    setNarrator(v);
-    setPrefs({ narrator: v } as never);
+  const chooseNarrator = (v: VoiceKind) => {
+    setVoicePreference(v);
+    // Keep the onboarding prefs object in step (used by the "For You" rail).
+    setPrefs({ voice: v });
+    setNarrator(getVoicePreference()); // reflect the persisted value, not the click
+  };
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      navigate("/");
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   // Guideline 5.1.1(v) — in-app account deletion, no second factor required.
@@ -126,257 +210,244 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <SEO title="Settings" description="Manage your account, appearance, audio, notifications and privacy on Doxazo Expressions." path="/settings" />
+    <div className="min-h-dvh bg-background">
+      <SEO
+        title="Settings"
+        description="Manage your account, appearance, audio, notifications and privacy on Doxazo Expressions."
+        path="/settings"
+      />
       <Navbar />
-      <main className="pt-16">
-        <section className="py-12 md:py-16 bg-secondary/30">
-          <div className="container mx-auto px-4 max-w-3xl text-center">
-            <h1 className="text-3xl md:text-5xl font-serif font-bold mb-3">Settings</h1>
-            <p className="text-muted-foreground">Make Doxazo Expressions feel at home on your device.</p>
-          </div>
-        </section>
+      <main className="pt-20 pb-16">
+        <div className="container mx-auto px-4 max-w-xl">
+          <header className="mb-8">
+            <h1 className="type-display text-2xl md:text-3xl">Settings</h1>
+            <p className="type-body text-sm text-muted-foreground mt-1">
+              Your quiet control centre for Doxazo Expressions.
+            </p>
+          </header>
 
-        <section className="py-10">
-          <div className="container mx-auto px-4 max-w-3xl space-y-6">
-            {/* Account */}
-            <Card id="account">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <User className="w-5 h-5 text-accent" />
-                  <h2 className="text-xl font-serif font-semibold">Account</h2>
-                </div>
-                {loading ? (
-                  <p className="text-sm text-muted-foreground">Checking your account…</p>
-                ) : user ? (
-                  <div className="space-y-3">
-                    <div className="text-sm">
-                      <p className="font-medium">
-                        {(user.user_metadata?.display_name as string | undefined) ??
-                          user.email?.split("@")[0] ??
-                          "Friend"}
-                      </p>
-                      <p className="text-muted-foreground break-all">{user.email}</p>
-                    </div>
-                    <Button onClick={() => signOut()} variant="outline" className="gap-1.5">
-                      <LogOut className="w-4 h-4" /> Sign out
-                    </Button>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          className="w-full flex items-center gap-2 text-sm text-destructive py-3 mt-1 border-t border-border/60"
-                          disabled={deleting}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          {deleting ? "Deleting account…" : "Delete account"}
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete account</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Deleting this account permanently removes all journal entries,
-                            plans, and synced data. This cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <div className="space-y-2">
-                          <Label htmlFor="delete-confirm" className="text-xs">
-                            Type{" "}
-                            <span className="font-mono font-semibold">
-                              {DELETE_CONFIRM_PHRASE}
-                            </span>{" "}
-                            to confirm
-                          </Label>
-                          <Input
-                            id="delete-confirm"
-                            value={deleteConfirm}
-                            onChange={(e) => setDeleteConfirm(e.target.value)}
-                            placeholder={DELETE_CONFIRM_PHRASE}
-                            autoComplete="off"
-                            autoCapitalize="characters"
-                          />
-                        </div>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setDeleteConfirm("")}>
-                            Cancel
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={deleteAccount}
-                            disabled={!isDeleteConfirmed(deleteConfirm) || deleting}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete account
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                    {deleteError && (
-                      <p className="text-xs text-destructive">{deleteError}</p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Sign in to sync your journal, highlights, favorites, and progress across devices.
+          {/* Account */}
+          <Group title="Account" icon={User} id="account">
+            {loading ? (
+              <StaticRow icon={User} label="Checking your account…" />
+            ) : user ? (
+              <>
+                <div className={`${rowBase} cursor-default`}>
+                  <User className="w-4 h-4 text-accent shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                  <div className="flex-1 min-w-0">
+                    <p className="type-body text-sm font-medium">
+                      {(user.user_metadata?.display_name as string | undefined) ??
+                        user.email?.split("@")[0] ??
+                        "Friend"}
                     </p>
-                    <Button asChild className="gap-1.5">
-                      <Link to="/auth">
-                        <LogIn className="w-4 h-4" /> Sign In
-                      </Link>
-                    </Button>
+                    <p className="type-body text-xs text-muted-foreground break-all">
+                      {user.email}
+                    </p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Appearance */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <Palette className="w-5 h-5 text-accent" />
-                  <h2 className="text-xl font-serif font-semibold">Appearance</h2>
+                  <span className="type-meta shrink-0 text-accent">Signed in</span>
                 </div>
-                <RadioGroup
-                  value={theme ?? "system"}
-                  onValueChange={(v) => setTheme(v)}
-                  className="space-y-1"
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={signingOut}
+                  className={`${rowBase} hover:bg-muted/40 disabled:opacity-60`}
                 >
-                  {[
-                    { v: "dark", label: "Dark mode" },
-                    { v: "light", label: "Light theme" },
-                    { v: "system", label: "Follow system" },
-                  ].map((o) => (
-                    <div key={o.v} className="flex items-center gap-3 py-2">
-                      <RadioGroupItem value={o.v} id={`theme-${o.v}`} />
-                      <Label htmlFor={`theme-${o.v}`} className="text-sm font-normal">{o.label}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </CardContent>
-            </Card>
-
-            {/* Audio */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <Headphones className="w-5 h-5 text-accent" />
-                  <h2 className="text-xl font-serif font-semibold">Audio</h2>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">Narrator voice</p>
-                <RadioGroup value={narrator} onValueChange={(v) => chooseNarrator(v as "female" | "male")} className="space-y-1">
-                  <div className="flex items-center gap-3 py-2">
-                    <RadioGroupItem value="female" id="narrator-female" />
-                    <Label htmlFor="narrator-female" className="text-sm font-normal">Female (Joy)</Label>
-                  </div>
-                  <div className="flex items-center gap-3 py-2">
-                    <RadioGroupItem value="male" id="narrator-male" />
-                    <Label htmlFor="narrator-male" className="text-sm font-normal">Male (Wisdom)</Label>
-                  </div>
-                </RadioGroup>
-              </CardContent>
-            </Card>
-
-            {/* Language */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <Languages className="w-5 h-5 text-accent" />
-                  <h2 className="text-xl font-serif font-semibold">Language</h2>
-                </div>
-                <select
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  defaultValue="en"
-                  aria-label="App language"
-                >
-                  <option value="en">English</option>
-                </select>
-                <p className="text-xs text-muted-foreground mt-2">More languages are planned.</p>
-              </CardContent>
-            </Card>
-
-            {/* Notifications */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <Bell className="w-5 h-5 text-accent" />
-                  <h2 className="text-xl font-serif font-semibold">Notifications</h2>
-                </div>
-                <p className="text-muted-foreground text-sm mb-4">
-                  Receive a gentle nudge when a new devotional is published. We never send anything else.
-                </p>
-                <PushNotificationToggle />
-                <div className="mt-3">
-                  <Row to="/settings/notifications" label="More notification options" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Offline */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  {online ? (
-                    <Wifi className="w-5 h-5 text-accent" />
+                  {signingOut ? (
+                    <Loader2 className="w-4 h-4 text-muted-foreground shrink-0 animate-spin" aria-hidden="true" />
                   ) : (
-                    <WifiOff className="w-5 h-5 text-destructive" />
+                    <LogOut className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={1.75} aria-hidden="true" />
                   )}
-                  <h2 className="text-xl font-serif font-semibold">Offline reading</h2>
-                </div>
-                <div className="space-y-1 text-sm">
-                  <p>
-                    Connection:{" "}
-                    <span className={online ? "text-accent font-medium" : "text-destructive font-medium"}>
-                      {online ? "Online" : "Offline — showing cached content"}
-                    </span>
+                  <span className="flex-1 min-w-0 type-body text-sm font-medium">
+                    {signingOut ? "Signing out…" : "Sign out"}
+                  </span>
+                </button>
+              </>
+            ) : (
+              <>
+                <StaticRow icon={User} label="Not signed in">
+                  <p className="type-body text-xs text-muted-foreground">
+                    Sign in to sync your journal, highlights, favourites and plan progress.
                   </p>
-                  <p className="text-muted-foreground">
-                    Saved on this device: {cachedInfo.hasToday ? "today's devotional" : "no devotional yet"}
-                    {cachedInfo.recentCount > 0
-                      ? ` + ${cachedInfo.recentCount} recent ${cachedInfo.recentCount === 1 ? "entry" : "entries"}`
-                      : ""}
-                    .
-                  </p>
+                </StaticRow>
+                <div className="p-4">
+                  <Button asChild className="w-full gap-1.5 min-h-11">
+                    <Link to="/auth">
+                      <LogIn className="w-4 h-4" aria-hidden="true" /> Sign in
+                    </Link>
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Favorites */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <Heart className="w-5 h-5 text-accent" />
-                  <h2 className="text-xl font-serif font-semibold">Favorites</h2>
-                </div>
-                <Row to="/favorites" label="Open your favorites" />
-              </CardContent>
-            </Card>
-
-            {/* About */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <Info className="w-5 h-5 text-accent" />
-                  <h2 className="text-xl font-serif font-semibold">About</h2>
-                </div>
-                <div>
-                  <Row to="/about" label="About us" />
-                  <Row to="/settings/bible-versions" label="Bible versions" />
-                  <Row to="/terms" label="Terms & Conditions" />
-                  <Row to="/privacy" label="Privacy policy" />
-                  <Row to="mailto:hello@doxazoexpressions.com?subject=Doxazo%20feedback" label="Give feedback" external />
-                  <Row to="mailto:hello@doxazoexpressions.com?subject=Contact%20Doxazo" label="Contact us" external />
-                </div>
-              </CardContent>
-            </Card>
-
-            {user && (
-              <Button onClick={() => signOut()} variant="outline" className="w-full gap-1.5">
-                <LogOut className="w-4 h-4" /> LOG OUT
-              </Button>
+              </>
             )}
-          </div>
-        </section>
+          </Group>
+
+          {/* Devotional experience */}
+          <Group title="Devotional experience" icon={Headphones}>
+            <fieldset className={`${rowBase} block cursor-default`}>
+              <legend className="type-body text-sm font-medium mb-2">Narrator voice</legend>
+              <RadioGroup
+                value={narrator}
+                onValueChange={(v) => chooseNarrator(v as VoiceKind)}
+                className="space-y-0"
+              >
+                <div className="flex items-center gap-3 min-h-11">
+                  <RadioGroupItem value="female" id="narrator-female" />
+                  <Label htmlFor="narrator-female" className="type-body text-sm font-normal flex-1">
+                    Joy — female voice
+                  </Label>
+                </div>
+                <div className="flex items-center gap-3 min-h-11">
+                  <RadioGroupItem value="male" id="narrator-male" />
+                  <Label htmlFor="narrator-male" className="type-body text-sm font-normal flex-1">
+                    Wisdom — male voice
+                  </Label>
+                </div>
+              </RadioGroup>
+            </fieldset>
+            <StaticRow
+              icon={online ? Wifi : WifiOff}
+              label="Offline reading"
+              iconClass={online ? "text-accent" : "text-destructive"}
+            >
+              <p className="type-body text-xs text-muted-foreground">
+                {online ? "Online" : "Offline — showing saved content"} ·{" "}
+                {cachedInfo.hasToday ? "today's devotional saved" : "no devotional saved yet"}
+                {cachedInfo.recentCount > 0
+                  ? ` + ${cachedInfo.recentCount} recent ${
+                      cachedInfo.recentCount === 1 ? "entry" : "entries"
+                    }`
+                  : ""}
+              </p>
+            </StaticRow>
+            <NavRow to="/plans" icon={BookOpen} label="Reading plans" description="Continue a guided journey" />
+            <NavRow to="/favorites" icon={Heart} label="Favourites" description="Devotionals you saved" />
+            <NavRow to="/settings/bible-versions" icon={FileText} label="Bible versions" />
+          </Group>
+
+          {/* Notifications */}
+          <Group
+            title="Notifications"
+            icon={Bell}
+            description="Your device's own notification permission always has the final say — if it's blocked, enable it in your system settings first."
+          >
+            <div className={`${rowBase} block cursor-default`}>
+              <p className="type-body text-sm font-medium">Daily devotional nudge</p>
+              <p className="type-body text-xs text-muted-foreground mt-0.5 mb-3">
+                A gentle reminder when a new devotional is published. Nothing else.
+              </p>
+              <PushNotificationToggle />
+            </div>
+            <NavRow to="/settings/notifications" icon={Bell} label="More notification options" />
+          </Group>
+
+          {/* Appearance */}
+          <Group title="Appearance" icon={Palette}>
+            <fieldset className={`${rowBase} block cursor-default`}>
+              <legend className="type-body text-sm font-medium mb-2">Theme</legend>
+              <RadioGroup value={theme ?? "system"} onValueChange={(v) => setTheme(v)} className="space-y-0">
+                {[
+                  { v: "dark", label: "Dark" },
+                  { v: "light", label: "Light" },
+                  { v: "system", label: "Follow system" },
+                ].map((o) => (
+                  <div key={o.v} className="flex items-center gap-3 min-h-11">
+                    <RadioGroupItem value={o.v} id={`theme-${o.v}`} />
+                    <Label htmlFor={`theme-${o.v}`} className="type-body text-sm font-normal flex-1">
+                      {o.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </fieldset>
+          </Group>
+
+          {/* Privacy & data */}
+          <Group title="Privacy &amp; data" icon={ShieldCheck}>
+            <NavRow to="/privacy" icon={ShieldCheck} label="Privacy policy" />
+            <NavRow to="/terms" icon={FileText} label="Terms &amp; conditions" />
+          </Group>
+
+          {/* Support */}
+          <Group title="Support" icon={Info}>
+            <NavRow to="/about" icon={Info} label="About Doxazo Expressions" />
+            <NavRow to="/support" icon={Mail} label="Help &amp; support" />
+            <NavRow
+              to="mailto:doxazoexpressions@gmail.com?subject=Doxazo%20feedback"
+              icon={Mail}
+              label="Send feedback"
+              external
+            />
+          </Group>
+
+          {/* Danger zone */}
+          {user && (
+            <section className="mb-2">
+              <div className="flex items-center gap-2 px-1 mb-2">
+                <Trash2 className="w-3.5 h-3.5 text-destructive shrink-0" strokeWidth={2} aria-hidden="true" />
+                <h2 className="type-group-label !text-destructive">Danger zone</h2>
+              </div>
+              <div className="rounded-xl border border-destructive/40 bg-destructive/[0.04] overflow-hidden">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      type="button"
+                      className={`${rowBase} hover:bg-destructive/10 disabled:opacity-60`}
+                      disabled={deleting}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                      <span className="flex-1 min-w-0">
+                        <span className="block type-body text-sm font-medium text-destructive">
+                          {deleting ? "Deleting account…" : "Delete account"}
+                        </span>
+                        <span className="block type-body text-xs text-muted-foreground">
+                          Permanently removes your journal, plans and synced data.
+                        </span>
+                      </span>
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete account</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Deleting this account permanently removes all journal entries, plans, and
+                        synced data. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-2">
+                      <Label htmlFor="delete-confirm" className="text-xs">
+                        Type{" "}
+                        <span className="font-mono font-semibold">{DELETE_CONFIRM_PHRASE}</span> to
+                        confirm
+                      </Label>
+                      <Input
+                        id="delete-confirm"
+                        value={deleteConfirm}
+                        onChange={(e) => setDeleteConfirm(e.target.value)}
+                        placeholder={DELETE_CONFIRM_PHRASE}
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                      />
+                    </div>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setDeleteConfirm("")}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={deleteAccount}
+                        disabled={!isDeleteConfirmed(deleteConfirm) || deleting}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete account
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              {deleteError && (
+                <p role="alert" className="type-body text-xs text-destructive mt-2 px-1">
+                  {deleteError}
+                </p>
+              )}
+            </section>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
