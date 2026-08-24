@@ -1,5 +1,11 @@
 // Faith Essentials — index over the 30 authored day files (src/data/devotional-day-01..30.ts).
 // kat_4_2_minimum: true
+//
+// Scheduling note: the authored day files carry an original authoring date
+// (2026-01-01 …), which must NOT be presented to readers — it would look like
+// stale content. The set is instead presented as a continuous 30-day cycle
+// anchored on the reader's own local date, so "today" always resolves to a real
+// authored day and every card shows a real calendar date.
 import type { DevotionalDay } from "./types";
 import day01 from "./devotional-day-01";
 import day02 from "./devotional-day-02";
@@ -41,32 +47,58 @@ export const faithEssentialDays: DevotionalDay[] = [
 export const todayIso = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-/** Formats a day's date with the en-US locale, matching existing tab labels. */
+/** Formats an ISO date as e.g. "Mon, Aug 24" using the visitor's locale calendar. */
 export const formatDayDate = (iso: string) =>
-  new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", {
+  new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
 
-export type ResolvedDay = { day: DevotionalDay; isFallback: boolean };
+/** Local-midnight day index, used to advance the cycle exactly once per day. */
+const dayIndexFor = (iso: string) =>
+  Math.floor(new Date(`${iso}T12:00:00`).getTime() / 86400000);
 
-/**
- * Picks the day scheduled for today. If today's date cannot be matched
- * against the authored set, falls back to day_01 (flagged so the UI can
- * show a visible "Day 1" label).
- */
-export const resolveTodayDay = (iso = todayIso()): ResolvedDay => {
-  const exact = faithEssentialDays.find((d) => d.date === iso);
-  if (exact) return { day: exact, isFallback: false };
-  return { day: faithEssentialDays[0], isFallback: true };
+const addDays = (iso: string, n: number) => {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return todayIso(d);
 };
 
-/** 7-day window starting at the resolved day, wrapping within the authored set. */
-export const dayWindow = (startIndex: number, size = 7): DevotionalDay[] => {
-  const out: DevotionalDay[] = [];
-  for (let i = 0; i < size; i++) {
-    out.push(faithEssentialDays[(startIndex + i) % faithEssentialDays.length]);
+/** A day paired with the real calendar date it is being read on. */
+export type ScheduledDay = { day: DevotionalDay; date: string; isToday: boolean };
+
+/** Index within the authored set that today maps to (stable per calendar day). */
+export const todayIndex = (iso = todayIso()): number => {
+  const len = faithEssentialDays.length;
+  return ((dayIndexFor(iso) % len) + len) % len;
+};
+
+/** Today's authored day, paired with today's real date. */
+export const resolveTodayDay = (iso = todayIso()): ScheduledDay => ({
+  day: faithEssentialDays[todayIndex(iso)],
+  date: iso,
+  isToday: true,
+});
+
+/**
+ * The reading window: today plus the previous `size - 1` days, newest first,
+ * so nothing in the list is dated in the future.
+ */
+export const recentWindow = (size = 7, iso = todayIso()): ScheduledDay[] => {
+  const len = faithEssentialDays.length;
+  const start = todayIndex(iso);
+  const out: ScheduledDay[] = [];
+  for (let i = 0; i < Math.min(size, len); i++) {
+    out.push({
+      day: faithEssentialDays[((start - i) % len + len) % len],
+      date: addDays(iso, -i),
+      isToday: i === 0,
+    });
   }
   return out;
 };
+
+/** Authored days not present in the current window (for "view earlier"). */
+export const earlierDays = (window: ScheduledDay[]): DevotionalDay[] =>
+  faithEssentialDays.filter((d) => !window.some((w) => w.day.day_id === d.day_id));

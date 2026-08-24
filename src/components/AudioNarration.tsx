@@ -58,6 +58,11 @@ const AudioNarration = ({
     () => (devotionalId ? getAudioProgress(devotionalId)?.position ?? null : null)
   );
   const progressSaveRef = useRef<number>(0);
+  // Live transport state for the visible progress bar.
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
   // Sleep-timer minutes remaining (null = off). When it hits 0 we fade out and pause.
   const [sleepMinutes, setSleepMinutes] = useState<number | null>(null);
   const sleepTimerRef = useRef<number | null>(null);
@@ -185,7 +190,11 @@ const AudioNarration = ({
   // Reset player when devotional/audio changes
   useEffect(() => {
     setState("idle");
+    setPosition(0);
+    setDuration(0);
+    setError(null);
     stopDuckingLoop();
+
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -274,7 +283,9 @@ const AudioNarration = ({
   const onPlay = async () => {
     if (!resolvedUrl || !audioRef.current) return;
     try {
+      setError(null);
       setState("loading");
+
       buildGraph();
       if (audioCtxRef.current?.state === "suspended") {
         await audioCtxRef.current.resume();
@@ -368,10 +379,20 @@ const AudioNarration = ({
   const usingFallbackVoice = !hasStoredForSelected && !!resolvedUrl;
   const noAudioAvailable = !resolvedUrl;
 
+  const fmtTime = (s: number) =>
+    `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+  const onSeek = (value: number) => {
+    if (!audioRef.current || !duration) return;
+    audioRef.current.currentTime = value;
+    setPosition(value);
+  };
+
   return (
     <section
+      id="listen"
       aria-label="Listen to today's devotional"
-      className="mb-8 rounded-xl border border-accent/25 bg-accent/5 p-4 sm:p-5"
+      className="mb-8 scroll-mt-24 rounded-xl border border-accent/25 bg-accent/5 p-4 sm:p-5"
     >
       <div className="flex items-center gap-2 mb-3">
         <Volume2 className="w-4 h-4 text-accent" aria-hidden="true" />
@@ -391,10 +412,22 @@ const AudioNarration = ({
             fadeBedGain(0, 1200);
             stopDuckingLoop();
             window.setTimeout(() => bedRef.current?.pause(), 1250);
+            setPosition(0);
             setState("idle");
           }}
           onCanPlay={() => setState((s) => (s === "loading" ? "paused" : s))}
-          onTimeUpdate={() => {
+          onLoadedMetadata={(e) => {
+            const d = (e.currentTarget as HTMLAudioElement).duration;
+            if (Number.isFinite(d)) setDuration(d);
+          }}
+          onError={() => {
+            setState("idle");
+            setError("We couldn't load this narration. Please try again.");
+          }}
+          onTimeUpdate={(e) => {
+            const el = e.currentTarget as HTMLAudioElement;
+            setPosition(el.currentTime);
+            if (!duration && Number.isFinite(el.duration)) setDuration(el.duration);
             // Save every ~5s while playing so a background/lock-screen close resumes correctly.
             const now = Date.now();
             if (now - progressSaveRef.current > 5000) {
@@ -418,9 +451,37 @@ const AudioNarration = ({
 
       {resumeHint != null && resumeHint > 5 && state !== "playing" && (
         <p className="text-[11px] text-accent font-medium mb-2">
-          Continue listening from {Math.floor(resumeHint / 60)}:{String(Math.floor(resumeHint % 60)).padStart(2, "0")}
+          Continue listening from {fmtTime(resumeHint)}
         </p>
       )}
+
+      {!noAudioAvailable && (
+        <div className="mb-3">
+          <input
+            type="range"
+            min={0}
+            max={duration || 0}
+            step={1}
+            value={Math.min(position, duration || 0)}
+            onChange={(e) => onSeek(Number(e.target.value))}
+            disabled={!duration}
+            aria-label="Narration progress"
+            aria-valuetext={`${fmtTime(position)} of ${duration ? fmtTime(duration) : "unknown duration"}`}
+            className="w-full h-1.5 appearance-none rounded-full bg-border accent-accent cursor-pointer disabled:cursor-default"
+          />
+          <div className="flex items-center justify-between mt-1.5 text-[11px] tabular-nums text-muted-foreground">
+            <span>{fmtTime(position)}</span>
+            <span>{duration ? fmtTime(duration) : state === "loading" ? "Loading…" : "--:--"}</span>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <p role="status" className="text-xs text-destructive mb-2">
+          {error}
+        </p>
+      )}
+
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {state !== "playing" ? (
