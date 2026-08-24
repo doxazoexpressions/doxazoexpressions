@@ -83,48 +83,71 @@ const Categories = () => {
           </div>
         </section>
 
-        <section className="py-8 md:py-14">
+        <section className="py-8 md:py-12 md:pb-10">
           <div className="container mx-auto page-x">
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4 md:gap-5 max-w-5xl mx-auto">
               {CATEGORIES.map((c) => {
                 const Icon = ICONS[c.slug];
                 const count = counts?.[c.slug];
-                return (
-                  <li key={c.slug} className="min-w-0">
-                    <Link
-                      to={`/categories/${c.slug}`}
-                      onClick={() => track("category_open", { slug: c.slug, from: "categories_hub" })}
-                      className="group flex h-full flex-col rounded-xl bg-card p-5 sm:p-6 ring-1 ring-border transition-all duration-200 hover:ring-accent/40 hover:shadow-md active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                    >
-                      <span className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
-                        <Icon className="h-[18px] w-[18px] text-accent" aria-hidden="true" />
+                const comingSoon = counts !== null && count === 0;
+
+                const inner = (
+                  <>
+                    <span className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                      <Icon className="h-[18px] w-[18px] text-accent" aria-hidden="true" />
+                    </span>
+
+                    <h2 className="type-heading text-[17px] md:text-lg text-foreground mb-1.5 break-words">
+                      {c.label}
+                    </h2>
+                    <p className="type-body text-sm text-muted-foreground leading-relaxed">{c.description}</p>
+
+                    <span className="mt-auto flex items-center justify-between gap-3 pt-5">
+                      <span className="type-meta text-muted-foreground tabular-nums">
+                        {counts === null
+                          ? "\u00A0"
+                          : comingSoon
+                            ? "Coming soon"
+                            : `${count} ${count === 1 ? "devotional" : "devotionals"}`}
                       </span>
-
-                      <h2 className="type-heading text-[17px] md:text-lg text-foreground mb-1.5 break-words">
-                        {c.label}
-                      </h2>
-                      <p className="type-body text-sm text-muted-foreground leading-relaxed">{c.description}</p>
-
-                      <span className="mt-auto flex items-center justify-between gap-3 pt-5">
-                        <span className="type-meta text-muted-foreground tabular-nums">
-                          {counts === null
-                            ? "\u00A0"
-                            : count === 0
-                              ? "Coming soon"
-                              : `${count} ${count === 1 ? "devotional" : "devotionals"}`}
-                        </span>
+                      {!comingSoon && (
                         <ChevronRight
                           className="h-4 w-4 shrink-0 text-accent transition-transform duration-200 group-hover:translate-x-0.5"
                           aria-hidden="true"
                         />
-                      </span>
-                    </Link>
+                      )}
+                    </span>
+                  </>
+                );
+
+                const base =
+                  "group flex h-full flex-col rounded-xl bg-card p-5 sm:p-6 ring-1 ring-border";
+
+                return (
+                  <li key={c.slug} className="min-w-0">
+                    {comingSoon ? (
+                      <div
+                        aria-disabled="true"
+                        className={`${base} cursor-default opacity-70`}
+                      >
+                        {inner}
+                      </div>
+                    ) : (
+                      <Link
+                        to={`/categories/${c.slug}`}
+                        onClick={() => track("category_open", { slug: c.slug, from: "categories_hub" })}
+                        className={`${base} interactive hover:ring-accent/40 hover:shadow-md active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+                      >
+                        {inner}
+                      </Link>
+                    )}
                   </li>
                 );
               })}
             </ul>
           </div>
         </section>
+
       </main>
       <Footer />
     </div>
