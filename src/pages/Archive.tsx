@@ -7,11 +7,12 @@ import CategoryRail from "@/components/CategoryRail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { BookOpen, Search as SearchIcon, WifiOff, AlertTriangle, X } from "lucide-react";
+import { BookOpen, Search as SearchIcon, WifiOff, AlertTriangle, X, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { CATEGORIES, CategorySlug } from "@/lib/categories";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const PAGE_SIZE = 12;
