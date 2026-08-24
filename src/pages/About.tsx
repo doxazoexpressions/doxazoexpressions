@@ -25,7 +25,7 @@ const About = () => {
       <Navbar />
       <main className="pt-16">
         {/* Restrained hero, matched to Categories / Archive scale. */}
-        <section className="pt-9 pb-8 md:pt-14 md:pb-12 bg-secondary/30">
+        <section className="pt-8 pb-7 md:pt-12 md:pb-10 bg-secondary/30">
           <div className="container mx-auto page-x max-w-2xl text-center">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
               <Sparkles className="w-7 h-7 md:w-8 md:h-8 text-accent mx-auto mb-3" aria-hidden="true" />
@@ -44,7 +44,7 @@ const About = () => {
         {/* Editorial body — controlled reading width, no decorative cards. */}
         <section className="py-10 md:py-14">
           <div className="container mx-auto page-x">
-            <div className="max-w-2xl mx-auto space-y-10 md:space-y-14">
+            <div className="max-w-2xl md:max-w-[46rem] mx-auto space-y-10 md:space-y-14">
               <motion.article
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -98,6 +98,8 @@ const About = () => {
                     alt="An open Bible resting in early morning light"
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    decoding="async"
+                    sizes="(min-width: 768px) 736px, 100vw"
                     width={1280}
                     height={800}
                   />
