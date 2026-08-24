@@ -629,6 +629,30 @@ export type Database = {
         }
         Relationships: []
       }
+      series_normalization_backup: {
+        Row: {
+          created_at: string
+          devotional_id: string
+          id: string
+          new_series: string | null
+          old_series: string | null
+        }
+        Insert: {
+          created_at?: string
+          devotional_id: string
+          id?: string
+          new_series?: string | null
+          old_series?: string | null
+        }
+        Update: {
+          created_at?: string
+          devotional_id?: string
+          id?: string
+          new_series?: string | null
+          old_series?: string | null
+        }
+        Relationships: []
+      }
       social_packs: {
         Row: {
           canva_cta: string | null
