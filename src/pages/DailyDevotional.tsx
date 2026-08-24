@@ -252,6 +252,8 @@ const DailyDevotional = () => {
   }, [requestedId, navigate, reloadKey]);
 
   const online = useOnlineStatus();
+  const { user } = useAuth();
+
 
   useEffect(() => {
     if (current) {
