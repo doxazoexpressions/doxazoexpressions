@@ -154,7 +154,7 @@ const PlanDetail = () => {
                     <div className="min-w-0">
                       <p className="type-meta !text-accent">
                         {completedCount === 0 ? "Start here" : "Up next"} · Part{" "}
-                        {nextItem.day ?? items.indexOf(nextItem) + 1} of {items.length}
+                        {items.indexOf(nextItem) + 1} of {items.length}
                       </p>
                       <p className="type-heading text-base leading-snug mt-1 break-words">
                         {nextItem.title}
@@ -190,7 +190,7 @@ const PlanDetail = () => {
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="type-meta">
-                            Part {r.day ?? i + 1} of {items.length} ·{" "}
+                            Part {i + 1} of {items.length} ·{" "}
                             {done ? "Read" : isNext ? "Up next" : "Not read"}
                           </p>
                           <p className="type-heading text-sm leading-snug mt-0.5 break-words">

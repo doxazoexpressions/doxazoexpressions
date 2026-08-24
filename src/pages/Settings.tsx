@@ -69,7 +69,7 @@ const Group = ({
   children: React.ReactNode;
   id?: string;
 }) => (
-  <section id={id} className="mb-8 last:mb-0">
+  <section id={id} className="mb-6 md:mb-7 last:mb-0">
     <div className="flex items-center gap-2 px-1 mb-2">
       <Icon className="w-3.5 h-3.5 text-accent shrink-0" strokeWidth={2} aria-hidden="true" />
       <h2 className="type-group-label !text-foreground/70">{title}</h2>
@@ -84,7 +84,7 @@ const Group = ({
 );
 
 const rowFrame =
-  "w-full px-4 py-3.5 min-h-[56px] text-left border-b border-border/50 last:border-0 interactive press";
+  "w-full px-4 py-3 md:py-2.5 min-h-[56px] text-left border-b border-border/50 last:border-0 interactive press";
 const rowBase = `${rowFrame} flex items-center gap-3`;
 
 const NavRow = ({
@@ -220,7 +220,7 @@ const Settings = () => {
       <Navbar />
       <main className="pt-20 pb-16">
         <div className="container mx-auto px-4 max-w-xl">
-          <header className="mb-8">
+          <header className="mb-6">
             <h1 className="type-display text-2xl md:text-3xl">Settings</h1>
             <p className="type-body text-sm text-muted-foreground mt-1">
               Your quiet control centre for Doxazo Expressions.

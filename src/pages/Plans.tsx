@@ -8,11 +8,13 @@ import { BookOpen, ArrowRight, CheckCircle2, AlertTriangle, RotateCcw } from "lu
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { planSlug, planDisplayName, getPlanCompleted, syncPlanProgressFromCloud } from "@/lib/planProgress";
+import { useAuth } from "@/hooks/useAuth";
 
 type Row = { id: string; title: string; series: string | null; publish_date: string; slug: string | null; day: number | null };
 type Plan = { slug: string; name: string; items: Row[]; completed: number };
 
 const Plans = () => {
+  const { user } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
@@ -63,7 +65,7 @@ const Plans = () => {
               <BookOpen className="w-4 h-4 text-accent shrink-0" strokeWidth={2} aria-hidden="true" />
               <p className="type-meta">Reading Plans</p>
             </div>
-            <h1 className="type-display text-3xl md:text-4xl">Grow with intention</h1>
+            <h1 className="type-display text-2xl sm:text-3xl md:text-4xl">Grow with intention</h1>
             <p className="type-body text-sm md:text-base text-muted-foreground mt-2 max-w-xl">
               Plans gather devotionals into a guided journey. Start one, keep your place, and
               return whenever you're ready.
@@ -110,7 +112,7 @@ const Plans = () => {
           )}
 
           {status === "ready" && plans.length > 0 && (
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch">
               {plans.map((p) => {
                 const total = p.items.length;
                 const pct = total ? Math.round((p.completed / total) * 100) : 0;
@@ -133,12 +135,10 @@ const Plans = () => {
                         <div className="min-w-0 flex-1">
                           <h2 className="type-heading text-lg leading-snug break-words">{p.name}</h2>
                           <p className="type-body text-xs text-muted-foreground mt-1">
-                            {total} part{total === 1 ? "" : "s"}
+                            {total} part{total === 1 ? "" : "s"} ·{" "}
                             {state === "completed"
-                              ? " · Completed"
-                              : state === "in-progress"
-                              ? ` · ${p.completed} of ${total} read`
-                              : " · Not started"}
+                              ? `All ${total} completed`
+                              : `${p.completed} of ${total} completed`}
                           </p>
                         </div>
                       </div>
@@ -155,8 +155,8 @@ const Plans = () => {
                           <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
                         </div>
                         <div className="flex items-center justify-between gap-2 mt-3">
-                          <span className="type-meta">{pct}% complete</span>
-                          <span className="inline-flex items-center gap-1 text-sm font-medium text-accent">
+                          <span className="type-meta shrink-0">{pct}% complete</span>
+                          <span className="inline-flex items-center gap-1 text-sm font-medium text-accent shrink-0">
                             {cta} <ArrowRight className="w-4 h-4" aria-hidden="true" />
                           </span>
                         </div>
@@ -166,6 +166,16 @@ const Plans = () => {
                 );
               })}
             </ul>
+          )}
+
+          {status === "ready" && plans.length > 0 && !user && (
+            <p className="type-body text-xs text-muted-foreground mt-4 px-1">
+              Your progress is saved on this device.{" "}
+              <Link to="/auth" className="text-accent underline underline-offset-2">
+                Sign in
+              </Link>{" "}
+              to sync it across your devices.
+            </p>
           )}
         </div>
       </main>
