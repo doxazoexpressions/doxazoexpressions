@@ -3,82 +3,126 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
-import { Compass, ArrowRight } from "lucide-react";
+import {
+  Compass,
+  ChevronRight,
+  HeartHandshake,
+  Sparkles,
+  Sun,
+  HandHeart,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { CATEGORIES, CategorySlug } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { track } from "@/lib/analytics";
 
-const Categories = () => {
-  const [counts, setCounts] = useState<Record<CategorySlug, number>>({} as Record<CategorySlug, number>);
+const ICONS: Record<CategorySlug, LucideIcon> = {
+  divine_relationship: HeartHandshake,
+  destiny_purpose: Sparkles,
+  blessings: Sun,
+  prayers: HandHeart,
+  life_relationships: Users,
+};
 
+type CountState = Record<CategorySlug, number> | null;
+
+const Categories = () => {
+  const [counts, setCounts] = useState<CountState>(null);
+
+  // One request for every count — tally client-side to avoid 5 parallel round trips.
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const orFilter = liveDevotionalOr();
-      const results = await Promise.all(
-        CATEGORIES.map((c) =>
-          supabase
-            .from("devotionals")
-            .select("id", { count: "exact", head: true })
-            .eq("category", c.slug)
-            .or(orFilter)
-            .then(({ count }) => [c.slug, count ?? 0] as const),
-        ),
-      );
-      setCounts(Object.fromEntries(results) as Record<CategorySlug, number>);
+      const { data, error } = await supabase
+        .from("devotionals")
+        .select("category")
+        .or(liveDevotionalOr());
+      if (cancelled) return;
+      if (error || !data) {
+        setCounts(null);
+        return;
+      }
+      const tally = Object.fromEntries(CATEGORIES.map((c) => [c.slug, 0])) as Record<CategorySlug, number>;
+      for (const row of data) {
+        const slug = row.category as CategorySlug | null;
+        if (slug && slug in tally) tally[slug] += 1;
+      }
+      setCounts(tally);
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <SEO
         title="Devotionals by Theme"
-        description="Browse devotionals by theme — divine relationship, destiny and purpose, blessings, prayer, and life and relationships."
+        description="Explore devotionals by theme — divine relationship, destiny and purpose, blessings, prayer, and life and relationships."
         path="/categories"
       />
       <Navbar />
       <main className="pt-16">
-        <section className="section-padding bg-secondary/30">
-          <div className="container mx-auto px-4 max-w-3xl text-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <Compass className="w-10 h-10 text-accent mx-auto mb-4" />
-              <p className="text-accent font-medium text-sm mb-2 uppercase tracking-wider">Categories</p>
-              <h1 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">
-                Devotionals by Theme
+        {/* Restrained hero — deliberately quieter than the homepage hero. */}
+        <section className="pt-9 pb-8 md:pt-14 md:pb-12 bg-secondary/30">
+          <div className="container mx-auto page-x max-w-2xl text-center">
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+              <Compass className="w-7 h-7 md:w-8 md:h-8 text-accent mx-auto mb-3" aria-hidden="true" />
+              <p className="type-meta text-accent mb-2">Categories</p>
+              <h1 className="type-display text-[26px] md:text-4xl text-foreground mb-3 break-words">
+                Explore by Theme
               </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                Find the word that meets you where you are — relationship with God, purpose, prayer, blessings, or life and people.
+              <p className="type-body text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+                Devotionals gathered around the themes that shape a believer's walk — so you can grow where you need it
+                most.
               </p>
             </motion.div>
           </div>
         </section>
 
-        <section className="section-padding">
-          <div className="container mx-auto px-4">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {CATEGORIES.map((c) => (
-                <Link
-                  key={c.slug}
-                  to={`/categories/${c.slug}`}
-                  onClick={() => track("category_open", { slug: c.slug, from: "categories_hub" })}
-                  className="group rounded-xl border border-border bg-card p-8 hover:border-accent/50 hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h2 className="font-serif font-bold text-xl text-foreground group-hover:text-accent transition-colors">
-                      {c.label}
-                    </h2>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {counts[c.slug] ?? 0} {counts[c.slug] === 1 ? "post" : "posts"}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-5">{c.description}</p>
-                  <span className="inline-flex items-center gap-1 text-xs text-accent font-medium uppercase tracking-wider">
-                    Browse <ArrowRight className="w-3 h-3" />
-                  </span>
-                </Link>
-              ))}
-            </div>
+        <section className="py-8 md:py-14">
+          <div className="container mx-auto page-x">
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4 md:gap-5 max-w-5xl mx-auto">
+              {CATEGORIES.map((c) => {
+                const Icon = ICONS[c.slug];
+                const count = counts?.[c.slug];
+                return (
+                  <li key={c.slug} className="min-w-0">
+                    <Link
+                      to={`/categories/${c.slug}`}
+                      onClick={() => track("category_open", { slug: c.slug, from: "categories_hub" })}
+                      className="group flex h-full flex-col rounded-xl bg-card p-5 sm:p-6 ring-1 ring-border transition-all duration-200 hover:ring-accent/40 hover:shadow-md active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    >
+                      <span className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                        <Icon className="h-[18px] w-[18px] text-accent" aria-hidden="true" />
+                      </span>
+
+                      <h2 className="type-heading text-[17px] md:text-lg text-foreground mb-1.5 break-words">
+                        {c.label}
+                      </h2>
+                      <p className="type-body text-sm text-muted-foreground leading-relaxed">{c.description}</p>
+
+                      <span className="mt-auto flex items-center justify-between gap-3 pt-5">
+                        <span className="type-meta text-muted-foreground tabular-nums">
+                          {counts === null
+                            ? "\u00A0"
+                            : count === 0
+                              ? "Coming soon"
+                              : `${count} ${count === 1 ? "devotional" : "devotionals"}`}
+                        </span>
+                        <ChevronRight
+                          className="h-4 w-4 shrink-0 text-accent transition-transform duration-200 group-hover:translate-x-0.5"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </section>
       </main>

@@ -7,11 +7,12 @@ import CategoryRail from "@/components/CategoryRail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { BookOpen, Search as SearchIcon, WifiOff, AlertTriangle, X } from "lucide-react";
+import { BookOpen, Search as SearchIcon, WifiOff, AlertTriangle, X, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { CATEGORIES, CategorySlug } from "@/lib/categories";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const PAGE_SIZE = 12;
@@ -30,12 +31,18 @@ const readPersisted = (): Persisted => {
   }
 };
 
-const Archive = () => {
+type ArchiveProps = {
+  /** When set, the page is locked to one theme (used by /categories/:slug). */
+  lockedCategory?: CategorySlug;
+};
+
+const Archive = ({ lockedCategory }: ArchiveProps = {}) => {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const online = useOnlineStatus();
-  const activeCategory = (params.get("category") as CategorySlug | null) ?? null;
+  const activeCategory = lockedCategory ?? ((params.get("category") as CategorySlug | null) ?? null);
   const restored = useRef(readPersisted());
+
 
   const [items, setItems] = useState<DevotionalCardData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,6 +123,11 @@ const Archive = () => {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const setCategory = (slug: CategorySlug | null) => {
+    if (lockedCategory) {
+      // Locked theme view (/categories/:slug) — switching moves to the new theme route.
+      navigate(slug ? `/categories/${slug}` : "/archive");
+      return;
+    }
     const next = new URLSearchParams(params);
     if (slug) next.set("category", slug);
     else next.delete("category");
@@ -127,21 +139,23 @@ const Archive = () => {
     if (q.trim()) navigate(`/search?q=${encodeURIComponent(q.trim())}`);
   };
 
-  const heading = useMemo(() => {
-    const cat = CATEGORIES.find((c) => c.slug === activeCategory);
-    return cat ? `${cat.label} Devotionals` : "Devotional Archive";
-  }, [activeCategory]);
+  const activeMeta = useMemo(
+    () => CATEGORIES.find((c) => c.slug === activeCategory),
+    [activeCategory],
+  );
+
+  const heading = activeMeta ? (lockedCategory ? activeMeta.label : `${activeMeta.label} Devotionals`) : "Devotional Archive";
 
   return (
     <div className="min-h-dvh bg-background">
       <SEO
-        title={activeCategory ? `${heading}` : "Devotional Archive"}
+        title={activeMeta ? `${activeMeta.label} Devotionals` : "Devotional Archive"}
         description={
-          activeCategory
-            ? `Browse every ${CATEGORIES.find((c) => c.slug === activeCategory)?.label} devotional published on Doxazo Expressions.`
+          activeMeta
+            ? `Browse every ${activeMeta.label} devotional published on Doxazo Expressions.`
             : "Every devotional we've published — searchable, filterable, and ready to revisit."
         }
-        path="/archive"
+        path={lockedCategory ? `/categories/${lockedCategory}` : "/archive"}
       />
       <Navbar />
       <main className="pt-16">
@@ -149,13 +163,26 @@ const Archive = () => {
           <div className="container mx-auto page-x max-w-4xl text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-accent mx-auto mb-3 md:mb-4" aria-hidden="true" />
-              <p className="type-meta text-accent mb-2">Archive</p>
+              <p className="type-meta text-accent mb-2">{lockedCategory ? "Exploring Theme" : "Archive"}</p>
               <h1 className="type-display text-[28px] md:text-5xl text-foreground mb-3 md:mb-6 break-words">
                 {heading}
               </h1>
               <p className="type-body text-sm md:text-lg text-muted-foreground mb-6 md:mb-8 max-w-md mx-auto">
-                Every devotional we've published — searchable, filterable, and ready to revisit.
+                {lockedCategory && activeMeta
+                  ? activeMeta.description
+                  : "Every devotional we've published — searchable, filterable, and ready to revisit."}
               </p>
+              {lockedCategory && (
+                <div className="mb-5">
+                  <Link
+                    to="/categories"
+                    className="type-meta inline-flex items-center gap-1.5 text-muted-foreground hover:text-accent interactive"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" /> All Themes
+                  </Link>
+                </div>
+              )}
+
               <form onSubmit={onSearch} className="relative max-w-md mx-auto" role="search">
                 <SearchIcon
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
@@ -233,17 +260,28 @@ const Archive = () => {
             ) : items.length === 0 ? (
               <div className="text-center py-16 max-w-md mx-auto">
                 <BookOpen className="w-10 h-10 text-accent/40 mx-auto mb-4" aria-hidden="true" />
-                <h2 className="type-heading text-xl mb-2">No devotionals here yet</h2>
+                <h2 className="type-heading text-xl mb-2">
+                  {lockedCategory ? "More devotionals are coming" : "No devotionals here yet"}
+                </h2>
                 <p className="type-body text-sm text-muted-foreground mb-5">
-                  {activeCategory
-                    ? "Nothing's been published in this category yet — browse all devotionals instead."
-                    : "Fresh devotionals are coming. Check back tomorrow morning."}
+                  {lockedCategory
+                    ? "This theme is being prepared — new devotionals are published here as they're released."
+                    : activeCategory
+                      ? "Nothing's been published in this category yet — browse all devotionals instead."
+                      : "Fresh devotionals are coming. Check back tomorrow morning."}
                 </p>
-                {activeCategory && (
-                  <Button variant="outline" onClick={() => setCategory(null)}>
-                    Browse all devotionals
+                {lockedCategory ? (
+                  <Button asChild variant="outline">
+                    <Link to="/categories">Back to Themes</Link>
                   </Button>
+                ) : (
+                  activeCategory && (
+                    <Button variant="outline" onClick={() => setCategory(null)}>
+                      Browse all devotionals
+                    </Button>
+                  )
                 )}
+
               </div>
             ) : (
               <>
