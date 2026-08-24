@@ -352,6 +352,18 @@ const DailyDevotional = () => {
     };
   }, [current?.id, current?.body, current?.inspiration_caption]);
 
+  // Several stored rows repeat the declaration inside prayer_section; showing
+  // both would print the same paragraph twice, so the duplicate is dropped.
+  const prayer = useMemo(() => {
+    const p = current?.prayer_section?.trim();
+    if (!p) return null;
+    const decl = (current?.decree_and_declare || current?.declaration || "").trim();
+    const key = (s: string) => s.replace(/\s+/g, " ").toLowerCase();
+    return decl && key(p) === key(decl) ? null : p;
+  }, [current?.prayer_section, current?.decree_and_declare, current?.declaration]);
+
+
+
   return (
     <div className="min-h-screen bg-background overflow-x-clip">
       <SEO title={seoTitle} description={seoDescription} path={seoPath} type="article" jsonLd={articleLd} />
