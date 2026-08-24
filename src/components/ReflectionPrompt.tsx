@@ -101,9 +101,10 @@ const ReflectionPrompt = ({ devotionalId, devotionalTitle }: Props) => {
       {!user ? (
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm text-muted-foreground">Sign in to keep your reflections.</p>
-          <Button asChild size="sm" variant="outline">
+          <Button asChild size="sm" variant="outline" className="min-h-11 px-5">
             <Link to="/auth">Sign in</Link>
           </Button>
+
         </div>
       ) : loading ? (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
