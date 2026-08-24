@@ -190,7 +190,11 @@ const AudioNarration = ({
   // Reset player when devotional/audio changes
   useEffect(() => {
     setState("idle");
+    setPosition(0);
+    setDuration(0);
+    setError(null);
     stopDuckingLoop();
+
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
