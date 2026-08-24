@@ -480,35 +480,9 @@ const DailyDevotional = () => {
                   )}
                 </div>
 
-                {/* Scripture */}
-                {current.scripture_reference && (
-                  <div className="pt-8">
-                    <SectionLabel icon={BookOpen}>Scripture</SectionLabel>
-                    <p className="text-sm font-semibold text-accent mb-2 break-words">
-                      {current.scripture_reference}
-                    </p>
-                    {scriptureText && (
-                      <blockquote className="border-l-2 border-accent/50 pl-4 sm:pl-5">
-                        <p className="font-serif italic text-lg md:text-xl leading-relaxed text-foreground/90 break-words [overflow-wrap:anywhere]">
-                          &ldquo;{scriptureText}&rdquo;
-                        </p>
-                      </blockquote>
-                    )}
-                    {scriptureText && (
-                      <div className="mt-3">
-                        <HighlightVerseButton
-                          devotionalId={current.id}
-                          devotionalTitle={current.title}
-                          reference={current.scripture_reference}
-                          verseText={scriptureText}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Audio */}
-                <div className="pt-8">
+                {/* Audio sits before the text so the reading flow
+                    Scripture → Reflection → Prayer is never interrupted. */}
+                <div className="pt-6">
                   <AudioNarration
                     title={current.title}
                     scripture={scriptureText || current.scripture_reference}
@@ -523,8 +497,35 @@ const DailyDevotional = () => {
                   />
                 </div>
 
+                {/* Scripture */}
+                {current.scripture_reference && (
+                  <div className="pt-2">
+                    <SectionLabel icon={BookOpen}>Scripture</SectionLabel>
+                    <p className="text-sm font-semibold text-accent mb-3 break-words">
+                      {current.scripture_reference}
+                    </p>
+                    {scriptureText && (
+                      <blockquote className="border-l-2 border-accent/50 pl-4 sm:pl-5">
+                        <p className="font-serif italic text-lg md:text-xl leading-relaxed text-foreground/90 break-words [overflow-wrap:anywhere]">
+                          &ldquo;{scriptureText}&rdquo;
+                        </p>
+                      </blockquote>
+                    )}
+                    {scriptureText && (
+                      <div className="mt-4">
+                        <HighlightVerseButton
+                          devotionalId={current.id}
+                          devotionalTitle={current.title}
+                          reference={current.scripture_reference}
+                          verseText={scriptureText}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Reflection */}
-                <div className="pt-2">
+                <div className="mt-10 border-t border-border/60 pt-8">
                   <SectionLabel icon={Sparkles}>Reflection</SectionLabel>
                   <div className="max-w-[66ch] reader-friendly">
                     <DevotionalBody body={reflection} variant="full" />
@@ -540,14 +541,17 @@ const DailyDevotional = () => {
                   </div>
                 )}
 
-                {/* Prayer */}
-                <div className="mt-10 border-t border-border/60 pt-8">
-                  <SectionLabel icon={Heart}>Prayer</SectionLabel>
-                  <p className="font-serif italic text-base md:text-lg leading-relaxed text-foreground/85 whitespace-pre-line break-words">
-                    {current.prayer_section?.trim() ||
-                      "Father, let the truth of Your Word take root in my heart today. Strengthen my faith, order my steps, and let every word from this devotional become a living reality in my life, in Jesus' name. Amen."}
-                  </p>
-                </div>
+                {/* Prayer — omitted when the stored prayer is the same text as
+                    the declaration, so the reader never sees it twice. */}
+                {prayer && (
+                  <div className="mt-10 border-t border-border/60 pt-8">
+                    <SectionLabel icon={Heart}>Prayer</SectionLabel>
+                    <p className="font-serif italic text-base md:text-lg leading-relaxed text-foreground/85 whitespace-pre-line break-words">
+                      {prayer}
+                    </p>
+                  </div>
+                )}
+
 
                 {/* Declaration */}
                 {(current.declaration || current.decree_and_declare) && (
