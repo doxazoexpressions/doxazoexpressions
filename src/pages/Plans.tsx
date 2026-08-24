@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
-import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, ArrowRight, CheckCircle2, AlertTriangle, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
 import { planSlug, planDisplayName, getPlanCompleted, syncPlanProgressFromCloud } from "@/lib/planProgress";
@@ -14,80 +14,158 @@ type Plan = { slug: string; name: string; items: Row[]; completed: number };
 
 const Plans = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
-  useEffect(() => {
-    (async () => {
-      await syncPlanProgressFromCloud().catch(() => { /* offline OK */ });
-      const { data } = await supabase
-        .from("devotionals")
-        .select("id,title,series,publish_date,slug,day")
-        .or(liveDevotionalOr())
-        .not("series", "is", null)
-        .order("publish_date", { ascending: true });
-      const grouped = new Map<string, Plan>();
-      (data as Row[] | null)?.forEach((r) => {
-        const slug = planSlug(r.series);
-        if (!slug) return;
-        const name = planDisplayName(r.series || "");
-        const existing = grouped.get(slug) ?? { slug, name, items: [], completed: 0 };
-        existing.items.push(r);
-        grouped.set(slug, existing);
-      });
-      const list = Array.from(grouped.values()).map((p) => ({
-        ...p,
-        completed: p.items.filter((i) => getPlanCompleted(p.slug).includes(i.id)).length,
-      }));
-      list.sort((a, b) => b.items.length - a.items.length);
-      setPlans(list);
-      setLoading(false);
-    })();
-  }, []);
+  const load = async () => {
+    setStatus("loading");
+    await syncPlanProgressFromCloud().catch(() => { /* offline OK */ });
+    const { data, error } = await supabase
+      .from("devotionals")
+      .select("id,title,series,publish_date,slug,day")
+      .or(liveDevotionalOr())
+      .not("series", "is", null)
+      .order("publish_date", { ascending: true });
+    if (error) {
+      setStatus("error");
+      return;
+    }
+    const grouped = new Map<string, Plan>();
+    (data as Row[] | null)?.forEach((r) => {
+      const slug = planSlug(r.series);
+      if (!slug) return;
+      const name = planDisplayName(r.series || "");
+      const existing = grouped.get(slug) ?? { slug, name, items: [], completed: 0 };
+      existing.items.push(r);
+      grouped.set(slug, existing);
+    });
+    const list = Array.from(grouped.values()).map((p) => {
+      // Only count completions that map to devotionals actually in this plan,
+      // so stale/local ids can never inflate the count past the plan length.
+      const done = new Set(getPlanCompleted(p.slug));
+      return { ...p, completed: p.items.filter((i) => done.has(i.id)).length };
+    });
+    list.sort((a, b) => b.items.length - a.items.length);
+    setPlans(list);
+    setStatus("ready");
+  };
+
+  useEffect(() => { void load(); }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <SEO title="Reading Plans & Series" description="Walk through devotional series and reading plans from Doxazo Expressions." path="/plans" />
+    <div className="min-h-dvh bg-background">
+      <SEO title="Reading Plans & Series" description="Walk through guided devotional journeys from Doxazo Expressions — one intentional step at a time." path="/plans" />
       <Navbar />
       <main className="pt-20 pb-16">
         <div className="container mx-auto px-4 max-w-3xl">
-          <div className="mb-8">
-            <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold mb-2">Reading Plans</p>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold">Journey through Scripture together</h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl">
-              Multi-part devotional series. Track your progress and pick up where you left off.
+          {/* Restrained hero */}
+          <header className="mb-8 md:mb-10">
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen className="w-4 h-4 text-accent shrink-0" strokeWidth={2} aria-hidden="true" />
+              <p className="type-meta">Reading Plans</p>
+            </div>
+            <h1 className="type-display text-3xl md:text-4xl">Grow with intention</h1>
+            <p className="type-body text-sm md:text-base text-muted-foreground mt-2 max-w-xl">
+              Plans gather devotionals into a guided journey. Start one, keep your place, and
+              return whenever you're ready.
             </p>
-          </div>
-          {loading ? (
-            <p className="text-muted-foreground">Loading plans…</p>
-          ) : plans.length === 0 ? (
-            <Card><CardContent className="p-8 text-center text-muted-foreground">No series yet — check back soon.</CardContent></Card>
-          ) : (
-            <div className="space-y-3">
+          </header>
+
+          {status === "loading" && (
+            <div className="space-y-3" aria-busy="true" aria-live="polite">
+              <span className="sr-only">Loading reading plans…</span>
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="rounded-xl border border-border/70 bg-card/40 p-5">
+                  <div className="h-4 w-2/5 rounded bg-muted animate-pulse" />
+                  <div className="h-3 w-1/4 rounded bg-muted/70 animate-pulse mt-3" />
+                  <div className="h-1.5 w-full rounded-full bg-muted/60 animate-pulse mt-4" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {status === "error" && (
+            <div role="alert" className="rounded-xl border border-destructive/40 bg-destructive/[0.04] p-6 text-center">
+              <AlertTriangle className="w-5 h-5 text-destructive mx-auto mb-3" aria-hidden="true" />
+              <p className="type-body text-sm font-medium">We couldn't load your reading plans.</p>
+              <p className="type-body text-xs text-muted-foreground mt-1">
+                This looks like a connection problem, not an empty library.
+              </p>
+              <Button variant="outline" onClick={() => void load()} className="mt-4 gap-1.5 min-h-11">
+                <RotateCcw className="w-4 h-4" aria-hidden="true" /> Try again
+              </Button>
+            </div>
+          )}
+
+          {status === "ready" && plans.length === 0 && (
+            <div className="rounded-xl border border-border/70 bg-card/40 p-8 text-center">
+              <BookOpen className="w-5 h-5 text-accent mx-auto mb-3" aria-hidden="true" />
+              <p className="type-body text-sm font-medium">No plans published yet</p>
+              <p className="type-body text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Guided journeys are on the way. In the meantime, today's devotional is always ready.
+              </p>
+              <Button asChild variant="outline" className="mt-4 min-h-11">
+                <Link to="/devotional">Read today's devotional</Link>
+              </Button>
+            </div>
+          )}
+
+          {status === "ready" && plans.length > 0 && (
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {plans.map((p) => {
-                const pct = p.items.length ? Math.round((p.completed / p.items.length) * 100) : 0;
+                const total = p.items.length;
+                const pct = total ? Math.round((p.completed / total) * 100) : 0;
+                const state = p.completed === 0 ? "not-started" : p.completed >= total ? "completed" : "in-progress";
+                const cta = state === "not-started" ? "Start plan" : state === "completed" ? "Revisit plan" : "Continue";
                 return (
-                  <Link key={p.slug} to={`/plans/${p.slug}`} className="block">
-                    <Card className="hover:border-accent/50 transition">
-                      <CardContent className="p-5">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">
-                            <BookOpen className="w-5 h-5 text-accent" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h2 className="font-serif font-semibold text-lg leading-snug">{p.name}</h2>
-                            <p className="text-xs text-muted-foreground mt-1">{p.items.length} part{p.items.length === 1 ? "" : "s"} · {p.completed} read</p>
-                            <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
-                              <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
-                            </div>
-                          </div>
-                          <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                  <li key={p.slug}>
+                    <Link
+                      to={`/plans/${p.slug}`}
+                      className="group h-full flex flex-col rounded-xl border border-border/70 bg-card/40 p-5 interactive press hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="w-9 h-9 rounded-lg bg-accent/12 flex items-center justify-center shrink-0">
+                          {state === "completed" ? (
+                            <CheckCircle2 className="w-4 h-4 text-accent" aria-hidden="true" />
+                          ) : (
+                            <BookOpen className="w-4 h-4 text-accent" aria-hidden="true" />
+                          )}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h2 className="type-heading text-lg leading-snug break-words">{p.name}</h2>
+                          <p className="type-body text-xs text-muted-foreground mt-1">
+                            {total} part{total === 1 ? "" : "s"}
+                            {state === "completed"
+                              ? " · Completed"
+                              : state === "in-progress"
+                              ? ` · ${p.completed} of ${total} read`
+                              : " · Not started"}
+                          </p>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                      </div>
+
+                      <div className="mt-4">
+                        <div
+                          className="h-1.5 rounded-full bg-muted overflow-hidden"
+                          role="progressbar"
+                          aria-valuenow={pct}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`${p.name} progress`}
+                        >
+                          <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="flex items-center justify-between gap-2 mt-3">
+                          <span className="type-meta">{pct}% complete</span>
+                          <span className="inline-flex items-center gap-1 text-sm font-medium text-accent">
+                            {cta} <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
         </div>
       </main>
