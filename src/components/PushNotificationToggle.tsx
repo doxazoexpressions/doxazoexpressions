@@ -32,6 +32,7 @@ const PushNotificationToggle = () => {
   const [nativePerm, setNativePerm] = useState<NativePermState>("prompt");
   const [nativeRegistered, setNativeRegistered] = useState(false);
 
+  const [webPerm, setWebPerm] = useState<NotificationPermission>("default");
   const [busy, setBusy] = useState(false);
   const supported = isPushSupported();
   const configured = pushConfigured();
@@ -44,6 +45,7 @@ const PushNotificationToggle = () => {
       });
     } else if (supported) {
       getCurrentSubscription().then((s) => setSubscribed(!!s));
+      if (typeof Notification !== "undefined") setWebPerm(Notification.permission);
     }
   }, [native, supported]);
 
@@ -186,12 +188,14 @@ const PushNotificationToggle = () => {
         trackReminderOptIn("push_web");
         track("notification_enabled", { source: "settings", channel: "push_web" });
         setSubscribed(true);
+        if (typeof Notification !== "undefined") setWebPerm(Notification.permission);
         toast({
           title: "Notifications enabled",
           description: "You'll get a gentle nudge when a new devotional is published.",
         });
       }
     } catch (err: any) {
+      if (typeof Notification !== "undefined") setWebPerm(Notification.permission);
       toast({
         title: "Couldn't update notifications",
         description: err?.message ?? "Please try again.",
@@ -201,6 +205,19 @@ const PushNotificationToggle = () => {
       setBusy(false);
     }
   };
+
+  if (webPerm === "denied") {
+    return (
+      <div className="space-y-2">
+        <p className="text-sm">
+          Status: <span className="text-destructive">Blocked in your browser settings</span>
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Allow notifications for this site in your browser's site settings, then reload this page.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <Button
