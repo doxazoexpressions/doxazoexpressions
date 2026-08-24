@@ -58,6 +58,11 @@ const AudioNarration = ({
     () => (devotionalId ? getAudioProgress(devotionalId)?.position ?? null : null)
   );
   const progressSaveRef = useRef<number>(0);
+  // Live transport state for the visible progress bar.
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
   // Sleep-timer minutes remaining (null = off). When it hits 0 we fade out and pause.
   const [sleepMinutes, setSleepMinutes] = useState<number | null>(null);
   const sleepTimerRef = useRef<number | null>(null);
