@@ -283,7 +283,9 @@ const AudioNarration = ({
   const onPlay = async () => {
     if (!resolvedUrl || !audioRef.current) return;
     try {
+      setError(null);
       setState("loading");
+
       buildGraph();
       if (audioCtxRef.current?.state === "suspended") {
         await audioCtxRef.current.resume();
