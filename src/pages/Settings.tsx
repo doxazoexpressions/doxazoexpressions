@@ -83,8 +83,9 @@ const Group = ({
   </section>
 );
 
-const rowBase =
-  "w-full flex items-center gap-3 px-4 py-3.5 min-h-[56px] text-left border-b border-border/50 last:border-0 interactive press";
+const rowFrame =
+  "w-full px-4 py-3.5 min-h-[56px] text-left border-b border-border/50 last:border-0 interactive press";
+const rowBase = `${rowFrame} flex items-center gap-3`;
 
 const NavRow = ({
   to,
@@ -282,7 +283,7 @@ const Settings = () => {
 
           {/* Devotional experience */}
           <Group title="Devotional experience" icon={Headphones}>
-            <fieldset className={`${rowBase} block cursor-default`}>
+            <fieldset className={`${rowFrame} cursor-default`}>
               <legend className="type-body text-sm font-medium mb-2">Narrator voice</legend>
               <RadioGroup
                 value={narrator}
@@ -329,7 +330,7 @@ const Settings = () => {
             icon={Bell}
             description="Your device's own notification permission always has the final say — if it's blocked, enable it in your system settings first."
           >
-            <div className={`${rowBase} block cursor-default`}>
+            <div className={`${rowFrame} cursor-default`}>
               <p className="type-body text-sm font-medium">Daily devotional nudge</p>
               <p className="type-body text-xs text-muted-foreground mt-0.5 mb-3">
                 A gentle reminder when a new devotional is published. Nothing else.
@@ -341,7 +342,7 @@ const Settings = () => {
 
           {/* Appearance */}
           <Group title="Appearance" icon={Palette}>
-            <fieldset className={`${rowBase} block cursor-default`}>
+            <fieldset className={`${rowFrame} cursor-default`}>
               <legend className="type-body text-sm font-medium mb-2">Theme</legend>
               <RadioGroup value={theme ?? "system"} onValueChange={(v) => setTheme(v)} className="space-y-0">
                 {[
