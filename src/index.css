@@ -368,3 +368,24 @@
   outline: 2px solid hsl(var(--accent));
   outline-offset: 4px;
 }
+
+/* --- Shared mobile header / safe-area page shell -------------------------
+   The fixed Navbar is `env(safe-area-inset-top)` + a 3.5rem row on mobile
+   (4.5rem from sm up). Pages previously hard-coded pt-16/pt-20/pt-28, which
+   ignored the iOS status-bar inset and pushed headings under the header. */
+:root {
+  --app-header-h: calc(env(safe-area-inset-top) + 3.5rem);
+}
+@media (min-width: 640px) {
+  :root {
+    --app-header-h: calc(env(safe-area-inset-top) + 4.5rem);
+  }
+}
+/* Pages whose first section supplies its own vertical rhythm. */
+.page-shell {
+  padding-top: var(--app-header-h);
+}
+/* Pages whose content starts immediately: header height + breathing room. */
+.page-shell-pad {
+  padding-top: calc(var(--app-header-h) + 1.75rem);
+}
