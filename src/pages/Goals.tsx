@@ -114,7 +114,7 @@ const Goals = () => {
                 {week.map((d) => (
                   <div key={d.date} className="min-w-0 flex flex-col items-center gap-2">
                     <div
-                      className={`w-full max-w-9 aspect-square rounded-full flex items-center justify-center text-xs font-semibold ${
+                      className={`w-full max-w-[2.25rem] aspect-square rounded-full flex items-center justify-center text-xs font-semibold ${
                         d.read
                           ? "bg-accent text-accent-foreground"
                           : "bg-muted text-muted-foreground"
