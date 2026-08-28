@@ -114,6 +114,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <NativeBootstrap />
+          <ScrollToTop />
           <RouteAnalytics />
           <BrandIntro />
           <MobileNav />
