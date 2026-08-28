@@ -23,7 +23,7 @@ const About = () => {
         path="/about"
       />
       <Navbar />
-      <main className="pt-16">
+      <main className="page-shell">
         {/* Restrained hero, matched to Categories / Archive scale. */}
         <section className="pt-8 pb-7 md:pt-12 md:pb-10 bg-secondary/30">
           <div className="container mx-auto page-x max-w-2xl text-center">

@@ -65,7 +65,7 @@ const PlanDetail = () => {
     <div className="min-h-dvh bg-background">
       <SEO title={name} description={`Reading plan: ${name}`} path={`/plans/${planId}`} />
       <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="page-shell-pad pb-16">
         <div className="container mx-auto px-4 max-w-3xl">
           <Link
             to="/plans"

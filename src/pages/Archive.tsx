@@ -158,7 +158,7 @@ const Archive = ({ lockedCategory }: ArchiveProps = {}) => {
         path={lockedCategory ? `/categories/${lockedCategory}` : "/archive"}
       />
       <Navbar />
-      <main className="pt-16">
+      <main className="page-shell">
         <section className="pt-9 pb-8 md:section-padding bg-secondary/30">
           <div className="container mx-auto page-x max-w-4xl text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>

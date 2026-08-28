@@ -65,7 +65,7 @@ const Categories = () => {
         path="/categories"
       />
       <Navbar />
-      <main className="pt-16">
+      <main className="page-shell">
         {/* Restrained hero — deliberately quieter than the homepage hero. */}
         <section className="pt-9 pb-8 md:pt-14 md:pb-12 bg-secondary/30">
           <div className="container mx-auto page-x max-w-2xl text-center">

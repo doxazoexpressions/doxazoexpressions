@@ -19,7 +19,7 @@ const SettingsStub = () => {
         path={pathname}
       />
       <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="page-shell-pad pb-16">
         <div className="container mx-auto px-4 max-w-2xl">
           <Link to="/settings" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground mb-6 hover:text-accent">
             <ArrowLeft className="w-4 h-4" /> Settings

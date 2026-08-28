@@ -218,7 +218,7 @@ const Settings = () => {
         path="/settings"
       />
       <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="page-shell-pad pb-16">
         <div className="container mx-auto px-4 max-w-xl">
           <header className="mb-6">
             <h1 className="type-display text-2xl md:text-3xl">Settings</h1>

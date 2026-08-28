@@ -101,7 +101,7 @@ const Search = () => {
         path={initialQ ? `/search?q=${encodeURIComponent(initialQ)}` : "/search"}
       />
       <Navbar />
-      <main className="pt-16">
+      <main className="page-shell">
         <section className="section-padding bg-secondary/30">
           <div className="container mx-auto px-4 max-w-3xl text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>

@@ -101,6 +101,7 @@ import Scripture from "./pages/Scripture";
 import Groups from "./pages/Groups";
 import MobileNav from "./components/MobileNav";
 import RouteAnalytics from "./components/RouteAnalytics";
+import ScrollToTop from "./components/ScrollToTop";
 import BrandIntro from "./components/BrandIntro";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <NativeBootstrap />
+          <ScrollToTop />
           <RouteAnalytics />
           <BrandIntro />
           <MobileNav />

@@ -43,7 +43,7 @@ const Goals = () => {
         path="/goals"
       />
       <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="page-shell-pad pb-16">
         <section className="container mx-auto px-4 max-w-3xl">
           <header className="mb-8 text-center">
             <Trophy className="w-10 h-10 text-accent mx-auto mb-3" />
@@ -108,11 +108,13 @@ const Goals = () => {
               <p className="text-xs uppercase tracking-[0.18em] font-semibold text-muted-foreground mb-4">
                 This week
               </p>
-              <div className="flex items-center justify-between gap-2">
+              {/* Seven equal columns: circles scale down on narrow screens so
+                  the final day can never spill outside the card. */}
+              <div className="grid grid-cols-7 gap-1 sm:gap-2">
                 {week.map((d) => (
-                  <div key={d.date} className="flex-1 flex flex-col items-center gap-2">
+                  <div key={d.date} className="min-w-0 flex flex-col items-center gap-2">
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold ${
+                      className={`w-full max-w-[2.25rem] aspect-square rounded-full flex items-center justify-center text-xs font-semibold ${
                         d.read
                           ? "bg-accent text-accent-foreground"
                           : "bg-muted text-muted-foreground"

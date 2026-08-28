@@ -68,7 +68,7 @@ const Admin = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="pt-32 container mx-auto px-4 max-w-xl text-center">
+        <main className="page-shell-pad container mx-auto px-4 max-w-xl text-center">
           <h1 className="text-3xl font-serif font-bold mb-4">Admin Access Required</h1>
           <p className="text-muted-foreground mb-6">
             Your account ({user.email}) is signed in but not yet an admin. To grant admin access, run this in your backend SQL editor:
@@ -87,7 +87,7 @@ VALUES ('${user.id}', 'admin');`}
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-24 pb-16">
+      <main className="page-shell-pad pb-16">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
             <div>

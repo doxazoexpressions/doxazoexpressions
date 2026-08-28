@@ -32,7 +32,7 @@ const Downloads = () => {
     <div className="min-h-screen bg-background text-foreground">
       <SEO title="Downloads — Doxazo Expressions" description="Your offline devotionals — read and listen without a connection." path="/downloads" />
       <Navbar />
-      <main className="container mx-auto px-4 pt-28 pb-16 max-w-3xl">
+      <main className="container mx-auto px-4 page-shell-pad pb-16 max-w-3xl">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-accent font-semibold mb-2">Available offline</p>

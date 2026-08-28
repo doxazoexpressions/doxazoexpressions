@@ -101,7 +101,7 @@ const Groups = () => {
       <div className="min-h-screen bg-background">
         <SEO title="Groups" description="Grow with a small group of believers." path="/groups" />
         <Navbar />
-        <main className="pt-24 container mx-auto px-4 max-w-md text-center">
+        <main className="page-shell-pad container mx-auto px-4 max-w-md text-center">
           <Users className="w-12 h-12 text-accent mx-auto mb-4" />
           <h1 className="text-2xl font-serif font-bold mb-2">Sign in to use Groups</h1>
           <p className="text-muted-foreground mb-6">Create or join a private group to encourage one another.</p>
@@ -116,7 +116,7 @@ const Groups = () => {
     <div className="min-h-screen bg-background">
       <SEO title="Groups" description="Create or join a small group for shared devotional accountability." path="/groups" />
       <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="page-shell-pad pb-16">
         <section className="container mx-auto px-4 max-w-3xl">
           <header className="mb-8 text-center">
             <Users className="w-10 h-10 text-accent mx-auto mb-3" />

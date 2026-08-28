@@ -57,7 +57,7 @@ const Plans = () => {
     <div className="min-h-dvh bg-background">
       <SEO title="Reading Plans & Series" description="Walk through guided devotional journeys from Doxazo Expressions — one intentional step at a time." path="/plans" />
       <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="page-shell-pad pb-16">
         <div className="container mx-auto px-4 max-w-3xl">
           {/* Restrained hero */}
           <header className="mb-8 md:mb-10">
