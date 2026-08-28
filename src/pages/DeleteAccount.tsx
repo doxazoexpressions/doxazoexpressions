@@ -59,7 +59,7 @@ const DeleteAccount = () => {
         path="/delete-account"
       />
       <Navbar />
-      <main className="pt-16">
+      <main className="page-shell">
         <section className="py-12 md:py-16 bg-secondary/30">
           <div className="container mx-auto px-4 max-w-3xl text-center">
             <h1 className="text-3xl md:text-5xl font-serif font-bold mb-3">Delete your account</h1>

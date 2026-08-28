@@ -132,7 +132,7 @@ const Contact = () => {
         path="/contact"
       />
       <Navbar />
-      <main className="pt-16">
+      <main className="page-shell">
         <section className="pt-9 pb-8 md:pt-14 md:pb-12 bg-secondary/30">
           <div className="container mx-auto page-x max-w-2xl text-center">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>

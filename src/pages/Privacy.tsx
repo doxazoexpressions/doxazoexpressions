@@ -10,7 +10,7 @@ const Privacy = () => (
       <link rel="canonical" href="https://www.doxazoexpressions.com/privacy" />
     </Helmet>
     <Navbar />
-    <main className="pt-32 pb-20">
+    <main className="page-shell-pad pb-20">
       <div className="container mx-auto px-4 max-w-3xl">
         <h1 className="text-4xl md:text-5xl font-serif font-bold mb-2">Privacy Policy</h1>
         <p className="text-muted-foreground mb-10 text-sm">Last updated: June 23, 2026</p>

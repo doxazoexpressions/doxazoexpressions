@@ -372,7 +372,7 @@ const DailyDevotional = () => {
     <div className="min-h-screen bg-background overflow-x-clip">
       <SEO title={seoTitle} description={seoDescription} path={seoPath} type="article" jsonLd={articleLd} />
       <Navbar />
-      <main className="pt-16 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
+      <main className="page-shell pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
         {!online && (
           <div className="bg-accent/15 border-b border-accent/30 text-sm text-center py-2 px-4 flex items-center justify-center gap-2">
             <WifiOff className="w-4 h-4 shrink-0" aria-hidden="true" />

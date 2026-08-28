@@ -36,7 +36,7 @@ const Highlights = () => {
     <div className="min-h-screen bg-background">
       <SEO title="My Highlights" description="Verses you've highlighted from Doxazo Expressions devotionals." path="/highlights" />
       <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="page-shell-pad pb-16">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="flex items-center gap-3 mb-6">
             <Highlighter className="w-6 h-6 text-accent" />

@@ -40,7 +40,7 @@ const Favorites = () => {
     <div className="min-h-screen bg-background">
       <SEO title="Your Favorites" description="Devotionals you've saved on Doxazo Expressions." path="/favorites" />
       <Navbar />
-      <main className="pt-16">
+      <main className="page-shell">
         <section className="py-12 md:py-16 bg-secondary/30">
           <div className="container mx-auto px-4 max-w-3xl text-center">
             <Heart className="w-10 h-10 text-accent mx-auto mb-4" />

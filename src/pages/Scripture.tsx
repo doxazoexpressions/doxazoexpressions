@@ -77,7 +77,7 @@ const Scripture = () => {
         path="/scripture"
       />
       <Navbar />
-      <main className="pt-20 pb-16">
+      <main className="page-shell-pad pb-16">
         <section className="container mx-auto px-4 max-w-3xl">
           <header className="mb-6 text-center">
             <BookOpen className="w-10 h-10 text-accent mx-auto mb-3" />
