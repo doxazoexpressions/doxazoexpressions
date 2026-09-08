@@ -58,18 +58,19 @@ function drawCard(title: string, scripture: string | null, quote: string): HTMLC
   // Scripture
   if (scripture) {
     ctx.fillStyle = "#d4a552";
-    ctx.font = "600 30px 'DM Sans', system-ui, sans-serif";
+    ctx.font = "700 36px 'DM Sans', system-ui, sans-serif";
     ctx.fillText(scripture, 80, 480);
   }
-  // Quote
-  ctx.fillStyle = "#f5efe1";
-  ctx.font = "italic 400 42px 'Playfair Display', Georgia, serif";
-  const qLines = wrapLines(ctx, `"${quote}"`, W - 160).slice(0, 10);
-  const startY = 560;
-  qLines.forEach((line, i) => ctx.fillText(line, 80, startY + i * 58));
-  // Footer
-  ctx.fillStyle = "rgba(245,239,225,0.7)";
-  ctx.font = "500 24px 'DM Sans', system-ui, sans-serif";
+  // Quote — larger, bolder, non-italic for maximum readability on small screens
+  ctx.fillStyle = "#fbf6ea";
+  ctx.font = "600 54px 'Playfair Display', Georgia, serif";
+  const qLines = wrapLines(ctx, `"${quote}"`, W - 160).slice(0, 9);
+  const startY = 580;
+  const lineGap = 74;
+  qLines.forEach((line, i) => ctx.fillText(line, 80, startY + i * lineGap));
+  // Footer — brighter and bolder so the website reads clearly
+  ctx.fillStyle = "#d4a552";
+  ctx.font = "700 32px 'DM Sans', system-ui, sans-serif";
   ctx.fillText("doxazoexpressions.com", 80, H - 80);
   return c;
 }
