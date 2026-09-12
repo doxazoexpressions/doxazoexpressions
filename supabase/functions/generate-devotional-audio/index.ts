@@ -32,6 +32,66 @@ const STANDARD_CLOSING =
 // unhurried devotional cadence with intentional section breaks.
 const B = (sec: number) => `<break time="${sec.toFixed(1)}s"/>`;
 
+const SMALL_NUMBERS = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+  "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+  "seventeen", "eighteen", "nineteen",
+];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+// Spell numbers out before sending text to TTS. This prevents values such as
+// "143" being read as individual digits or with an unnatural cadence.
+function numberToWords(value: number): string {
+  if (!Number.isSafeInteger(value) || value < 0) return String(value);
+  if (value < 20) return SMALL_NUMBERS[value];
+  if (value < 100) {
+    const remainder = value % 10;
+    return `${TENS[Math.floor(value / 10)]}${remainder ? ` ${SMALL_NUMBERS[remainder]}` : ""}`;
+  }
+  if (value < 1000) {
+    const remainder = value % 100;
+    return `${SMALL_NUMBERS[Math.floor(value / 100)]} hundred${remainder ? ` and ${numberToWords(remainder)}` : ""}`;
+  }
+  if (value < 1_000_000) {
+    const remainder = value % 1000;
+    return `${numberToWords(Math.floor(value / 1000))} thousand${remainder ? ` ${numberToWords(remainder)}` : ""}`;
+  }
+  return String(value);
+}
+
+function speakPartNumbers(value: string): string {
+  return value.replace(/\bpart\s+(\d+)\b/gi, (_match, digits: string) =>
+    `Part ${numberToWords(Number(digits))}`
+  );
+}
+
+function speakTranslation(value: string): string {
+  // Dots and spaces force ElevenLabs to pronounce Bible version initials
+  // separately: "NIV" becomes "N. I. V.", rather than a single word.
+  return value.replace(/\b(NIV|KJV|NKJV|ESV|NLT|NASB|AMP|CSB|RSV|NRSV)\b/gi, (code: string) =>
+    code.toUpperCase().split("").join(". ") + "."
+  );
+}
+
+function speakScriptureReference(value: string): string {
+  let spoken = speakTranslation(value.trim().replace(/[()]/g, " "));
+  spoken = spoken.replace(/\b([1-3])\s+(?=[A-Za-z])/g, (_match, bookNumber: string) =>
+    ["", "First", "Second", "Third"][Number(bookNumber)] + " "
+  );
+  spoken = spoken.replace(/\b(\d+):(\d+)(?:\s*[-–]\s*(\d+))?/g, (
+    _match,
+    chapter: string,
+    firstVerse: string,
+    lastVerse?: string,
+  ) => {
+    const verse = lastVerse
+      ? `verses ${numberToWords(Number(firstVerse))} through ${numberToWords(Number(lastVerse))}`
+      : `verse ${numberToWords(Number(firstVerse))}`;
+    return `chapter ${numberToWords(Number(chapter))}, ${verse}`;
+  });
+  return spoken.replace(/\s+/g, " ").trim();
+}
+
 // Narration flow (Joy + Wisdom, identical script):
 //   Welcome → series/part → title → Reflection → Scripture →
 //   Prayer/Decree (ends in Amen with a longer reverent pause) →
@@ -51,8 +111,8 @@ function buildScript(d: {
 
   parts.push(STANDARD_INTRO + " " + B(0.8));
 
-  const seriesName = d.series?.trim();
-  const partLabel = d.day ? `Part ${d.day}` : null;
+  const seriesName = d.series ? speakPartNumbers(d.series.trim()) : null;
+  const partLabel = d.day ? `Part ${numberToWords(d.day)}` : null;
   if (seriesName || partLabel) {
     const seriesPhrase = [seriesName, partLabel].filter(Boolean).join(", ");
     parts.push(`Let us receive today's devotional from our wonderful series, ${seriesPhrase}. ${B(1.0)}`);
@@ -69,7 +129,7 @@ function buildScript(d: {
   }
 
   if (d.scripture_reference || d.scripture_text) {
-    const ref = d.scripture_reference?.trim();
+    const ref = d.scripture_reference ? speakScriptureReference(d.scripture_reference) : null;
     const text = d.scripture_text?.trim();
     const scripture = [ref, text].filter(Boolean).join(". ");
     parts.push(`Scripture for the day: ${B(0.9)} ${scripture} ${B(1.0)}`);
