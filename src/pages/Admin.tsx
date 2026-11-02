@@ -71,13 +71,12 @@ const Admin = () => {
         <main className="page-shell-pad container mx-auto px-4 max-w-xl text-center">
           <h1 className="text-3xl font-serif font-bold mb-4">Admin Access Required</h1>
           <p className="text-muted-foreground mb-6">
-            Your account ({user.email}) is signed in but not yet an admin. To grant admin access, run this in your backend SQL editor:
+            This account does not have admin access. Sign out and sign in with your authorised admin account, or return to the home page.
           </p>
-          <pre className="bg-muted p-4 rounded-lg text-left text-xs overflow-x-auto mb-6">
-{`INSERT INTO public.user_roles (user_id, role)
-VALUES ('${user.id}', 'admin');`}
-          </pre>
-          <Button onClick={signOut} variant="outline">Sign Out</Button>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button asChild variant="secondary"><Link to="/">Return Home</Link></Button>
+            <Button onClick={signOut} variant="outline">Sign Out</Button>
+          </div>
         </main>
         <Footer />
       </div>
