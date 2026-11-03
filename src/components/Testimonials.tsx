@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 type Testimony = {
   id: string;
@@ -37,6 +41,15 @@ const fallback: Testimony[] = [
 const Testimonials = () => {
   const [items, setItems] = useState<Testimony[]>(fallback);
 
+  // Submission form state
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [message, setMessage] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     supabase
       .from("testimonies")
@@ -48,6 +61,42 @@ const Testimonials = () => {
         if (data && data.length > 0) setItems(data);
       });
   }, []);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Spam trap: real users never see or fill this field
+    if (honeypot) return;
+
+    const trimmedName = name.trim();
+    const trimmedMessage = message.trim();
+    if (!trimmedName || !trimmedMessage) {
+      setError("Please add your name and your testimony.");
+      return;
+    }
+    if (trimmedMessage.length > 2000) {
+      setError("Please keep your testimony under 2,000 characters.");
+      return;
+    }
+
+    setSending(true);
+    const { error: insertError } = await supabase.from("testimonies").insert({
+      name: trimmedName,
+      location: location.trim() || null,
+      message: trimmedMessage,
+    });
+    setSending(false);
+
+    if (insertError) {
+      setError("Something went wrong sending your testimony. Please try again.");
+      return;
+    }
+    setSent(true);
+    setName("");
+    setLocation("");
+    setMessage("");
+  };
 
   return (
     <section id="testimonials" className="section-padding relative">
@@ -100,6 +149,110 @@ const Testimonials = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Share your testimony */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-2xl mx-auto mt-16"
+        >
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-10">
+            {sent ? (
+              <div className="text-center py-6">
+                <CheckCircle2 className="w-12 h-12 text-accent mx-auto mb-4" />
+                <h3 className="text-2xl font-serif font-bold text-foreground mb-3">Thank you for sharing</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Your testimony has been received. Once reviewed, it will appear here to encourage others.
+                </p>
+                <Button variant="outline" className="mt-6" onClick={() => setSent(false)}>
+                  Share another
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl md:text-3xl font-serif font-bold text-foreground mb-3">
+                    Has Doxazo Blessed You?
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Share how the devotional has touched your life — your words may be the encouragement
+                    someone else needs today.
+                  </p>
+                </div>
+
+                <form onSubmit={submit} className="space-y-5">
+                  {/* Honeypot — hidden from real users */}
+                  <input
+                    type="text"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="hidden"
+                  />
+
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="testimony-name">Your name</Label>
+                      <Input
+                        id="testimony-name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Grace O."
+                        maxLength={80}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="testimony-location">Location (optional)</Label>
+                      <Input
+                        id="testimony-location"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder="e.g. London"
+                        maxLength={80}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="testimony-message">Your testimony</Label>
+                    <Textarea
+                      id="testimony-message"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Tell us how Doxazo has blessed you..."
+                      rows={5}
+                      maxLength={2000}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground text-right">{message.length}/2000</p>
+                  </div>
+
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+
+                  <Button type="submit" className="w-full" disabled={sending}>
+                    {sending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" /> Share Your Testimony
+                      </>
+                    )}
+                  </Button>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    Testimonials are reviewed before appearing on this page.
+                  </p>
+                </form>
+              </>
+            )}
+          </div>
+        </motion.div>
       </div>
     </section>
   );
