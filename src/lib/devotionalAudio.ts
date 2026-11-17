@@ -19,9 +19,9 @@ let cachedBedUrl: { url: string; expires: number } | null = null;
 export async function getMusicBedUrl(): Promise<string | null> {
   const now = Date.now();
   if (cachedBedUrl && cachedBedUrl.expires > now) return cachedBedUrl.url;
-  const { data, error } = await supabase.storage
-    .from(AUDIO_BUCKET)
-    .createSignedUrl("_music/bed.mp3", 60 * 60);
+  const { data, error } = await supabase.functions.invoke("devotional-audio-url", {
+    body: { path: "_music/bed.mp3" },
+  });
   if (error || !data?.signedUrl) return null;
   cachedBedUrl = { url: data.signedUrl, expires: now + 50 * 60 * 1000 };
   return data.signedUrl;
@@ -35,11 +35,11 @@ export async function resolveAudioUrl(value?: string | null): Promise<string | n
     return value;
   }
   // Treat as storage path within the devotional-audio bucket.
-  const { data, error } = await supabase.storage
-    .from(AUDIO_BUCKET)
-    .createSignedUrl(value, 60 * 60);
+  const { data, error } = await supabase.functions.invoke("devotional-audio-url", {
+    body: { path: value },
+  });
   if (error) {
-    console.warn("resolveAudioUrl failed:", error.message);
+    console.warn("resolveAudioUrl failed");
     return null;
   }
   return data?.signedUrl ?? null;

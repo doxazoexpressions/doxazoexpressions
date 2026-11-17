@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS devotional_audio_published_read ON storage.objects;
