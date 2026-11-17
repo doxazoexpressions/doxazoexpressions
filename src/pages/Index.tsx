@@ -29,7 +29,6 @@ const Index = () => {
         <Navbar />
         <NativeOnboarding />
         <main>
-          <SignupPrompt variant="native" />
           <NativeHome />
         </main>
       </div>

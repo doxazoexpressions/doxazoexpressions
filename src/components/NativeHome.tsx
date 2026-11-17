@@ -15,6 +15,7 @@ import { getLastRead, getReadHistory, type ReadEntry } from "@/lib/readingHistor
 import { useAuth } from "@/hooks/useAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import SignupPrompt from "@/components/SignupPrompt";
 import CategoryBadge from "@/components/CategoryBadge";
 import { CATEGORIES } from "@/lib/categories";
 import { liveDevotionalOr } from "@/lib/liveDevotional";
@@ -257,6 +258,11 @@ const NativeHome = () => {
             </CardContent>
           </Card>
         </motion.div>
+      </div>
+
+      {/* Single signed-out sign-up prompt, below the devotional card */}
+      <div className="px-5 [&>div]:px-0 [&>div]:pt-5">
+        <SignupPrompt variant="native" />
       </div>
 
       {/* Streak */}
