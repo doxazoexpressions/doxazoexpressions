@@ -10,6 +10,7 @@ import SEO from "@/components/SEO";
 import NativeHome from "@/components/NativeHome";
 import NativeOnboarding from "@/components/NativeOnboarding";
 import { isNative } from "@/lib/native";
+import SignupPrompt from "@/components/SignupPrompt";
 import { useEffect, useState } from "react";
 
 const Index = () => {
@@ -28,6 +29,7 @@ const Index = () => {
         <Navbar />
         <NativeOnboarding />
         <main>
+          <SignupPrompt variant="native" />
           <NativeHome />
         </main>
       </div>
@@ -43,6 +45,7 @@ const Index = () => {
       />
       <Navbar />
       <main>
+        <SignupPrompt variant="home" />
         <Hero />
         <DevotionalHighlight />
         <CategoriesPreview />

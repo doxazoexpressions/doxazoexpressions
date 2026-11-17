@@ -44,6 +44,7 @@ import { liveDevotionalOr } from "@/lib/liveDevotional";
 import AudioNarration from "@/components/AudioNarration";
 import ShareVerseCard from "@/components/ShareVerseCard";
 import JournalPanel from "@/components/JournalPanel";
+import SignupPrompt from "@/components/SignupPrompt";
 import FaithEssentials from "@/components/FaithEssentials";
 import HighlightVerseButton from "@/components/HighlightVerseButton";
 import { normalizeReadableText } from "@/lib/textPreview";
@@ -662,6 +663,8 @@ const DailyDevotional = () => {
                 )}
               </motion.article>
             )}
+
+            <SignupPrompt variant="devotional" />
 
             <FaithEssentials />
 

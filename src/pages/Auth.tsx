@@ -1,3 +1,4 @@
+import { GATE_MESSAGE } from "@/components/RequireAuth";
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -19,7 +20,10 @@ const passwordSchema = z.string().min(6, "Password must be at least 6 characters
 type Mode = "signin" | "signup" | "forgot";
 
 const Auth = () => {
-  const [mode, setMode] = useState<Mode>("signin");
+  const [mode, setMode] = useState<Mode>(() => {
+    const m = new URLSearchParams(window.location.search).get("mode");
+    return m === "signup" ? ("signup" as Mode) : "signin";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +36,12 @@ const Auth = () => {
   const [existingEmail, setExistingEmail] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [gated] = useState(() => new URLSearchParams(window.location.search).get("gate") === "1");
+  // Only same-site paths are honoured as a return destination.
+  const [nextPath] = useState(() => {
+    const n = new URLSearchParams(window.location.search).get("next") ?? "";
+    return n.startsWith("/") && !n.startsWith("//") ? n : "/";
+  });
 
   useEffect(() => {
     const authError = searchParams.get("error");
@@ -72,7 +82,7 @@ const Auth = () => {
         });
       }
       if ((result as { redirected?: boolean }).redirected) return;
-      navigate("/");
+      navigate(nextPath);
     } catch (e) {
       toast({ title: "Sign in failed", description: (e as Error).message, variant: "destructive" });
     } finally {
@@ -162,7 +172,7 @@ const Auth = () => {
     }
     if (import.meta.env.DEV) console.info("[auth] signIn:success");
     toast({ title: "Welcome back!" });
-    navigate("/");
+    navigate(nextPath);
   };
 
   const handleForgot = async (e: React.FormEvent) => {
@@ -313,6 +323,11 @@ const Auth = () => {
               </>
             ) : (
               <>
+                {gated && (
+                  <p role="status" className="mb-4 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-foreground">
+                    {GATE_MESSAGE}
+                  </p>
+                )}
                 <h1 className="text-2xl font-serif font-bold mb-1">
                   {mode === "signin" ? "Welcome Back" : "Create Account"}
                 </h1>

@@ -93,6 +93,11 @@ const Navbar = () => {
                 <Link to="/auth"><LogIn className="w-4 h-4" /> Sign In</Link>
               </Button>
             )}
+            {!user && (
+              <Button asChild variant="ghost" size="sm" className="text-accent font-semibold">
+                <Link to="/auth?mode=signup">Create free account</Link>
+              </Button>
+            )}
             <Button asChild className="px-5">
               <Link to="/devotional">Today's Devotional</Link>
             </Button>
@@ -102,6 +107,14 @@ const Navbar = () => {
               container edge and produced a few px of horizontal overflow. */}
           <div className="flex lg:hidden items-center gap-1 shrink-0">
 
+            {!user && (
+              <Link
+                to="/auth?mode=signup"
+                className="hidden min-[360px]:inline-flex items-center h-9 px-3 rounded-lg text-xs font-semibold text-accent border border-accent/50 whitespace-nowrap interactive"
+              >
+                Create free account
+              </Link>
+            )}
             <ThemeToggle />
             <button
               type="button"

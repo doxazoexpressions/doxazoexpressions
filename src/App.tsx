@@ -103,6 +103,7 @@ import MobileNav from "./components/MobileNav";
 import RouteAnalytics from "./components/RouteAnalytics";
 import ScrollToTop from "./components/ScrollToTop";
 import BrandIntro from "./components/BrandIntro";
+import RequireAuth from "./components/RequireAuth";
 
 const queryClient = new QueryClient();
 
@@ -123,7 +124,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/devotional" element={<DailyDevotional />} />
             <Route path="/devotional/:id" element={<DailyDevotional />} />
-            <Route path="/archive" element={<Archive />} />
+            <Route path="/archive" element={<RequireAuth><Archive /></RequireAuth>} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/categories/:slug" element={<CategoryDetail />} />
             <Route path="/search" element={<Search />} />
@@ -131,22 +132,22 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/favorites" element={<RequireAuth><Favorites /></RequireAuth>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/notifications" element={<SettingsStub />} />
             <Route path="/settings/bible-versions" element={<SettingsStub />} />
             <Route path="/delete-account" element={<DeleteAccount />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/plans" element={<Plans />} />
-            <Route path="/plans/:slug" element={<PlanDetail />} />
-            <Route path="/journal" element={<Journal />} />
-            <Route path="/highlights" element={<Highlights />} />
-            <Route path="/prayers" element={<Prayers />} />
-            <Route path="/downloads" element={<Downloads />} />
-            <Route path="/goals" element={<Goals />} />
+            <Route path="/plans" element={<RequireAuth><Plans /></RequireAuth>} />
+            <Route path="/plans/:slug" element={<RequireAuth><PlanDetail /></RequireAuth>} />
+            <Route path="/journal" element={<RequireAuth><Journal /></RequireAuth>} />
+            <Route path="/highlights" element={<RequireAuth><Highlights /></RequireAuth>} />
+            <Route path="/prayers" element={<RequireAuth><Prayers /></RequireAuth>} />
+            <Route path="/downloads" element={<RequireAuth><Downloads /></RequireAuth>} />
+            <Route path="/goals" element={<RequireAuth><Goals /></RequireAuth>} />
             <Route path="/scripture" element={<Scripture />} />
-            <Route path="/groups" element={<Groups />} />
+            <Route path="/groups" element={<RequireAuth><Groups /></RequireAuth>} />
             <Route path="/~/oauth/callback" element={<OAuthCallback />} />
             <Route path="/~oauth/callback" element={<OAuthCallback />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
