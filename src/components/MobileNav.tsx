@@ -225,11 +225,16 @@ const MobileNav = () => {
                 </Button>
               </div>
             ) : (
+              <>
               <Button asChild className="w-full gap-1.5">
                 <Link to="/auth">
                   <LogIn className="w-4 h-4" /> Sign In
                 </Link>
               </Button>
+              <Button asChild variant="outline" className="w-full mt-2 text-accent border-accent/50">
+                <Link to="/auth?mode=signup">Create free account</Link>
+              </Button>
+              </>
             )}
           </div>
         </SheetContent>

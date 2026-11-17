@@ -19,7 +19,7 @@ const SignupPrompt = ({ variant }: { variant: Variant }) => {
 
   if (variant === "home") {
     return (
-      <div className="border-b border-accent/30 bg-primary text-primary-foreground">
+      <div className="mt-[var(--app-header-h)] border-b border-accent/30 bg-card text-foreground">
         <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center">
           <p className="text-sm">{COPY.home}</p>
           <Link
