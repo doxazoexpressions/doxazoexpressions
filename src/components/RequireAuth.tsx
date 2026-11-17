@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 export const GATE_MESSAGE =
-  "Create a free account to unlock the full archive and your personal spiritual tools.";
+  "Create a free account to use your personal spiritual tools.";
 
 /**
  * Signed-out visitors are sent to /auth (same behaviour on web and native).

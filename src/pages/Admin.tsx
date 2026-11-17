@@ -23,6 +23,7 @@ import { LogOut, Plus, Trash2, Send } from "lucide-react";
 import { CATEGORIES, categoryLabel } from "@/lib/categories";
 import DevotionalsManager from "@/components/admin/DevotionalsManager";
 import SocialPackPanel from "@/components/admin/SocialPackPanel";
+import StorageBackupButton from "@/components/admin/StorageBackupButton";
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -109,6 +110,7 @@ const Admin = () => {
             </div>
           </div>
 
+          <StorageBackupButton />
           <Tabs defaultValue="devotional" className="w-full">
             <TabsList className="grid grid-cols-5 mb-6">
               <TabsTrigger value="devotional">Devotionals</TabsTrigger>

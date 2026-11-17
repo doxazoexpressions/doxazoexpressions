@@ -124,7 +124,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/devotional" element={<DailyDevotional />} />
             <Route path="/devotional/:id" element={<DailyDevotional />} />
-            <Route path="/archive" element={<RequireAuth><Archive /></RequireAuth>} />
+            <Route path="/archive" element={<Archive />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/categories/:slug" element={<CategoryDetail />} />
             <Route path="/search" element={<Search />} />

@@ -14,6 +14,7 @@ import { CATEGORIES, CategorySlug } from "@/lib/categories";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import SignupPrompt from "@/components/SignupPrompt";
 
 const PAGE_SIZE = 12;
 const STATE_KEY = "doxazo.archive.state";
@@ -312,6 +313,11 @@ const Archive = ({ lockedCategory }: ArchiveProps = {}) => {
             )}
           </div>
         </section>
+        {!lockedCategory && (
+          <div className="container mx-auto page-x max-w-4xl pb-12">
+            <SignupPrompt variant="archive" />
+          </div>
+        )}
       </main>
       <Footer />
     </div>

@@ -3,11 +3,12 @@ import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
-type Variant = "devotional" | "home" | "native";
+type Variant = "devotional" | "home" | "native" | "archive";
 
 const COPY: Record<Variant, string> = {
   devotional:
-    "Save your reflections, build streaks and unlock the archive — create a free account.",
+    "Save your reflections and build streaks — create a free account.",
+  archive: "Save your favourites, reflections and reading progress — create a free account.",
   home: "Join the community — save your daily reflections and build your streak.",
   native: "Join the community — save your daily reflections and build your streak.",
 };
@@ -56,7 +57,7 @@ const SignupPrompt = ({ variant }: { variant: Variant }) => {
     <aside className="mt-16 rounded-2xl border border-accent/40 bg-card p-6 sm:p-8 text-center">
       <Sparkles className="w-6 h-6 text-accent mx-auto mb-3" aria-hidden="true" />
       <p className="font-serif text-lg sm:text-xl text-foreground mb-5 max-w-xl mx-auto">
-        {COPY.devotional}
+        {COPY[variant]}
       </p>
       <Button asChild className="min-h-11 px-6">
         <Link to="/auth?mode=signup">Create free account</Link>
